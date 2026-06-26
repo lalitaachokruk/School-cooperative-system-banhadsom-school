@@ -3,24 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="https://www.banhadsompan.ac.th/_files_school/86101511/data/86101511_0_20240629-000624.png" type="image/png">
     <title>ระบบสหกรณ์โรงเรียนบ้านหาดส้มแป้น</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://www.gstatic.com/firebasejs/10.1.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.1.0/firebase-firestore-compat.js"></script>
 
     <style>
         :root {
-            --primary-blue: #1A365D;
-            --secondary-blue: #3182CE;
-            --accent-red: #E53E3E;
-            --bg-body: #F8FAFC;
-            --bg-white: #FFFFFF;
-            --text-main: #2D3748;
-            --text-muted: #718096;
-            --border-color: #E2E8F0;
-            --radius-md: 10px;
+            --primary-blue: #1A365D; --secondary-blue: #3182CE; --accent-red: #E53E3E;
+            --bg-body: #F8FAFC; --bg-white: #FFFFFF; --text-main: #2D3748; --text-muted: #718096;
+            --border-color: #E2E8F0; --radius-md: 10px;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Kanit', sans-serif; }
@@ -42,7 +39,6 @@
         .date-selector { background: #F8FAFC; border: 1px solid var(--border-color); padding: 15px; border-radius: 10px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; }
         .date-selector input { font-family: 'Kanit'; padding: 8px 12px; border: 1px solid #CBD5E0; border-radius: 6px; outline: none; color: var(--primary-blue); font-weight: 500; font-size: 1.1rem;}
 
-        /* แยก 2 ช่อง Input */
         .input-group { margin-bottom: 20px; }
         .input-group label { display: block; font-size: 1.1rem; font-weight: 500; color: var(--primary-blue); margin-bottom: 8px; }
         .pos-input { width: 100%; padding: 18px; font-size: 1.5rem; border: 2px solid var(--border-color); border-radius: 10px; outline: none; background: #F7FAFC; transition: 0.3s; }
@@ -50,7 +46,7 @@
         .pos-input:disabled { background: #EDF2F7; border-color: #E2E8F0; color: #A0AEC0; cursor: not-allowed; }
 
         .member-alert { background: #EBF8FF; border-left: 4px solid var(--secondary-blue); padding: 15px 20px; border-radius: 0 10px 10px 0; display: none; justify-content: space-between; align-items: center; margin-bottom: 20px; color: var(--secondary-blue); font-size: 1.2rem; }
-        .btn-cancel { background: rgba(43, 108, 176, 0.1); color: var(--secondary-blue); border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; }
+        .btn-cancel { background: rgba(43, 108, 176, 0.1); color: var(--secondary-blue); border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-family: 'Kanit';}
 
         .pos-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         .pos-table th { background: #F7FAFC; color: var(--text-muted); font-weight: 500; padding: 15px; text-align: left; }
@@ -59,29 +55,19 @@
         .highlight-price { color: var(--accent-red); font-size: 1.8rem; font-weight: 600; }
 
         /* ==========================================
-           2. โมดูล Login
-        ========================================== */
-        #login-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(10, 25, 47, 0.7); backdrop-filter: blur(5px); display: none; justify-content: center; align-items: center; z-index: 9999; }
-        .modal-box { background: white; padding: 40px; border-radius: var(--radius-md); text-align: center; width: 100%; max-width: 400px; position: relative; }
-        .close-btn { position: absolute; top: 15px; right: 20px; font-size: 1.5rem; cursor: pointer; color: var(--text-muted); }
-        .modal-box input { width: 100%; padding: 15px; font-size: 1.1rem; border: 2px solid var(--border-color); border-radius: 8px; margin: 20px 0; text-align: center; letter-spacing: 2px; outline: none; }
-        .modal-box button { width: 100%; padding: 15px; background: var(--primary-blue); color: white; border: none; border-radius: 8px; font-size: 1.1rem; cursor: pointer; }
-
-        /* ==========================================
-           3. หน้า Admin Dashboard
+           2. หน้า Admin Dashboard (Sidebar & Main)
         ========================================== */
         #admin-section { display: none; height: 100vh; overflow: hidden; }
         .admin-sidebar { width: 260px; background: white; border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 20px 0; flex-shrink: 0;}
         .admin-brand { text-align: center; padding: 0 20px 20px; border-bottom: 1px solid var(--border-color); margin-bottom: 15px; }
         .admin-brand img { height: 60px; margin-bottom: 10px; }
-        
-        .nav-item { padding: 15px 25px; display: block; color: var(--text-muted); cursor: pointer; font-size: 1.05rem; border-left: 4px solid transparent; }
+        .nav-item { padding: 12px 25px; display: block; color: var(--text-muted); cursor: pointer; font-size: 1.05rem; border-left: 4px solid transparent; transition: 0.2s;}
         .nav-item.active { background: #F0F7FF; color: var(--primary-blue); border-left-color: var(--primary-blue); font-weight: 500; }
+        .nav-item:hover { background: #F8FAFC; }
 
         .admin-main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
         .admin-topbar { height: 70px; background: white; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; padding: 0 30px; flex-shrink: 0;}
         .admin-content { padding: 30px; max-width: 1400px; margin: 0 auto; width: 100%; overflow-y: auto; flex: 1;}
-
         .tab-pane { display: none; }
         .tab-pane.active { display: block; }
 
@@ -91,14 +77,18 @@
         
         .btn-blue { background: var(--secondary-blue); color: white; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-family: 'Kanit'; transition: 0.2s;}
         .btn-blue:hover { background: var(--primary-blue); }
+        .btn-red { background: white; color: var(--accent-red); border: 1px solid var(--accent-red); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-family: 'Kanit'; font-size: 0.85rem;}
+        .btn-red:hover { background: #FFF5F5; }
         
-        .admin-table-container { max-height: 500px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 6px;}
+        .admin-table-container { max-height: 500px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 6px; margin-top: 15px;}
         .admin-table { width: 100%; border-collapse: collapse; }
         .admin-table th { background: #F7FAFC; padding: 12px; border-bottom: 1px solid var(--border-color); text-align: left; position: sticky; top: 0; z-index: 1;}
-        .admin-table td { padding: 12px; border-bottom: 1px solid var(--border-color); }
+        .admin-table td { padding: 12px; border-bottom: 1px solid var(--border-color); vertical-align: middle;}
         
-        .form-row { display: flex; gap: 10px; margin-bottom: 15px; }
-        .form-row input, .form-row select { padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-family: 'Kanit'; outline: none; }
+        /* คอนเทนเนอร์จัดขนาดกราฟให้พอดีจอ */
+        .chart-container { position: relative; height: 300px; width: 100%; }
+        .form-row { display: flex; gap: 10px; margin-bottom: 15px; align-items: center;}
+        .form-row input { padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-family: 'Kanit'; outline: none; }
     </style>
 </head>
 <body>
@@ -106,7 +96,7 @@
     <div id="pos-section">
         <header class="pos-navbar">
             <h1><img src="https://www.banhadsompan.ac.th/_files_school/86101511/data/86101511_0_20240629-000624.png" alt="โลโก้">ระบบสหกรณ์โรงเรียนบ้านหาดส้มแป้น</h1>
-            <button class="btn-admin-toggle" onclick="openLoginModal()">⚙️ ตั้งค่า (Admin)</button>
+            <button class="btn-admin-toggle" onclick="openAdminLogin()">⚙️ ตั้งค่า (Admin)</button>
         </header>
 
         <main class="pos-container">
@@ -145,17 +135,6 @@
         </main>
     </div>
 
-    <div id="login-modal">
-        <div class="modal-box">
-            <span class="close-btn" onclick="closeLoginModal()">×</span>
-            <h3 style="color: var(--primary-blue); font-size: 1.4rem;">🔒 ยืนยันตัวตน (Admin)</h3>
-            <p style="color: var(--text-muted); margin-top: 10px;">กรุณากรอกรหัสผ่านเพื่อเข้าสู่ระบบควบคุม</p>
-            <input type="password" id="admin-pwd" placeholder="••••••••" autocomplete="off">
-            <button onclick="verifyAdmin()">เข้าสู่ระบบ</button>
-            <p id="pwd-error" style="color: var(--accent-red); display: none; margin-top: 15px;">รหัสผ่านไม่ถูกต้อง!</p>
-        </div>
-    </div>
-
     <div id="admin-section">
         <aside class="admin-sidebar">
             <div class="admin-brand">
@@ -163,25 +142,25 @@
                 <h3 style="color: var(--primary-blue);">ศูนย์ควบคุม</h3>
             </div>
             
-            <a class="nav-item active" onclick="switchAdminTab('dashboard', this)">📊 ภาพรวมบัญชี (Dashboard)</a>
+            <a class="nav-item active" onclick="switchAdminTab('dashboard', this)">📊 ภาพรวมบัญชี</a>
             <a class="nav-item" onclick="switchAdminTab('members', this)">👥 จัดการสมาชิก & หุ้น</a>
-            <a class="nav-item" onclick="switchAdminTab('history', this)">📜 ประวัติการซื้อรายบุคคล</a>
-            <a class="nav-item" onclick="switchAdminTab('expenses', this)">💸 บันทึกรายจ่ายอื่นๆ</a>
+            <a class="nav-item" onclick="switchAdminTab('history', this)">📜 ประวัติการซื้อ</a>
+            <a class="nav-item" onclick="switchAdminTab('expenses', this)">💸 บันทึกรายจ่าย</a>
+            <a class="nav-item" onclick="switchAdminTab('audit', this)">📑 ประวัติการแก้ไข</a>
             <a class="nav-item" onclick="switchAdminTab('settings', this)">⚙️ ตั้งค่าระบบ</a>
             
-            <a class="nav-item" onclick="exitAdmin()" style="margin-top: auto; color: var(--accent-red);">⬅️ ออกจากระบบ (กลับไป POS)</a>
+            <a class="nav-item" onclick="exitAdmin()" style="margin-top: auto; color: var(--accent-red); border-top: 1px solid var(--border-color);">⬅️ ออกจากระบบ (POS)</a>
         </aside>
 
         <main class="admin-main">
             <header class="admin-topbar">
-                <h2 id="admin-page-title" style="color: var(--primary-blue); font-size: 1.3rem;">ภาพรวมบัญชี (Dashboard)</h2>
+                <h2 id="admin-page-title" style="color: var(--primary-blue); font-size: 1.3rem;">ภาพรวมบัญชี</h2>
                 <div style="background: #FFF5F5; color: var(--accent-red); padding: 8px 16px; border-radius: 20px; font-size: 0.9rem; border: 1px solid #FEB2B2;">
                     ผู้ใช้งาน: <span id="admin-name">Admin</span>
                 </div>
             </header>
 
             <div class="admin-content">
-                
                 <div id="tab-dashboard" class="tab-pane active">
                     <div class="stats-grid">
                         <div class="stat-box"><p>ยอดขายรวม</p><h3 id="dash-sales">0.00</h3></div>
@@ -191,48 +170,39 @@
                         <div class="stat-box"><p>สมาชิกทั้งหมด</p><h3 id="dash-total-members">-</h3></div>
                     </div>
                     <div class="admin-card">
-                        <h3 style="margin-bottom: 20px; color: var(--primary-blue);">📈 กราฟความเคลื่อนไหว (Real-time)</h3>
-                        <canvas id="salesChart" height="60"></canvas>
+                        <h3 style="margin-bottom: 20px; color: var(--primary-blue);">📈 กราฟความเคลื่อนไหวยอดขาย (Real-time)</h3>
+                        <div class="chart-container">
+                            <canvas id="salesChart"></canvas>
+                        </div>
                     </div>
                 </div>
 
                 <div id="tab-members" class="tab-pane">
                     <div class="admin-card">
-                        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 10px;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-end;">
                             <div>
                                 <h3 style="color: var(--primary-blue);">ฐานข้อมูลสมาชิก และ หุ้นสหกรณ์</h3>
-                                <p style="color: var(--text-muted); margin-top: 5px;">ตารางรวมสมาชิก (อัปเดตข้อมูลอัตโนมัติตามการซื้อหน้าร้าน)</p>
+                                <p style="color: var(--text-muted); margin-top: 5px;">ตารางรวมสมาชิก กดปุ่มจัดการหุ้นเพื่อซื้อเพิ่ม/ถอนออก</p>
                             </div>
-                            <div style="display: flex; gap: 10px;">
-                                <button class="btn-blue" id="btn-sync-sheets" onclick="syncFromSheets()">⬇️ ดึงรายชื่อจาก Sheets</button>
-                            </div>
+                            <button class="btn-blue" onclick="syncFromSheets()">🔄 ดึงข้อมูลจาก Sheets</button>
                         </div>
-                        
                         <div class="admin-table-container">
                             <table class="admin-table">
-                                <thead><tr><th>รหัส</th><th>ชื่อ-สกุล</th><th>ชั้นเรียน</th><th>จำนวนหุ้น</th><th>ยอดซื้อสะสม</th><th>จัดการ</th></tr></thead>
+                                <thead><tr><th>รหัส</th><th>ชื่อ-สกุล</th><th>ชั้นเรียน</th><th>หุ้นสะสม</th><th>ยอดซื้อสะสม</th><th>จัดการ</th></tr></thead>
                                 <tbody id="admin-member-list">
                                     <tr><td colspan="6" style="text-align: center; padding: 20px;">⏳ กำลังเชื่อมต่อฐานข้อมูล...</td></tr>
                                 </tbody>
                             </table>
                         </div>
                     </div>
-
-                    <div class="admin-card" style="border-left: 4px solid #805AD5; display: flex; justify-content: space-between; align-items: center;">
-                        <div>
-                            <h3 style="color: #805AD5; margin-bottom: 5px;">💰 ระบบสำรองข้อมูล และ ปันผล</h3>
-                            <p style="color: var(--text-muted);">ส่งยอดหุ้นและยอดซื้อกลับไปบันทึกใน Google Sheets</p>
-                        </div>
-                        <button class="btn-blue" style="background: #805AD5;" onclick="alert('ระบบเตรียมพร้อมเชื่อมต่อ Google Sheets Webhook แล้ว')">📤 ส่งข้อมูลออกไปยัง Sheets</button>
-                    </div>
                 </div>
 
                 <div id="tab-history" class="tab-pane">
                     <div class="admin-card">
-                        <h3 style="color: var(--primary-blue); margin-bottom: 20px;">📜 ประวัติการทำรายการแบบเรียลไทม์</h3>
+                        <h3 style="color: var(--primary-blue);">📜 ประวัติการทำรายการแบบเรียลไทม์</h3>
                         <div class="admin-table-container">
                             <table class="admin-table">
-                                <thead><tr><th>วันที่-เวลา</th><th>รหัสสมาชิก</th><th>ยอดเงิน (บาท)</th><th>ผู้บันทึก</th></tr></thead>
+                                <thead><tr><th>วันที่-เวลา</th><th>รหัสสมาชิก</th><th>ชื่อ-สกุล</th><th>ยอดเงิน (บาท)</th><th>ผู้บันทึก</th><th>จัดการ</th></tr></thead>
                                 <tbody id="admin-history-list"></tbody>
                             </table>
                         </div>
@@ -248,11 +218,25 @@
                             <input type="number" id="exp-amount" placeholder="จำนวนเงิน" style="width: 150px;">
                             <button class="btn-blue" onclick="addExpense()">บันทึกรายจ่าย</button>
                         </div>
-                        
-                        <div class="admin-table-container" style="margin-top: 20px;">
+                        <div class="admin-table-container">
                             <table class="admin-table">
-                                <thead><tr><th>วันที่</th><th>รายการ</th><th>จำนวนเงิน (บาท)</th></tr></thead>
+                                <thead><tr><th>วันที่</th><th>รายการ</th><th>จำนวนเงิน (บาท)</th><th>จัดการ</th></tr></thead>
                                 <tbody id="admin-expenses-list"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="tab-audit" class="tab-pane">
+                    <div class="admin-card">
+                        <h3 style="color: var(--primary-blue);">📑 ประวัติการแก้ไข และ การลบข้อมูล (Audit Log)</h3>
+                        <p style="color: var(--text-muted); margin-bottom: 15px;">บันทึกรายชื่อแอดมินที่ทำการลบข้อมูลออกจากระบบ เพื่อความโปร่งใส</p>
+                        <div class="admin-table-container">
+                            <table class="admin-table">
+                                <thead><tr><th>วัน-เวลาที่ลบ</th><th>การกระทำ</th><th>รหัสอ้างอิง/ข้อมูล</th><th>ผู้ทำรายการลบ</th></tr></thead>
+                                <tbody id="admin-audit-list">
+                                    <tr><td colspan="4" style="text-align: center;">ไม่มีประวัติการลบข้อมูล</td></tr>
+                                </tbody>
                             </table>
                         </div>
                     </div>
@@ -264,19 +248,28 @@
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
                             <div style="background: #F7FAFC; padding: 20px; border-radius: 10px; border: 1px solid var(--border-color);">
                                 <h4 style="color: var(--primary-blue);">💰 ตั้งค่าราคาหุ้น (ต่อหน่วย)</h4>
-                                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 10px;">ใช้คำนวณมูลค่าหุ้นรวมในหน้า Dashboard</p>
-                                <div style="display: flex; gap: 10px;">
-                                    <input type="number" id="setting-share-price" value="10" style="flex:1; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 1.1rem; text-align: center;">
-                                    <button class="btn-blue" onclick="alert('อัปเดตราคาหุ้นเรียบร้อย')">บันทึกราคา</button>
+                                <div class="form-row" style="margin-top: 10px;">
+                                    <input type="number" id="setting-share-price" value="10" style="flex:1; text-align: center;">
+                                    <button class="btn-blue" onclick="saveSharePrice()">บันทึก</button>
                                 </div>
                             </div>
                             
                             <div style="background: #F7FAFC; padding: 20px; border-radius: 10px; border: 1px solid var(--border-color);">
                                 <h4 style="color: var(--primary-blue);">📅 ปีการศึกษา / เทอม</h4>
-                                <div style="display: flex; gap: 10px; margin-top: 10px;">
-                                    <input type="text" placeholder="เช่น 2568 เทอม 1" style="flex:1; padding: 10px; border: 1px solid #ccc; border-radius: 6px;">
-                                    <button class="btn-blue">เพิ่ม</button>
+                                <div class="form-row" style="margin-top: 10px;">
+                                    <input type="text" id="setting-term" placeholder="เช่น 2568 เทอม 1" style="flex:1;">
+                                    <button class="btn-blue" onclick="addSetting('terms', 'setting-term')">เพิ่ม</button>
                                 </div>
+                                <ul id="list-terms" style="list-style:none; margin-top: 10px;"></ul>
+                            </div>
+
+                            <div style="background: #F7FAFC; padding: 20px; border-radius: 10px; border: 1px solid var(--border-color);">
+                                <h4 style="color: var(--primary-blue);">🏫 ระดับชั้นเรียน</h4>
+                                <div class="form-row" style="margin-top: 10px;">
+                                    <input type="text" id="setting-class" placeholder="เช่น ป.1/1" style="flex:1;">
+                                    <button class="btn-blue" onclick="addSetting('classes', 'setting-class')">เพิ่ม</button>
+                                </div>
+                                <ul id="list-classes" style="list-style:none; margin-top: 10px;"></ul>
                             </div>
                         </div>
                     </div>
@@ -288,20 +281,11 @@
 
     <script>
         // ==========================================
-        // 1. แปลงเลข (ไทย <-> อารบิก) 
+        // 1. ฟังก์ชันแปลงเลข และ Firebase Init
         // ==========================================
-        function toArabic(text) {
-            const thaiNumbers = ['๐','๑','๒','๓','๔','๕','๖','๗','๘','๙'];
-            return text.replace(/[๐-๙]/g, match => thaiNumbers.indexOf(match));
-        }
-        function toThai(text) {
-            const thaiNumbers = ['๐','๑','๒','๓','๔','๕','๖','๗','๘','๙'];
-            return text.replace(/[0-9]/g, match => thaiNumbers[match]);
-        }
+        function toArabic(text) { const t=['๐','๑','๒','๓','๔','๕','๖','๗','๘','๙']; return text.replace(/[๐-๙]/g, m => t.indexOf(m)); }
+        function toThai(text) { const t=['๐','๑','๒','๓','๔','๕','๖','๗','๘','๙']; return text.replace(/[0-9]/g, m => t[m]); }
 
-        // ==========================================
-        // 2. ตั้งค่า Firebase
-        // ==========================================
         const firebaseConfig = {
             apiKey: "AIzaSyAYaXrrNOCRbC7uDVc4tXHMDQcSiwswxoo",
             authDomain: "school-cooperative-system.firebaseapp.com",
@@ -314,149 +298,36 @@
         const db = firebase.firestore();
 
         // ==========================================
-        // 3. ระบบ POS (แยกช่อง Input อัจฉริยะ)
-        // ==========================================
-        let currentMemberId = null; 
-        let totalAmount = 0;
-        let actualDocId = null; 
-
-        const inputStudentId = document.getElementById('input-student-id');
-        const inputAmount = document.getElementById('input-amount');
-        const labelStudentId = document.getElementById('label-student-id');
-        const labelAmount = document.getElementById('label-amount');
-        const memberDisplay = document.getElementById('member-display');
-        const memberNameText = document.getElementById('member-name-text');
-        const cartBody = document.getElementById('cart-body');
-        const totalPriceElement = document.getElementById('total-price');
-        const dateInput = document.getElementById('transaction-date');
-
-        const today = new Date();
-        dateInput.value = new Date(today.getTime() - (today.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
-        document.getElementById('exp-date').value = dateInput.value;
-
-        // ดักจับ Enter ในช่อง 1 (รหัสนักเรียน)
-        inputStudentId.addEventListener('keypress', async function(e) {
-            if (e.key === 'Enter') {
-                let val = toArabic(inputStudentId.value.trim());
-                if (val !== "") {
-                    labelStudentId.innerText = "กำลังค้นหา...";
-                    let thaiId = toThai(val);
-                    try {
-                        let doc = await db.collection("members").doc(val).get();
-                        actualDocId = val;
-                        if (!doc.exists) { doc = await db.collection("members").doc(thaiId).get(); actualDocId = thaiId; }
-
-                        if (doc.exists) {
-                            const d = doc.data();
-                            currentMemberId = val;
-                            memberNameText.innerText = `รหัส ${val}: ${d.name} (${d.class || '-'})`;
-                            memberDisplay.style.display = "flex";
-                            
-                            // ล็อกช่องรหัส เปิดช่องเงิน และเปลี่ยนโฟกัส
-                            inputStudentId.disabled = true;
-                            labelStudentId.innerText = "1. รหัสนักเรียน (ถูกล็อกแล้ว)";
-                            inputAmount.disabled = false;
-                            labelAmount.style.color = "var(--accent-red)";
-                            inputAmount.focus();
-                        } else {
-                            alert("ไม่พบรหัสนักเรียนในระบบ!");
-                            labelStudentId.innerText = "1. พิมพ์ / สแกน รหัสนักเรียน (4 หลัก)";
-                        }
-                    } catch (err) { console.error(err); alert("ข้อผิดพลาดฐานข้อมูล"); }
-                }
-            }
-        });
-
-        // ดักจับ Enter ในช่อง 2 (จำนวนเงิน)
-        inputAmount.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                let val = toArabic(inputAmount.value.trim());
-                // ถ้าช่องว่าง แล้วมียอดรวมอยู่แล้ว -> ชำระเงิน
-                if (val === "" && totalAmount > 0) {
-                    checkout();
-                } else if (val !== "") {
-                    const price = parseFloat(val); 
-                    if (!isNaN(price) && price > 0) {
-                        const tr = document.createElement('tr');
-                        tr.innerHTML = `<td>รายการสินค้า / ยอดรวม</td><td class="text-right">${price.toFixed(2)}</td>`;
-                        cartBody.appendChild(tr);
-
-                        totalAmount += price;
-                        totalPriceElement.innerText = totalAmount.toFixed(2);
-                        
-                        labelAmount.innerText = "3. กด Enter อีกครั้ง (ตอนช่องว่าง) เพื่อบันทึกข้อมูล";
-                        labelAmount.style.color = "#38A169";
-                        inputAmount.value = '';
-                    } else { alert("ยอดเงินไม่ถูกต้อง"); }
-                }
-            }
-        });
-
-        async function checkout() {
-            if (!dateInput.value || !currentMemberId || totalAmount === 0) return;
-            
-            inputAmount.disabled = true;
-            labelAmount.innerText = "กำลังบันทึกข้อมูล...";
-
-            try {
-                // บันทึก Firebase (Real-time)
-                await db.collection("members").doc(actualDocId).set({
-                    total_buy_accumulated: firebase.firestore.FieldValue.increment(totalAmount)
-                }, { merge: true });
-
-                await db.collection("transactions").add({
-                    member_id: actualDocId,
-                    amount: totalAmount,
-                    date: dateInput.value,
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                    recorded_by: "Admin_Bhsp" 
-                });
-
-                alert(`บันทึกข้อมูลสำเร็จ!\nยอดรวม: ฿${totalAmount.toFixed(2)}`);
-            } catch (error) { console.error(error); alert("บันทึกไม่สำเร็จ"); }
-
-            resetPOS();
-        }
-
-        function resetPOS() {
-            currentMemberId = null; actualDocId = null; totalAmount = 0;
-            memberDisplay.style.display = "none";
-            cartBody.innerHTML = ""; totalPriceElement.innerText = "0.00";
-            
-            inputStudentId.disabled = false; inputStudentId.value = '';
-            labelStudentId.innerText = "1. พิมพ์ / สแกน รหัสนักเรียน (4 หลัก)";
-            
-            inputAmount.disabled = true; inputAmount.value = '';
-            labelAmount.innerText = "2. พิมพ์ยอดรวม หรือ ยิงบาร์โค้ดสินค้า (บาท)";
-            labelAmount.style.color = "var(--text-muted)";
-            
-            inputStudentId.focus();
-        }
-
-        // ==========================================
-        // 4. ระบบ Admin Login & SPA Navigation
+        // 2. ระบบรักษาความปลอดภัย Admin (ด้วย SweetAlert2)
         // ==========================================
         const posSection = document.getElementById('pos-section');
         const adminSection = document.getElementById('admin-section');
-        const loginModal = document.getElementById('login-modal');
-        const pwdInput = document.getElementById('admin-pwd');
-        
         let adminInitialized = false;
 
-        function openLoginModal() { loginModal.style.display = 'flex'; pwdInput.value = ''; document.getElementById('pwd-error').style.display = 'none'; pwdInput.focus(); }
-        function closeLoginModal() { loginModal.style.display = 'none'; inputStudentId.focus(); }
-        pwdInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') verifyAdmin(); });
+        async function openAdminLogin() {
+            const { value: password } = await Swal.fire({
+                title: '🔒 เข้าสู่ระบบส่วนกลาง',
+                input: 'password',
+                inputPlaceholder: 'กรอกรหัสผ่าน Admin...',
+                showCancelButton: true,
+                confirmButtonText: 'เข้าสู่ระบบ',
+                cancelButtonText: 'ยกเลิก',
+                confirmButtonColor: '#1A365D'
+            });
 
-        function verifyAdmin() {
-            if (pwdInput.value === "Bhsp2026") {
-                loginModal.style.display = 'none'; posSection.style.display = 'none'; adminSection.style.display = 'flex';
-                if(!adminInitialized) { initRealtimeListeners(); adminInitialized = true; }
-            } else {
-                document.getElementById('pwd-error').style.display = 'block'; pwdInput.value = ''; pwdInput.focus();
+            if (password) {
+                if (password === "Bhsp2026") {
+                    posSection.style.display = 'none';
+                    adminSection.style.display = 'flex';
+                    if(!adminInitialized) { initRealtimeListeners(); adminInitialized = true; }
+                    Swal.fire({ title: 'เข้าสู่ระบบสำเร็จ', icon: 'success', timer: 1000, showConfirmButton: false });
+                } else {
+                    Swal.fire({ title: 'รหัสผ่านไม่ถูกต้อง', icon: 'error' });
+                }
             }
         }
         function exitAdmin() { adminSection.style.display = 'none'; posSection.style.display = 'flex'; resetPOS(); }
-
+        
         function switchAdminTab(tabId, element) {
             document.querySelectorAll('.tab-pane').forEach(tab => tab.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
@@ -465,122 +336,244 @@
         }
 
         // ==========================================
-        // 5. ระบบดึงข้อมูลจาก Sheets ลง Firebase
+        // 3. ระบบ POS
+        // ==========================================
+        let currentMemberId = null; let currentMemberName = ''; let currentDocId = null; let totalAmount = 0;
+        const inId = document.getElementById('input-student-id'); const inAmt = document.getElementById('input-amount');
+        const lbId = document.getElementById('label-student-id'); const lbAmt = document.getElementById('label-amount');
+        const mDisp = document.getElementById('member-display'); const mText = document.getElementById('member-name-text');
+        const tBody = document.getElementById('cart-body'); const tPrice = document.getElementById('total-price');
+        const dateIn = document.getElementById('transaction-date');
+
+        dateIn.value = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD
+        document.getElementById('exp-date').value = dateIn.value;
+
+        // ช่อง 1: รหัส
+        inId.addEventListener('keypress', async (e) => {
+            if (e.key === 'Enter' && inId.value.trim() !== "") {
+                let val = toArabic(inId.value.trim());
+                lbId.innerText = "กำลังค้นหา...";
+                try {
+                    let doc = await db.collection("members").doc(val).get();
+                    currentDocId = val;
+                    if (!doc.exists) { doc = await db.collection("members").doc(toThai(val)).get(); currentDocId = toThai(val); }
+
+                    if (doc.exists) {
+                        const d = doc.data(); currentMemberId = val; currentMemberName = d.name;
+                        mText.innerText = `รหัส ${val}: ${d.name} (${d.class || '-'})`; mDisp.style.display = "flex";
+                        inId.disabled = true; lbId.innerText = "1. รหัสนักเรียน (ถูกล็อกแล้ว)";
+                        inAmt.disabled = false; lbAmt.style.color = "var(--accent-red)"; inAmt.focus();
+                    } else {
+                        Swal.fire({ icon: 'warning', title: 'ไม่พบข้อมูล', text: 'กรุณาตรวจสอบรหัสอีกครั้ง หรือกดซิงค์ข้อมูลในหน้าแอดมิน' });
+                        lbId.innerText = "1. พิมพ์ / สแกน รหัสนักเรียน (4 หลัก)";
+                    }
+                } catch (err) { Swal.fire('Error', 'ไม่สามารถเชื่อมต่อฐานข้อมูล', 'error'); }
+            }
+        });
+
+        // ช่อง 2: ราคาสินค้า
+        inAmt.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                let val = toArabic(inAmt.value.trim());
+                if (val === "" && totalAmount > 0) checkout();
+                else if (val !== "") {
+                    const p = parseFloat(val); 
+                    if (!isNaN(p) && p > 0) {
+                        tBody.innerHTML += `<tr><td>รายการ / ยอดรวม</td><td class="text-right">${p.toFixed(2)}</td></tr>`;
+                        totalAmount += p; tPrice.innerText = totalAmount.toFixed(2);
+                        lbAmt.innerText = "3. กด Enter ที่ช่องว่าง เพื่อบันทึกเข้าสู่ระบบ"; lbAmt.style.color = "#38A169";
+                        inAmt.value = '';
+                    } else Swal.fire('ข้อมูลไม่ถูกต้อง', 'กรุณาระบุตัวเลขที่มากกว่า 0', 'error');
+                }
+            }
+        });
+
+        async function checkout() {
+            inAmt.disabled = true; lbAmt.innerText = "กำลังบันทึก...";
+            try {
+                await db.collection("members").doc(currentDocId).set({ total_buy_accumulated: firebase.firestore.FieldValue.increment(totalAmount) }, { merge: true });
+                await db.collection("transactions").add({
+                    member_id: currentDocId, member_name: currentMemberName, amount: totalAmount,
+                    date: dateIn.value, timestamp: firebase.firestore.FieldValue.serverTimestamp(), recorded_by: "Admin_Bhsp" 
+                });
+                Swal.fire({ title: 'บันทึกสำเร็จ!', html: `ยอดรวม: <b>฿${totalAmount.toFixed(2)}</b>`, icon: 'success', timer: 1500, showConfirmButton: false });
+            } catch (err) { Swal.fire('Error', 'บันทึกไม่สำเร็จ', 'error'); }
+            resetPOS();
+        }
+
+        function resetPOS() {
+            currentMemberId = null; currentDocId = null; currentMemberName = ''; totalAmount = 0;
+            mDisp.style.display = "none"; tBody.innerHTML = ""; tPrice.innerText = "0.00";
+            inId.disabled = false; inId.value = ''; lbId.innerText = "1. พิมพ์ / สแกน รหัสนักเรียน (4 หลัก)";
+            inAmt.disabled = true; inAmt.value = ''; lbAmt.innerText = "2. พิมพ์ยอดรวม หรือ ยิงบาร์โค้ดสินค้า (บาท)"; lbAmt.style.color = "var(--text-muted)";
+            inId.focus();
+        }
+
+        // ==========================================
+        // 4. ระบบดึงข้อมูลจาก Sheets ลง Firebase
         // ==========================================
         const SHEET_API_URL = "https://script.google.com/macros/s/AKfycbwHj-Igmnm99WoxgskAc4-0NmyjsC6r6gC83AX0_f1n_nIWmLYQ0dR30F8xDJBTmEvdNw/exec";
         async function syncFromSheets() {
-            const btn = document.getElementById('btn-sync-sheets'); btn.innerText = "⏳ กำลังดึง..."; btn.disabled = true;
+            Swal.fire({ title: 'กำลังดึงข้อมูล...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
             try {
-                const response = await fetch(SHEET_API_URL);
-                const members = await response.json();
-                let count = 0;
+                const res = await fetch(SHEET_API_URL); const members = await res.json(); let count = 0;
                 for (const m of members) {
                     if (m.member_id && m.member_id !== "") {
-                        await db.collection("members").doc(m.member_id.toString()).set({ name: m.name || '', class: m.class || '', shares: 0, total_buy_accumulated: 0 }, { merge: true });
-                        count++;
+                        await db.collection("members").doc(m.member_id.toString()).set({ name: m.name || '', class: m.class || '', shares: 0, total_buy_accumulated: 0 }, { merge: true }); count++;
                     }
                 }
-                alert(`ดึงข้อมูลสำเร็จ ${count} คน`); btn.innerText = "⬇️ ดึงรายชื่อจาก Sheets";
-            } catch (err) { console.error(err); alert("เชื่อมต่อ Sheets ไม่สำเร็จ"); btn.innerText = "ลองใหม่"; }
-            btn.disabled = false;
+                Swal.fire('ดึงข้อมูลสำเร็จ!', `อัปเดตรายชื่อจำนวน ${count} คน เรียบร้อยแล้ว`, 'success');
+            } catch (err) { Swal.fire('ล้มเหลว', 'เชื่อมต่อ Google Sheets ไม่สำเร็จ', 'error'); }
         }
 
         // ==========================================
-        // 6. Real-time Firebase Listeners (หัวใจหลักที่ทำให้ไม่ต้องรีเฟรช)
+        // 5. ระบบจัดการหุ้น (Pop-up)
         // ==========================================
-        let salesChartInstance = null;
-        let globalTotalSales = 0;
-        let globalTotalExpenses = 0;
+        async function manageShares(docId, currentShares, name) {
+            const { value: formValues } = await Swal.fire({
+                title: 'จัดการหุ้นสหกรณ์',
+                html: `นักเรียน: <b>${name}</b><br>มีหุ้นปัจจุบัน: <b>${currentShares}</b> หุ้น<br><br>
+                       <input id="swal-shares" type="number" class="swal2-input" placeholder="จำนวนหุ้น (ใส่เลขติดลบเพื่อถอน)">`,
+                focusConfirm: false,
+                showCancelButton: true, confirmButtonText: 'บันทึก', cancelButtonText: 'ยกเลิก',
+                preConfirm: () => { return document.getElementById('swal-shares').value; }
+            });
+
+            if (formValues) {
+                const num = parseInt(formValues);
+                if (!isNaN(num)) {
+                    await db.collection("members").doc(docId).set({ shares: firebase.firestore.FieldValue.increment(num) }, { merge: true });
+                    Swal.fire('อัปเดตหุ้นสำเร็จ!', '', 'success');
+                }
+            }
+        }
+
+        // ==========================================
+        // 6. ระบบบังคับถามชื่อก่อนลบข้อมูล (Audit System)
+        // ==========================================
+        async function confirmDelete(collection, docId, description) {
+            const { value: adminName } = await Swal.fire({
+                title: '⚠️ ยืนยันการลบข้อมูล',
+                html: `คุณกำลังจะลบ: <b>${description}</b><br>โปรดพิมพ์ชื่อ-นามสกุลของคุณ เพื่อยืนยันการลบ`,
+                input: 'text', inputPlaceholder: 'ชื่อผู้ทำรายการ...',
+                icon: 'warning', showCancelButton: true, confirmButtonColor: '#E53E3E', confirmButtonText: 'ยืนยันการลบ', cancelButtonText: 'ยกเลิก',
+                inputValidator: (value) => { if (!value) return 'คุณต้องพิมพ์ชื่อเพื่อบันทึกประวัติการแก้ไข!' }
+            });
+
+            if (adminName) {
+                try {
+                    await db.collection(collection).doc(docId).delete();
+                    // บันทึกประวัติการลบลง Audit Logs
+                    await db.collection("audit_logs").add({
+                        action: "ลบข้อมูล", collection: collection, details: description,
+                        deleted_by: adminName, timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    Swal.fire('ลบข้อมูลสำเร็จ!', '', 'success');
+                } catch(e) { Swal.fire('Error', 'ลบข้อมูลไม่สำเร็จ', 'error'); }
+            }
+        }
+
+        // ==========================================
+        // 7. Real-time Listeners (กราฟและตารางทั้งหมด)
+        // ==========================================
+        let salesChartInstance = null; let gSales = 0; let gExp = 0;
 
         function initRealtimeListeners() {
-            // 6.1 ตารางสมาชิก และ สรุปหุ้น
+            // สมาชิก
             db.collection("members").onSnapshot((snapshot) => {
-                const tbody = document.getElementById('admin-member-list');
-                const sharePrice = parseFloat(document.getElementById('setting-share-price').value) || 10;
-                let html = ''; let count = 0; let totalShares = 0;
-
+                const tb = document.getElementById('admin-member-list');
+                const price = parseFloat(document.getElementById('setting-share-price').value) || 10;
+                let html = ''; let c = 0; let tShares = 0;
                 snapshot.forEach(doc => {
-                    const d = doc.data();
-                    count++;
-                    totalShares += (d.shares || 0);
-                    html += `<tr>
-                        <td style="font-weight: 500;">${doc.id}</td><td>${d.name}</td><td>${d.class || '-'}</td>
-                        <td style="color: #805AD5;">${d.shares || 0} หุ้น</td>
-                        <td style="color: #38A169;">฿${(d.total_buy_accumulated || 0).toFixed(2)}</td>
-                        <td><button class="btn-blue" style="font-size: 0.8rem;">เพิ่มหุ้น</button></td>
-                    </tr>`;
+                    const d = doc.data(); c++; tShares += (d.shares || 0);
+                    html += `<tr><td>${doc.id}</td><td>${d.name}</td><td>${d.class || '-'}</td>
+                             <td style="color: #805AD5;">${d.shares || 0}</td><td style="color: #38A169;">฿${(d.total_buy_accumulated || 0).toFixed(2)}</td>
+                             <td><button class="btn-blue" style="padding: 5px 10px; font-size: 0.8rem;" onclick="manageShares('${doc.id}', ${d.shares || 0}, '${d.name}')">จัดการหุ้น</button>
+                             <button class="btn-red" onclick="confirmDelete('members', '${doc.id}', 'สมาชิก ${d.name}')">🗑️</button></td></tr>`;
                 });
-                
-                if (count === 0) html = '<tr><td colspan="6" style="text-align: center;">ไม่มีข้อมูล</td></tr>';
-                tbody.innerHTML = html;
-                
-                document.getElementById('dash-total-members').innerText = count;
-                document.getElementById('dash-shares-value').innerText = (totalShares * sharePrice).toLocaleString(undefined, {minimumFractionDigits: 2});
+                tb.innerHTML = c === 0 ? '<tr><td colspan="6" align="center">ไม่มีข้อมูล</td></tr>' : html;
+                document.getElementById('dash-total-members').innerText = c;
+                document.getElementById('dash-shares-value').innerText = (tShares * price).toLocaleString();
             });
 
-            // 6.2 ตารางประวัติการซื้อ และ ยอดขายรวม
+            // ประวัติการซื้อ (เพิ่มแสดงชื่อแล้ว)
             db.collection("transactions").orderBy("timestamp", "desc").onSnapshot((snapshot) => {
-                const tbody = document.getElementById('admin-history-list');
-                let html = ''; globalTotalSales = 0;
-                
+                const tb = document.getElementById('admin-history-list'); let html = ''; gSales = 0;
                 snapshot.forEach(doc => {
-                    const d = doc.data();
-                    globalTotalSales += (d.amount || 0);
-                    html += `<tr><td>${d.date}</td><td>${d.member_id}</td><td style="color: #38A169;">+ ฿${(d.amount || 0).toFixed(2)}</td><td>${d.recorded_by}</td></tr>`;
+                    const d = doc.data(); gSales += (d.amount || 0);
+                    html += `<tr><td>${d.date}</td><td>${d.member_id}</td><td>${d.member_name || '-'}</td>
+                             <td style="color: #38A169;">+ ฿${(d.amount || 0).toFixed(2)}</td><td>${d.recorded_by}</td>
+                             <td><button class="btn-red" onclick="confirmDelete('transactions', '${doc.id}', 'บิลซื้อ ${d.member_id} ยอด ${d.amount}')">🗑️</button></td></tr>`;
                 });
-                
-                if(snapshot.empty) html = '<tr><td colspan="4" style="text-align: center;">ไม่มีประวัติ</td></tr>';
-                tbody.innerHTML = html;
-                document.getElementById('dash-sales').innerText = globalTotalSales.toLocaleString(undefined, {minimumFractionDigits: 2});
-                updateNetProfit();
-                updateChart();
+                tb.innerHTML = snapshot.empty ? '<tr><td colspan="6" align="center">ไม่มีข้อมูล</td></tr>' : html;
+                document.getElementById('dash-sales').innerText = gSales.toLocaleString(); updateNet(); updateChart();
             });
 
-            // 6.3 ตารางรายจ่าย
-            db.collection("expenses").orderBy("date", "desc").onSnapshot((snapshot) => {
-                const tbody = document.getElementById('admin-expenses-list');
-                let html = ''; globalTotalExpenses = 0;
-                
+            // รายจ่าย
+            db.collection("expenses").orderBy("timestamp", "desc").onSnapshot((snapshot) => {
+                const tb = document.getElementById('admin-expenses-list'); let html = ''; gExp = 0;
                 snapshot.forEach(doc => {
-                    const d = doc.data();
-                    globalTotalExpenses += (d.amount || 0);
-                    html += `<tr><td>${d.date}</td><td>${d.name}</td><td style="color: var(--accent-red);">- ฿${(d.amount || 0).toFixed(2)}</td></tr>`;
+                    const d = doc.data(); gExp += (d.amount || 0);
+                    html += `<tr><td>${d.date}</td><td>${d.name}</td><td style="color: var(--accent-red);">- ฿${(d.amount || 0).toFixed(2)}</td>
+                             <td><button class="btn-red" onclick="confirmDelete('expenses', '${doc.id}', 'รายจ่าย ${d.name}')">🗑️</button></td></tr>`;
                 });
-                
-                if(snapshot.empty) html = '<tr><td colspan="3" style="text-align: center;">ไม่มีรายจ่าย</td></tr>';
-                tbody.innerHTML = html;
-                document.getElementById('dash-expenses').innerText = globalTotalExpenses.toLocaleString(undefined, {minimumFractionDigits: 2});
-                updateNetProfit();
+                tb.innerHTML = snapshot.empty ? '<tr><td colspan="4" align="center">ไม่มีข้อมูล</td></tr>' : html;
+                document.getElementById('dash-expenses').innerText = gExp.toLocaleString(); updateNet();
+            });
+
+            // Audit Logs (ประวัติการแก้ไข)
+            db.collection("audit_logs").orderBy("timestamp", "desc").onSnapshot((snapshot) => {
+                const tb = document.getElementById('admin-audit-list'); let html = '';
+                snapshot.forEach(doc => {
+                    const d = doc.data(); 
+                    const time = d.timestamp ? d.timestamp.toDate().toLocaleString('th-TH') : 'เพิ่งดำเนินการ';
+                    html += `<tr><td>${time}</td><td>${d.action}</td><td>${d.details}</td><td style="color: var(--accent-red); font-weight: 500;">${d.deleted_by}</td></tr>`;
+                });
+                tb.innerHTML = snapshot.empty ? '<tr><td colspan="4" align="center">ไม่มีประวัติ</td></tr>' : html;
+            });
+            
+            // ตั้งค่า
+            db.collection("settings").doc("dropdowns").onSnapshot((doc) => {
+                const d = doc.data() || { terms: [], classes: [] };
+                document.getElementById('list-terms').innerHTML = d.terms.map(t => `<li style="padding:10px; background:#F7FAFC; border:1px solid #E2E8F0; margin-bottom:5px; display:flex; justify-content:space-between; border-radius:6px;">${t} <span style="color:#E53E3E; cursor:pointer;" onclick="removeSetting('terms', '${t}')">ลบ</span></li>`).join('');
+                document.getElementById('list-classes').innerHTML = d.classes.map(c => `<li style="padding:10px; background:#F7FAFC; border:1px solid #E2E8F0; margin-bottom:5px; display:flex; justify-content:space-between; border-radius:6px;">${c} <span style="color:#E53E3E; cursor:pointer;" onclick="removeSetting('classes', '${c}')">ลบ</span></li>`).join('');
             });
         }
 
-        function updateNetProfit() {
-            const net = globalTotalSales - globalTotalExpenses;
-            document.getElementById('dash-net').innerText = net.toLocaleString(undefined, {minimumFractionDigits: 2});
-        }
-
+        function updateNet() { document.getElementById('dash-net').innerText = (gSales - gExp).toLocaleString(); }
+        
+        // แก้กราฟให้ Responsive
         function updateChart() {
             const ctx = document.getElementById('salesChart').getContext('2d');
             if(salesChartInstance) salesChartInstance.destroy();
             salesChartInstance = new Chart(ctx, {
                 type: 'bar',
-                data: { labels: ['ยอดรวมปัจจุบัน'], datasets: [{ label: 'ยอดขายรวม (บาท)', data: [globalTotalSales], backgroundColor: '#3182CE', borderRadius: 4 }] },
-                options: { responsive: true, plugins: { legend: { display: false } }, maintainAspectRatio: false }
+                data: { labels: ['ยอดขายทั้งหมด'], datasets: [{ label: 'ยอดขายรวม (บาท)', data: [gSales], backgroundColor: '#3182CE', borderRadius: 4 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
             });
         }
 
-        // ฟังก์ชันบันทึกรายจ่ายเข้า Firebase
+        // ==========================================
+        // 8. การจัดการ Form & Settings (เพิ่ม/รายจ่าย/ตั้งค่า)
+        // ==========================================
         async function addExpense() {
-            const date = document.getElementById('exp-date').value;
-            const name = document.getElementById('exp-name').value.trim();
-            const amount = parseFloat(document.getElementById('exp-amount').value);
-            
-            if(!date || !name || isNaN(amount)) return alert("กรุณากรอกข้อมูลรายจ่ายให้ครบถ้วน");
-            
-            try {
-                await db.collection("expenses").add({ date: date, name: name, amount: amount, timestamp: firebase.firestore.FieldValue.serverTimestamp() });
-                document.getElementById('exp-name').value = ''; document.getElementById('exp-amount').value = '';
-            } catch(e) { console.error(e); alert("บันทึกไม่สำเร็จ"); }
+            const date = document.getElementById('exp-date').value; const name = document.getElementById('exp-name').value.trim(); const amount = parseFloat(document.getElementById('exp-amount').value);
+            if(!name || isNaN(amount)) return Swal.fire('ข้อมูลไม่ครบ', 'กรุณากรอกชื่อและจำนวนเงิน', 'warning');
+            await db.collection("expenses").add({ date: date, name: name, amount: amount, timestamp: firebase.firestore.FieldValue.serverTimestamp() });
+            Swal.fire({ icon: 'success', title: 'บันทึกรายจ่ายสำเร็จ', timer: 1000, showConfirmButton: false});
+            document.getElementById('exp-name').value = ''; document.getElementById('exp-amount').value = '';
+        }
+
+        function saveSharePrice() { Swal.fire('บันทึกสำเร็จ', 'อัปเดตราคาหุ้นเรียบร้อยแล้ว', 'success'); }
+
+        async function addSetting(field, inputId) {
+            const val = document.getElementById(inputId).value.trim(); if(!val) return;
+            await db.collection("settings").doc("dropdowns").set({ [field]: firebase.firestore.FieldValue.arrayUnion(val) }, { merge: true });
+            document.getElementById(inputId).value = '';
+        }
+        
+        async function removeSetting(field, val) {
+            await db.collection("settings").doc("dropdowns").set({ [field]: firebase.firestore.FieldValue.arrayRemove(val) }, { merge: true });
         }
     </script>
 </body>

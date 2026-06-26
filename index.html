@@ -66,7 +66,7 @@
            3. หน้า Admin Dashboard (Sidebar & Main)
         ========================================== */
         #admin-section { display: none; height: 100vh; overflow: hidden; }
-        .admin-sidebar { width: 260px; background: white; border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 20px 0; flex-shrink: 0; transition: width 0.3s;}
+        .admin-sidebar { width: 260px; background: white; border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 20px 0; flex-shrink: 0;}
         .admin-brand { text-align: center; padding: 0 20px 20px; border-bottom: 1px solid var(--border-color); margin-bottom: 15px; }
         .admin-brand img { height: 60px; margin-bottom: 10px; }
         .nav-item { padding: 12px 25px; display: block; color: var(--text-muted); cursor: pointer; font-size: 1.05rem; border-left: 4px solid transparent; transition: 0.2s;}
@@ -75,7 +75,7 @@
 
         .admin-main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
         .admin-topbar { height: 70px; background: white; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; padding: 0 30px; flex-shrink: 0;}
-        .admin-content { padding: 30px; max-width: 1400px; margin: 0 auto; width: 100%; overflow-y: auto; flex: 1; overflow-x: hidden;}
+        .admin-content { padding: 30px; max-width: 1400px; margin: 0 auto; width: 100%; overflow-y: auto; flex: 1;}
         .tab-pane { display: none; }
         .tab-pane.active { display: block; }
 
@@ -88,7 +88,7 @@
         .btn-red { background: white; color: var(--accent-red); border: 1px solid var(--accent-red); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-family: 'Kanit'; font-size: 0.85rem;}
         .btn-red:hover { background: #FFF5F5; }
         
-        .admin-table-container { max-height: 500px; overflow-y: auto; overflow-x: auto; border: 1px solid var(--border-color); border-radius: 6px; margin-top: 15px; width: 100%;}
+        .admin-table-container { max-height: 500px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 6px; margin-top: 15px;}
         .admin-table { width: 100%; border-collapse: collapse; min-width: 800px; }
         .admin-table th { background: #F7FAFC; padding: 12px; border-bottom: 1px solid var(--border-color); text-align: left; position: sticky; top: 0; z-index: 1;}
         .admin-table td { padding: 12px; border-bottom: 1px solid var(--border-color); vertical-align: middle;}
@@ -101,20 +101,10 @@
         .swal-form-group label { display: block; font-size: 0.95rem; color: var(--primary-blue); margin-bottom: 5px; font-weight: 500; }
         .swal-form-group input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-family: 'Kanit'; outline: none; box-sizing: border-box; }
         .swal-form-group input:focus { border-color: var(--secondary-blue); }
-
-        @media (max-width: 1180px) {
-            .admin-sidebar { width: 220px; } 
-            .nav-item { padding: 12px 15px; font-size: 1rem; }
-            .stats-grid { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 15px; }
-            .admin-content { padding: 20px; }
-        }
     </style>
 </head>
 <body>
 
-    <!-- ==========================================
-         โมดูล 1: หน้าขายของ (POS)
-    =========================================== -->
     <div id="pos-section">
         <header class="pos-navbar">
             <h1><img src="https://www.banhadsompan.ac.th/_files_school/86101511/data/86101511_0_20240629-000624.png" alt="โลโก้">ระบบสหกรณ์โรงเรียนบ้านหาดส้มแป้น</h1>
@@ -157,9 +147,6 @@
         </main>
     </div>
 
-    <!-- ==========================================
-         โมดูล 2: ระบบ Login เข้าแอดมิน
-    =========================================== -->
     <div id="login-modal">
         <div class="modal-box">
             <span class="close-btn" onclick="closeLoginModal()">×</span>
@@ -176,9 +163,6 @@
         </div>
     </div>
 
-    <!-- ==========================================
-         โมดูล 3: ระบบหลังบ้าน (Admin Dashboard)
-    =========================================== -->
     <div id="admin-section">
         <aside class="admin-sidebar">
             <div class="admin-brand">
@@ -199,7 +183,6 @@
         <main class="admin-main">
             <header class="admin-topbar">
                 <h2 id="admin-page-title" style="color: var(--primary-blue); font-size: 1.3rem;">ภาพรวมบัญชี</h2>
-                
                 <div style="background: #FFF5F5; color: var(--accent-red); padding: 8px 16px; border-radius: 20px; font-size: 0.9rem; border: 1px solid #FEB2B2; display: flex; gap: 15px; align-items: center;">
                     <span>ปีการศึกษา: <b id="topbar-year">-</b></span>
                     <span style="border-left: 1px solid #FEB2B2; padding-left: 15px;">ผู้ใช้งาน: <span id="admin-name">Admin</span></span>
@@ -207,7 +190,6 @@
             </header>
 
             <div class="admin-content">
-                <!-- แท็บ 1: ภาพรวม (Dashboard) -->
                 <div id="tab-dashboard" class="tab-pane active">
                     <div class="stats-grid">
                         <div class="stat-box"><p>ยอดขายรวม</p><h3 id="dash-sales">0.00</h3></div>
@@ -217,12 +199,11 @@
                         <div class="stat-box"><p>สมาชิกทั้งหมด</p><h3 id="dash-total-members">-</h3></div>
                     </div>
                     <div class="admin-card">
-                        <h3 style="margin-bottom: 20px; color: var(--primary-blue);">📈 กราฟความเคลื่อนไหวยอดขาย (Real-time)</h3>
+                        <h3 style="margin-bottom: 20px; color: var(--primary-blue);">📈 กราฟความเคลื่อนไหวยอดขาย</h3>
                         <div class="chart-container"><canvas id="salesChart"></canvas></div>
                     </div>
                 </div>
 
-                <!-- แท็บ 2: สมาชิกและหุ้น & ระบบปันผล -->
                 <div id="tab-members" class="tab-pane">
                     <div class="admin-card">
                         <div style="display: flex; justify-content: space-between; align-items: flex-end;">
@@ -247,7 +228,6 @@
                             <div style="display: flex; justify-content: space-between; align-items: center;">
                                 <div>
                                     <h3 style="color: #805AD5; margin-bottom: 5px;">💰 คำนวณเงินปันผลประจำปี</h3>
-                                    <p style="color: var(--text-muted); font-size: 0.9rem;">ระบบจะคำนวณจากกำไรสุทธิ แบ่งตามหุ้นและยอดซื้อสะสม</p>
                                 </div>
                                 <button class="btn-blue" style="background: #805AD5;" onclick="calculateDividend()">คำนวณเงินปันผล</button>
                             </div>
@@ -257,7 +237,6 @@
                             <div style="display: flex; justify-content: space-between; align-items: center;">
                                 <div>
                                     <h3 style="color: #DD6B20; margin-bottom: 5px;">📤 ระบบสำรองข้อมูล</h3>
-                                    <p style="color: var(--text-muted); font-size: 0.9rem;">ส่งยอดหุ้น/ยอดซื้อ กลับไปบันทึกเป็นแท็บ Backup</p>
                                 </div>
                                 <button class="btn-blue" style="background: #DD6B20;" onclick="exportMembersToSheets()">ส่งออกข้อมูล</button>
                             </div>
@@ -265,7 +244,6 @@
                     </div>
                 </div>
 
-                <!-- แท็บ 3: ประวัติการซื้อ -->
                 <div id="tab-history" class="tab-pane">
                     <div class="admin-card">
                         <h3 style="color: var(--primary-blue);">📜 ประวัติการทำรายการแบบเรียลไทม์</h3>
@@ -278,7 +256,6 @@
                     </div>
                 </div>
 
-                <!-- แท็บ 4: รายจ่าย -->
                 <div id="tab-expenses" class="tab-pane">
                     <div class="admin-card">
                         <h3 style="color: var(--primary-blue); margin-bottom: 20px;">💸 บันทึกรายจ่ายอื่นๆ (หักลบกำไร)</h3>
@@ -297,7 +274,6 @@
                     </div>
                 </div>
 
-                <!-- แท็บ 5: ประวัติการแก้ไข (Audit Log) -->
                 <div id="tab-audit" class="tab-pane">
                     <div class="admin-card">
                         <h3 style="color: var(--primary-blue);">📑 ประวัติการลบข้อมูล (Audit Log)</h3>
@@ -310,7 +286,6 @@
                     </div>
                 </div>
 
-                <!-- แท็บ 6: ตั้งค่าระบบ -->
                 <div id="tab-settings" class="tab-pane">
                     <div class="admin-card">
                         <h3 style="color: var(--primary-blue); margin-bottom: 20px;">⚙️ ตั้งค่าระบบ</h3>
@@ -324,9 +299,6 @@
                                     </select>
                                     <input type="text" id="setting-new-year" placeholder="หรือพิมพ์ปีใหม่ เช่น 2568" style="flex:1;">
                                     <button class="btn-blue" onclick="saveCurrentYear()">บันทึกปีปัจจุบัน</button>
-                                </div>
-                                <div style="margin-top: 15px; font-size: 1.1rem;">
-                                    ปีการศึกษาที่ใช้งานอยู่ขณะนี้: <strong id="active-year-display" style="color: var(--accent-red);">-</strong>
                                 </div>
                             </div>
 
@@ -356,29 +328,55 @@
 
     <script>
         // ==========================================
-        // URL ของ Google Apps Script ของคุณ
+        // 1. ฟังก์ชันจัดการวันที่และตัวเลข
         // ==========================================
         const SHEET_API_URL = "https://script.google.com/macros/s/AKfycbwnXkLLhzRf38_c268mD5_aKN447wO87sJVRzJcntB-0zjgm_Y1vQHotgNQZXrq3T7few/exec";
 
-        // แปลงเลขไทยและอารบิก
         function toArabic(text) { const t=['๐','๑','๒','๓','๔','๕','๖','๗','๘','๙']; return text.replace(/[๐-๙]/g, m => t.indexOf(m)); }
         function toThai(text) { const t=['๐','๑','๒','๓','๔','๕','๖','๗','๘','๙']; return text.replace(/[0-9]/g, m => t[m]); }
 
-        // ตัวแปลงวันที่จากดิบๆ เป็นแบบสวยงาม (5 มิ.ย. 2569)
-        function formatDisplayDate(isoString) {
-            if (!isoString || isoString === '-') return '-';
-            if (isoString.includes('T')) {
-                let d = new Date(isoString);
-                return d.toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' });
+        // ฟังก์ชันพระเอก! แปลงวันที่ดิบๆ ให้เป็นภาษาไทย และแก้บัคปี 196x ของ Google Sheets
+        function formatDisplayDate(dateString) {
+            if (!dateString || dateString === '-') return '-';
+            
+            let d = new Date(dateString);
+            if (isNaN(d.getTime())) return dateString; 
+
+            let year = d.getFullYear();
+            let day = d.getDate();
+            let months = ["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
+            let month = months[d.getMonth()];
+            
+            let thaiYear = year + 543; // ทำเป็นปี พ.ศ. ก่อน
+            
+            // เช็คและแก้บัค Google Sheets อ่าน 67, 68 เป็นปี ค.ศ. 1967, 1968
+            if (year >= 1900 && year <= 1999) {
+                let lastTwoDigits = year.toString().slice(-2);
+                thaiYear = parseInt("25" + lastTwoDigits); // ดึงเลข 67, 68 ไปต่อท้าย 25 กลายเป็น 2567, 2568
             }
-            return isoString;
+
+            return `${day} ${month} ${thaiYear}`;
         }
 
-        // ตัวแปลงวันที่ดิบๆ เป็นฟอร์แมต YYYY-MM-DD เพื่อเอาไปยัดใส่ช่อง Input ตอนแก้ไข
-        function formatDateForInput(isoString) {
-            if (!isoString || isoString === '-') return '';
-            if (isoString.includes('T')) return isoString.split('T')[0];
-            return isoString;
+        // ฟังก์ชันพระรอง! แปลงกลับให้ใส่ใน <input type="date"> ได้อย่างถูกต้อง
+        function formatDateForInput(dateString) {
+            if (!dateString || dateString === '-') return '';
+            
+            let d = new Date(dateString);
+            if (isNaN(d.getTime())) return ''; 
+            
+            let year = d.getFullYear();
+            
+            // ถ้าเป็นปี 196x ให้แปลงกลับเป็นปี ค.ศ. ที่ถูกต้อง (พ.ศ. 2567 = ค.ศ. 2024)
+            if (year >= 1900 && year <= 1999) {
+                let lastTwoDigits = year.toString().slice(-2);
+                let correctBuddhistYear = parseInt("25" + lastTwoDigits);
+                year = correctBuddhistYear - 543; 
+            }
+            
+            let mm = String(d.getMonth() + 1).padStart(2, '0');
+            let dd = String(d.getDate()).padStart(2, '0');
+            return `${year}-${mm}-${dd}`;
         }
 
         const firebaseConfig = {
@@ -391,13 +389,17 @@
         };
         firebase.initializeApp(firebaseConfig); const db = firebase.firestore();
 
+        // ==========================================
+        // 2. ระบบ UI และ Login
+        // ==========================================
         const posSection = document.getElementById('pos-section'); const adminSection = document.getElementById('admin-section');
         const loginModal = document.getElementById('login-modal'); const pwdInput = document.getElementById('admin-pwd');
         let adminInitialized = false;
 
         function togglePassword() {
-            const pwd = document.getElementById('admin-pwd'); const icon = document.getElementById('toggle-pwd-icon');
-            if (pwd.type === "password") { pwd.type = "text"; icon.innerText = "🙈"; } else { pwd.type = "password"; icon.innerText = "👁️"; }
+            const icon = document.getElementById('toggle-pwd-icon');
+            if (pwdInput.type === "password") { pwdInput.type = "text"; icon.innerText = "🙈"; } 
+            else { pwdInput.type = "password"; icon.innerText = "👁️"; }
         }
 
         async function openAdminLogin() {
@@ -430,7 +432,7 @@
         }
 
         // ==========================================
-        // ระบบ POS (คิดเงิน)
+        // 3. ระบบ POS (คิดเงิน)
         // ==========================================
         let currentMemberId = null; let currentMemberName = ''; let currentDocId = null; let totalAmount = 0;
         const inId = document.getElementById('input-student-id'); const inAmt = document.getElementById('input-amount');
@@ -492,7 +494,7 @@
         }
 
         // ==========================================
-        // ระบบดึงเข้า - ส่งออกข้อมูล (Google Sheets)
+        // 4. ระบบจัดการข้อมูล (เพิ่ม แก้ไข ลบ ซิงค์)
         // ==========================================
         async function syncFromSheets() {
             Swal.fire({ title: 'กำลังดึงข้อมูล...', didOpen: () => Swal.showLoading() });
@@ -508,21 +510,18 @@
         }
 
         async function exportMembersToSheets() {
-            Swal.fire({ title: 'กำลังเตรียมข้อมูลสำรอง...', didOpen: () => Swal.showLoading() });
+            Swal.fire({ title: 'กำลังส่งออกข้อมูลสำรอง...', didOpen: () => Swal.showLoading() });
             try {
                 const snapshot = await db.collection("members").get();
                 for (const doc of snapshot.docs) {
                     const d = doc.data();
-                    let cleanDate = formatDateForInput(d.register_date); // ปรับวันที่ให้สะอาดก่อนส่ง
+                    let cleanDate = formatDateForInput(d.register_date); 
                     await sendToGoogleSheets("Member_Backup", [doc.id, d.name, d.class || '', cleanDate, d.shares || 0, d.total_buy_accumulated || 0]);
                 }
                 Swal.fire('สำรองข้อมูลสำเร็จ!', 'ส่งรายชื่อและยอดหุ้นไปยังแท็บ Member_Backup แล้ว', 'success');
             } catch (error) { Swal.fire('Error', 'ส่งข้อมูลไม่สำเร็จ', 'error'); }
         }
 
-        // ==========================================
-        // การเพิ่มสมาชิก การแก้ไข และการลบ (Audit)
-        // ==========================================
         async function addNewMember() {
             const { value: v } = await Swal.fire({
                 title: '➕ เพิ่มสมาชิกใหม่',
@@ -537,7 +536,7 @@
         }
 
         async function editMember(docId, name, cls, shares, rawDate) {
-            let cleanDate = formatDateForInput(rawDate); // แปลงวันที่ดิบให้กลายเป็น YYYY-MM-DD เพื่อยัดใส่ input type="date"
+            let cleanDate = formatDateForInput(rawDate); // แก้ปี พ.ศ. ให้เป็น ค.ศ. สำหรับโชว์ในปฏิทิน
             const { value: v } = await Swal.fire({
                 title: '✏️ แก้ไขและจัดการหุ้น',
                 html: `<div class="swal-form-group"><label>ชื่อ-นามสกุล:</label><input id="s-name" type="text" value="${name}"></div><div class="swal-form-group"><label>ชั้นเรียน:</label><input id="s-class" type="text" value="${cls}"></div><div class="swal-form-group"><label>วันที่สมัคร:</label><input id="s-date" type="date" value="${cleanDate}"></div><div class="swal-form-group"><label>จำนวนหุ้น (แก้เพื่อเพิ่ม/ถอน):</label><input id="s-shares" type="number" value="${shares}"></div>`,
@@ -562,29 +561,8 @@
             }
         }
 
-        async function addExpense() {
-            const date = document.getElementById('exp-date').value; const name = document.getElementById('exp-name').value.trim(); const amount = parseFloat(document.getElementById('exp-amount').value);
-            if(!name || isNaN(amount)) return Swal.fire('ข้อมูลไม่ครบ', '', 'warning');
-            
-            await db.collection("expenses").add({ date: date, name: name, amount: amount, timestamp: firebase.firestore.FieldValue.serverTimestamp() });
-            sendToGoogleSheets("Expenses", [date, new Date().toLocaleTimeString('th-TH'), name, amount]);
-
-            Swal.fire({ icon: 'success', title: 'บันทึกรายจ่ายสำเร็จ', timer: 1000, showConfirmButton: false});
-            document.getElementById('exp-name').value = ''; document.getElementById('exp-amount').value = '';
-        }
-
-        async function saveCurrentYear() {
-            let selectVal = document.getElementById('setting-current-year').value; let inputVal = document.getElementById('setting-new-year').value.trim();
-            let finalYear = inputVal !== "" ? inputVal : selectVal;
-            if(!finalYear) return Swal.fire('ข้อมูลไม่ครบ', 'กรุณาระบุปีการศึกษา', 'warning');
-            await db.collection("settings").doc("system").set({ currentYear: finalYear }, { merge: true });
-            if(inputVal !== "") { await db.collection("settings").doc("dropdowns").set({ years: firebase.firestore.FieldValue.arrayUnion(finalYear) }, { merge: true }); }
-            document.getElementById('setting-new-year').value = '';
-            Swal.fire({ icon: 'success', title: 'ตั้งค่าปีการศึกษาสำเร็จ', timer: 1500, showConfirmButton: false});
-        }
-
         // ==========================================
-        // ระบบคำนวณเงินปันผล (ใหม่ล่าสุด!)
+        // 5. ระบบคำนวณเงินปันผลประจำปี
         // ==========================================
         async function calculateDividend() {
             const netProfit = gSales - gExp;
@@ -612,13 +590,11 @@
                 let totalPct = formValues.reserve + formValues.sharePct + formValues.buyPct;
                 if (totalPct !== 100) return Swal.fire('ผลรวมไม่ถูกต้อง', 'เปอร์เซ็นต์รวมทั้งหมดต้องเท่ากับ 100% พอดีครับ', 'error');
 
-                Swal.fire({ title: 'กำลังคำนวณยอดเงินของนักเรียนทุกคน...', didOpen: () => Swal.showLoading() });
+                Swal.fire({ title: 'กำลังประมวลผลยอดเงิน...', didOpen: () => Swal.showLoading() });
 
-                // คำนวณกองเงินแต่ละก้อน
                 let shareDivAmt = formValues.net * (formValues.sharePct / 100);
                 let buyDivAmt = formValues.net * (formValues.buyPct / 100);
 
-                // ดึงข้อมูลสมาชิกทั้งหมดมา
                 const snapshot = await db.collection("members").get();
                 let totalShares = 0; let totalBuys = 0; let membersList = [];
 
@@ -631,7 +607,6 @@
                 let divPerShare = totalShares > 0 ? shareDivAmt / totalShares : 0;
                 let divPerBuy = totalBuys > 0 ? buyDivAmt / totalBuys : 0;
 
-                // สร้างตารางผลลัพธ์
                 let resultHtml = `<div style="text-align:left; font-size:0.95rem; max-height:300px; overflow-y:auto;">
                     <p style="color:#805AD5;"><b>ปันผลต่อ 1 หุ้น:</b> ฿${divPerShare.toFixed(2)}</p>
                     <p style="color:#38A169;"><b>ปันผลต่อยอดซื้อ 1 บาท:</b> ฿${divPerBuy.toFixed(2)}</p>
@@ -653,7 +628,7 @@
         }
 
         // ==========================================
-        // 7. Real-time Firebase Listeners
+        // 6. Real-time Firebase Listeners
         // ==========================================
         let salesChartInstance = null; let gSales = 0; let gExp = 0;
 
@@ -671,7 +646,7 @@
                 snapshot.forEach(doc => {
                     const d = doc.data(); c++; tShares += (d.shares || 0); const sVal = (d.shares || 0) * price;
                     
-                    // ใช้ฟังก์ชันแปลงวันที่ให้สวยงามก่อนแสดงผล
+                    // แปลงวันที่โชว์สวยๆ ในตาราง
                     let displayDate = formatDisplayDate(d.register_date);
 
                     html += `<tr><td>${doc.id}</td><td style="min-width: 150px;">${d.name}</td><td>${d.class||'-'}</td><td>${displayDate}</td><td style="color:#805AD5; font-weight:500; min-width: 100px;">${d.shares||0} <span style="font-size:0.8rem; color:#A0AEC0;">(฿${sVal})</span></td><td style="color:#38A169; min-width: 100px;">฿${(d.total_buy_accumulated||0).toFixed(2)}</td>
@@ -724,6 +699,30 @@
             if(salesChartInstance) salesChartInstance.destroy();
             salesChartInstance = new Chart(ctx, { type: 'bar', data: { labels: ['ยอดขาย'], datasets: [{ label: 'ยอดเงิน (บาท)', data: [gSales], backgroundColor: '#3182CE', borderRadius: 6 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } });
         }
+        
+        async function addExpense() {
+            const date = document.getElementById('exp-date').value; const name = document.getElementById('exp-name').value.trim(); const amount = parseFloat(document.getElementById('exp-amount').value);
+            if(!name || isNaN(amount)) return Swal.fire('ข้อมูลไม่ครบ', '', 'warning');
+            await db.collection("expenses").add({ date: date, name: name, amount: amount, timestamp: firebase.firestore.FieldValue.serverTimestamp() });
+            sendToGoogleSheets("Expenses", [date, new Date().toLocaleTimeString('th-TH'), name, amount]);
+            Swal.fire({ icon: 'success', title: 'บันทึกรายจ่ายสำเร็จ', timer: 1000, showConfirmButton: false});
+            document.getElementById('exp-name').value = ''; document.getElementById('exp-amount').value = '';
+        }
+        async function saveCurrentYear() {
+            let selectVal = document.getElementById('setting-current-year').value; let inputVal = document.getElementById('setting-new-year').value.trim();
+            let finalYear = inputVal !== "" ? inputVal : selectVal;
+            if(!finalYear) return Swal.fire('ข้อมูลไม่ครบ', 'กรุณาระบุปีการศึกษา', 'warning');
+            await db.collection("settings").doc("system").set({ currentYear: finalYear }, { merge: true });
+            if(inputVal !== "") { await db.collection("settings").doc("dropdowns").set({ years: firebase.firestore.FieldValue.arrayUnion(finalYear) }, { merge: true }); }
+            document.getElementById('setting-new-year').value = '';
+            Swal.fire({ icon: 'success', title: 'ตั้งค่าปีการศึกษาสำเร็จ', timer: 1500, showConfirmButton: false});
+        }
+        async function addSetting(field, inputId) {
+            const val = document.getElementById(inputId).value.trim(); if(!val) return;
+            await db.collection("settings").doc("dropdowns").set({ [field]: firebase.firestore.FieldValue.arrayUnion(val) }, { merge: true });
+            document.getElementById(inputId).value = '';
+        }
+        async function removeSetting(field, val) { await db.collection("settings").doc("dropdowns").set({ [field]: firebase.firestore.FieldValue.arrayRemove(val) }, { merge: true }); }
     </script>
 </body>
 </html>

@@ -11,7 +11,6 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://www.gstatic.com/firebasejs/10.1.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.1.0/firebase-firestore-compat.js"></script>
-    <!-- เพิ่มไลบรารีสร้างบาร์โค้ด -->
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
 
     <style>
@@ -56,7 +55,7 @@
         .highlight-price { color: var(--accent-red); font-size: 1.8rem; font-weight: 600; }
 
         /* ==========================================
-           2. โมดูล Login & ไอคอนดวงตาแบบใหม่
+           2. ระบบ Login & ไอคอนดวงตาเวกเตอร์แบบเส้นคมชัด
         ========================================== */
         #login-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(10, 25, 47, 0.7); backdrop-filter: blur(5px); display: none; justify-content: center; align-items: center; z-index: 9999; }
         .modal-box { background: white; padding: 40px; border-radius: var(--radius-md); text-align: center; width: 100%; max-width: 400px; position: relative; }
@@ -64,8 +63,8 @@
         .modal-box input { width: 100%; padding: 15px; font-size: 1.1rem; border: 2px solid var(--border-color); border-radius: 8px; text-align: center; letter-spacing: 2px; outline: none; }
         .modal-box button { width: 100%; padding: 15px; background: var(--primary-blue); color: white; border: none; border-radius: 8px; font-size: 1.1rem; cursor: pointer; }
         
-        .eye-icon svg { width: 24px; height: 24px; fill: #4A5568; transition: 0.2s; }
-        .eye-icon:hover svg { fill: var(--primary-blue); }
+        .eye-icon { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; display: flex; align-items: center; justify-content: center; width: 24px; height: 24px; }
+        .eye-icon svg { width: 24px; height: 24px; stroke: #4A5568; stroke-width: 2.5; fill: none; stroke-linecap: round; stroke-linejoin: round; }
 
         /* ==========================================
            3. หน้า Admin Dashboard
@@ -98,17 +97,12 @@
         .admin-table th { background: #F7FAFC; padding: 12px; border-bottom: 1px solid var(--border-color); text-align: left; position: sticky; top: 0; z-index: 1;}
         .admin-table td { padding: 12px; border-bottom: 1px solid var(--border-color); vertical-align: middle;}
         
-        .chart-container { position: relative; height: 300px; width: 100%; }
+        .chart-container { position: relative; height: 260px; width: 100%; margin-bottom: 10px; }
         .form-row { display: flex; gap: 10px; margin-bottom: 15px; align-items: center;}
         .form-row input, .form-row select { padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-family: 'Kanit'; outline: none; }
         
-        .swal-form-group { text-align: left; margin-bottom: 15px; }
-        .swal-form-group label { display: block; font-size: 0.95rem; color: var(--primary-blue); margin-bottom: 5px; font-weight: 500; }
-        .swal-form-group input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-family: 'Kanit'; outline: none; box-sizing: border-box; }
-        .swal-form-group input:focus { border-color: var(--secondary-blue); }
-
-        #floating-manual-btn { position: fixed; bottom: 25px; right: 25px; z-index: 999; background-color: var(--secondary-blue); color: white; border: none; border-radius: 50%; width: 50px; height: 50px; font-size: 1.5rem; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: flex; align-items: center; justify-content: center; transition: 0.3s; }
-        #floating-manual-btn:hover { background-color: var(--primary-blue); transform: scale(1.05); }
+        #floating-manual-btn { position: fixed; bottom: 25px; right: 25px; z-index: 999; background-color: #319795; color: white; border: none; border-radius: 50%; width: 55px; height: 55px; font-size: 1.4rem; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.2); display: flex; align-items: center; justify-content: center; transition: 0.3s; }
+        #floating-manual-btn:hover { background-color: #234e52; transform: scale(1.05); }
 
         @media (max-width: 1180px) {
             .admin-sidebar { width: 220px; }
@@ -120,11 +114,8 @@
 </head>
 <body>
 
-    <button id="floating-manual-btn" onclick="showUserManual()">❓</button>
+    <button id="floating-manual-btn" onclick="showUserManual()">📖</button>
 
-    <!-- ==========================================
-         โมดูล 1: หน้าขายของ (POS)
-    =========================================== -->
     <div id="pos-section">
         <header class="pos-navbar">
             <h1><img src="https://www.banhadsompan.ac.th/_files_school/86101511/data/86101511_0_20240629-000624.png" alt="โลโก้">ระบบสหกรณ์โรงเรียนบ้านหาดส้มแป้น</h1>
@@ -167,9 +158,6 @@
         </main>
     </div>
 
-    <!-- ==========================================
-         โมดูล 2: ระบบ Login เข้าแอดมิน (ไอคอนตาสวยงาม)
-    =========================================== -->
     <div id="login-modal">
         <div class="modal-box">
             <span class="close-btn" onclick="closeLoginModal()">×</span>
@@ -179,14 +167,9 @@
             <div style="position: relative; margin: 20px 0;">
                 <input type="password" id="admin-pwd" placeholder="••••••••" autocomplete="off" style="margin: 0; padding-right: 45px; width: 100%;">
                 
-                <!-- ไอคอนดวงตาแบบ Vector SVGs -->
-                <span class="eye-icon" onclick="togglePassword()" style="position: absolute; right: 15px; top: 50%; transform: translateY(-40%); cursor: pointer; user-select: none;">
-                    <span id="eye-open" style="display:none;">
-                        <svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
-                    </span>
-                    <span id="eye-closed">
-                        <svg viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c.55 1.41 1.36 2.68 2.37 3.75l-1.92 1.92A10.966 10.966 0 0 1 1 12c1.73-4.39 6-7.5 11-7.5 1.5 0 2.94.34 4.26.93l-1.93 1.93A8.914 8.914 0 0 0 12 7c-2.76 0-5 2.24-5 5 0 .54.1 1.05.26 1.54l-2.03 2.03A6.994 6.994 0 0 1 7 12c0-2.76 2.24-5 5-5 .86 0 1.66.23 2.36.62l1.45-1.45A10.875 10.875 0 0 0 12 4.5zm8.63 11.75l-1.92-1.92c1.01-1.07 1.82-2.34 2.37-3.75-1.73-4.39-6-7.5-11-7.5-.66 0-1.3.08-1.92.22l-1.6-1.6A10.96 10.96 0 0 1 12 4.5c5 0 9.27 3.11 11 7.5-1.73 4.39-6 7.5-11 7.5-.83 0-1.63-.12-2.4-.33zM2.27 2.27L1 3.54l4.28 4.28A6.994 6.994 0 0 0 7 12c0 2.76 2.24 5 5 5 1.15 0 2.2-.39 3.03-1.03l4.43 4.43 1.27-1.27L2.27 2.27zM12 17c-2.76 0-5-2.24-5-5 0-.46.07-.9.18-1.32l6.5 6.5A4.98 4.98 0 0 1 12 17z"/></svg>
-                    </span>
+                <span class="eye-icon" onclick="togglePassword()">
+                    <svg id="eye-open" style="display:none;" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    <svg id="eye-closed" viewBox="0 0 24 24"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.45 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
                 </span>
             </div>
             
@@ -195,9 +178,6 @@
         </div>
     </div>
 
-    <!-- ==========================================
-         โมดูล 3: ระบบหลังบ้าน (Admin Dashboard)
-    =========================================== -->
     <div id="admin-section">
         <aside class="admin-sidebar">
             <div class="admin-brand">
@@ -209,7 +189,7 @@
             <a class="nav-item" onclick="switchAdminTab('members', this)">👥 จัดการสมาชิก & หุ้น</a>
             <a class="nav-item" onclick="switchAdminTab('history', this)">📜 ประวัติการซื้อ</a>
             <a class="nav-item" onclick="switchAdminTab('expenses', this)">💸 บันทึกรายจ่าย</a>
-            <a class="nav-item" onclick="switchAdminTab('barcode', this)">🏷️ สร้างบาร์โค้ด <span style="font-size:0.7rem; color:white; background:#E53E3E; padding:2px 5px; border-radius:10px;">ใหม่</span></a>
+            <a class="nav-item" onclick="switchAdminTab('barcode', this)">🏷️ สร้างบาร์โค้ดสลาก</a>
             <a class="nav-item" onclick="switchAdminTab('audit', this)">📑 ประวัติการแก้ไข</a>
             <a class="nav-item" onclick="switchAdminTab('settings', this)">⚙️ ตั้งค่าระบบ</a>
             
@@ -219,7 +199,6 @@
         <main class="admin-main">
             <header class="admin-topbar">
                 <h2 id="admin-page-title" style="color: var(--primary-blue); font-size: 1.3rem;">ภาพรวมบัญชี</h2>
-                
                 <div style="background: #FFF5F5; color: var(--accent-red); padding: 8px 16px; border-radius: 20px; font-size: 0.9rem; border: 1px solid #FEB2B2; display: flex; gap: 15px; align-items: center;">
                     <span>ปีการศึกษา: <b id="topbar-year">-</b></span>
                     <span style="border-left: 1px solid #FEB2B2; padding-left: 15px;">ผู้ใช้งาน: <span id="admin-name">Admin</span></span>
@@ -227,7 +206,6 @@
             </header>
 
             <div class="admin-content">
-                <!-- แท็บ 1: ภาพรวม -->
                 <div id="tab-dashboard" class="tab-pane active">
                     <div class="stats-grid">
                         <div class="stat-box"><p>ยอดขายรวม</p><h3 id="dash-sales">0.00</h3></div>
@@ -236,19 +214,23 @@
                         <div class="stat-box" style="border-left-color: #805AD5;"><p>มูลค่าหุ้นรวม (บาท)</p><h3 id="dash-shares-value" style="color: #805AD5;">0.00</h3></div>
                         <div class="stat-box"><p>สมาชิกทั้งหมด</p><h3 id="dash-total-members">-</h3></div>
                     </div>
-                    <div class="admin-card">
-                        <h3 style="margin-bottom: 20px; color: var(--primary-blue);">📈 กราฟความเคลื่อนไหวยอดขาย (Real-time รายวัน)</h3>
-                        <div class="chart-container"><canvas id="salesChart"></canvas></div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <div class="admin-card">
+                            <h3 style="margin-bottom: 15px; color: var(--primary-blue); font-size:1rem;">📅 กราฟความเคลื่อนไหวยอดขาย (รายวัน)</h3>
+                            <div class="chart-container"><canvas id="salesChart"></canvas></div>
+                        </div>
+                        <div class="admin-card">
+                            <h3 style="margin-bottom: 15px; color: #319795; font-size:1rem;">📅 กราฟความเคลื่อนไหวยอดขาย (รายสัปดาห์)</h3>
+                            <div class="chart-container"><canvas id="weeklyChart"></canvas></div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- แท็บ 2: สมาชิก -->
                 <div id="tab-members" class="tab-pane">
                     <div class="admin-card">
                         <div style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 15px;">
                             <div>
                                 <h3 style="color: var(--primary-blue);">ฐานข้อมูลสมาชิก และ หุ้นสหกรณ์</h3>
-                                <!-- ฟีเจอร์ใหม่: ช่องค้นหาอัจฉริยะ -->
                                 <input type="text" id="search-member-input" placeholder="🔍 ค้นหารหัส หรือ ชื่อนักเรียน..." style="padding: 8px 15px; border: 1px solid #ccc; border-radius: 6px; font-family: 'Kanit'; width: 250px; margin-top: 10px; outline: none;">
                             </div>
                             <div style="display: flex; gap: 10px;">
@@ -279,7 +261,6 @@
                     </div>
                 </div>
 
-                <!-- แท็บ 3: ประวัติการซื้อ -->
                 <div id="tab-history" class="tab-pane">
                     <div class="admin-card">
                         <h3 style="color: var(--primary-blue);">📜 ประวัติการทำรายการแบบเรียลไทม์</h3>
@@ -292,7 +273,6 @@
                     </div>
                 </div>
 
-                <!-- แท็บ 4: รายจ่าย -->
                 <div id="tab-expenses" class="tab-pane">
                     <div class="admin-card">
                         <h3 style="color: var(--primary-blue); margin-bottom: 20px;">💸 บันทึกรายจ่ายอื่นๆ (หักลบกำไร)</h3>
@@ -311,33 +291,42 @@
                     </div>
                 </div>
 
-                <!-- แท็บ 5: บาร์โค้ด (ฟีเจอร์ใหม่) -->
                 <div id="tab-barcode" class="tab-pane">
-                    <div class="admin-card">
-                        <h3 style="color: var(--primary-blue); margin-bottom: 10px;">🏷️ สร้างบาร์โค้ดสินค้า และ รหัสนักเรียน</h3>
-                        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px;">ใช้สำหรับพิมพ์ไปแปะหลังบัตรนักเรียน หรือ แปะที่ตัวสินค้าเพื่อให้สแกนคิดเงินได้ง่ายขึ้น</p>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px;">
+                        <div class="admin-card" style="border-top: 4px solid var(--secondary-blue); margin-bottom: 0;">
+                            <h4 style="color: var(--primary-blue); margin-bottom: 10px;">🪪 1. จัดทำบัตรประจำตัวสมาชิกนักเรียน (6 บัตรต่อ A4)</h4>
+                            <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 15px;">ดึงรายชื่อจากฐานข้อมูลมาลงบัตร มีรายละเอียด ชื่อ-นามสกุล ระดับชั้น บาร์โค้ด และเลข 4 หลัก</p>
+                            <div class="form-row">
+                                <select id="barcode-student-class-filter" style="flex: 1; padding: 10px; border-radius:6px; border:1px solid #ccc; font-family:'Kanit';"></select>
+                                <button class="btn-blue" onclick="generateStudentCards()">✨ ดึงข้อมูลสร้างบัตร</button>
+                            </div>
+                            <div style="text-align: right; margin-top: 10px;">
+                                <button class="btn-blue" style="background:#2B6CB0; font-size:0.85rem;" onclick="printSectionBarcodes('student')">🖨️ พิมพ์เฉพาะบัตรนักเรียน</button>
+                            </div>
+                        </div>
                         
-                        <div class="form-row">
-                            <select id="barcode-type" style="padding: 10px; border-radius: 6px; border: 1px solid #ccc;">
-                                <option value="id">รหัสนักเรียน (ID)</option>
-                                <option value="price">ราคาสินค้า (บาท)</option>
-                            </select>
-                            <input type="text" id="barcode-input" placeholder="ระบุตัวเลข (เช่น 1234 หรือ 15)" style="flex: 1;">
-                            <button class="btn-blue" onclick="addBarcode()">สร้างบาร์โค้ด</button>
+                        <div class="admin-card" style="border-top: 4px solid #DD6B20; margin-bottom: 0;">
+                            <h4 style="color: #DD6B20; margin-bottom: 10px;">🏷️ 2. เครื่องมือพิมพ์สติกเกอร์บาร์โค้ดราคาสินค้า</h4>
+                            <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 15px;">สร้างป้ายสลากบาร์โค้ดบอกราคาแยกเฉพาะต่างหาก เพื่อนำไปแปะบนชั้นวางสินค้าสหกรณ์</p>
+                            <div class="form-row">
+                                <input type="number" id="barcode-custom-price" placeholder="ระบุราคาสินค้า เช่น 5, 10, 20" style="flex: 1;">
+                                <button class="btn-blue" style="background: #DD6B20;" onclick="addCustomProductBarcode()">🏷️ สร้างบาร์โค้ดสินค้า</button>
+                            </div>
+                            <div style="text-align: right; margin-top: 10px;">
+                                <button class="btn-blue" style="background:#C05621; font-size:0.85rem;" onclick="printSectionBarcodes('product')">🖨️ พิมพ์เฉพาะสลากราคาสินค้า</button>
+                            </div>
                         </div>
+                    </div>
 
-                        <!-- พื้นที่แสดงบาร์โค้ดที่สร้าง -->
-                        <div id="barcode-display-area" style="display: flex; flex-wrap: wrap; gap: 20px; margin-top: 25px; padding: 20px; border: 2px dashed #E2E8F0; border-radius: 10px; min-height: 200px; background: #F8FAFC;">
-                            <p id="barcode-placeholder" style="width: 100%; text-align: center; color: #A0AEC0; margin-top: 60px;">ยังไม่มีบาร์โค้ดในรายการ (พิมพ์ตัวเลขและกดสร้าง)</p>
-                        </div>
-
+                    <div class="admin-card" style="margin-top: 25px;">
+                        <h4 style="color: var(--primary-blue); margin-bottom: 15px;">🖥️ รายการพรีวิวก่อนส่งออก (สามารถสั่งพิมพ์รวมพร้อมกันได้ทั้งหมด)</h4>
+                        <div id="barcode-preview-container" style="display: flex; flex-wrap: wrap; gap: 15px; padding: 20px; border: 2px dashed #CBD5E0; border-radius: 8px; min-height: 150px; background: #F8FAFC;"></div>
                         <div style="text-align: center; margin-top: 25px;">
-                            <button class="btn-blue" style="font-size: 1.1rem; padding: 10px 30px;" onclick="printBarcodes()">🖨️ สั่งพิมพ์บาร์โค้ดทั้งหมด</button>
+                            <button class="btn-blue" style="font-size: 1.1rem; padding: 12px 40px; background: #2D3748;" onclick="printAllActiveBarcodes()">🖨️ สั่งพิมพ์รายการทั้งหมดพร้อมกัน</button>
                         </div>
                     </div>
                 </div>
 
-                <!-- แท็บ 6: ประวัติการแก้ไข (Audit Log) -->
                 <div id="tab-audit" class="tab-pane">
                     <div class="admin-card">
                         <h3 style="color: var(--primary-blue);">📑 ประวัติการลบข้อมูล (Audit Log)</h3>
@@ -350,7 +339,6 @@
                     </div>
                 </div>
 
-                <!-- แท็บ 7: ตั้งค่าระบบ -->
                 <div id="tab-settings" class="tab-pane">
                     <div class="admin-card">
                         <h3 style="color: var(--primary-blue); margin-bottom: 20px;">⚙️ ตั้งค่าระบบ</h3>
@@ -396,63 +384,6 @@
     </div>
 
     <script>
-        // URL ของ Web App ขาออกหลัก
-        const SHEET_API_URL = "https://script.google.com/macros/s/AKfycbwnXkLLhzRf38_c268mD5_aKN447wO87sJVRzJcntB-0zjgm_Y1vQHotgNQZXrq3T7few/exec";
-
-        function toArabic(text) { const t=['๐','๑','๒','๓','๔','๕','๖','๗','๘','๙']; return text.replace(/[๐-๙]/g, m => t.indexOf(m)); }
-        function toThai(text) { const t=['๐','๑','๒','๓','๔','๕','๖','๗','๘','๙']; return text.replace(/[0-9]/g, m => t[m]); }
-
-        // ==========================================
-        // 🔥 ฟังก์ชันล็อกและแก้ปัญหาปี ค.ศ. เด็ดขาด (Bulletproof Date Fix)
-        // ==========================================
-        function formatDisplayDate(dateString) {
-            if (!dateString || dateString === '-') return '-';
-            let d = new Date(dateString);
-            if (isNaN(d.getTime())) return dateString; 
-
-            let year = d.getFullYear();
-            let day = d.getDate();
-            let months = ["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
-            let month = months[d.getMonth()];
-            
-            let finalYear = year;
-            
-            // ล็อกปีเด็ดขาด: ถ้าเจอปี 196x หรือ 199x ที่ Google Sheets เดาผิด ให้แปลง 2 ตัวท้ายเป็น 25xx
-            if (year >= 1960 && year <= 1999) {
-                finalYear = 2500 + (year % 100); // 1967 -> 67 -> 2567
-            } 
-            // ถ้าเป็นปี 2024 (ค.ศ. ปัจจุบัน) ให้บวก 543
-            else if (year >= 2000 && year < 2500) {
-                finalYear = year + 543;
-            }
-            // ถ้าน้อยกว่า 1960 (ไม่น่าเกิด) ให้ถือเป็น ค.ศ. 
-            else if (year < 1960) {
-                finalYear = year + 543;
-            }
-            // ถ้ากรอกมา 2567 อยู่แล้ว (>= 2500) ก็ปล่อยผ่านเลย
-
-            return `${day} ${month} ${finalYear}`;
-        }
-
-        function formatDateForInput(dateString) {
-            if (!dateString || dateString === '-') return '';
-            let d = new Date(dateString);
-            if (isNaN(d.getTime())) return '';
-            
-            let year = d.getFullYear();
-            
-            // ตอนเอาไปยัดใส่ช่อง <input type="date"> ต้องเป็น ค.ศ. เท่านั้น
-            if (year >= 1960 && year <= 1999) {
-                year = 2000 + (year % 100) - 43; // 1967 -> 67 -> 2024
-            } else if (year >= 2500) {
-                year = year - 543; // 2567 -> 2024
-            }
-
-            let mm = String(d.getMonth() + 1).padStart(2, '0');
-            let dd = String(d.getDate()).padStart(2, '0');
-            return `${year}-${mm}-${dd}`;
-        }
-
         const firebaseConfig = {
             apiKey: "AIzaSyAYaXrrNOCRbC7uDVc4tXHMDQcSiwswxoo",
             authDomain: "school-cooperative-system.firebaseapp.com",
@@ -461,33 +392,47 @@
             messagingSenderId: "383328934393",
             appId: "1:383328934393:web:0a326b1e0098b7d6cf4528"
         };
-        firebase.initializeApp(firebaseConfig); const db = firebase.firestore();
+        firebase.initializeApp(firebaseConfig); 
+        const db = firebase.firestore();
+
+        // ฟังก์ชันลอจิกช่วยแปลงวันที่ดิบ คลี่คลายและแสดงปี พ.ศ. ตามตาราง Google Sheets 100%
+        function formatDisplayDate(dateString) {
+            if (!dateString || dateString === '-') return '-';
+            if (typeof dateString === 'string' && !dateString.includes('T') && (dateString.includes('256') || dateString.includes('/67') || dateString.includes('/68'))) {
+                return dateString;
+            }
+            let d = new Date(dateString); if (isNaN(d.getTime())) return dateString; 
+            let year = d.getFullYear(); let day = d.getDate();
+            let months = ["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
+            let month = months[d.getMonth()];
+            if (year >= 1960 && year <= 1999) { year = 2500 + (year % 100); } 
+            else if (year < 1960 || (year >= 2000 && year < 2500)) { year = year + 543; }
+            return `${day} ${month} ${year}`;
+        }
+
+        function formatDateForInput(dateString) {
+            if (!dateString || dateString === '-') return '';
+            let d = new Date(dateString); if (isNaN(d.getTime())) return '';
+            let year = d.getFullYear();
+            if (year >= 1960 && year <= 1999) { year = 2000 + (year % 100) - 43; } 
+            else if (year >= 2500) { year = year - 543; }
+            let mm = String(d.getMonth() + 1).padStart(2, '0'); let dd = String(d.getDate()).padStart(2, '0');
+            return `${year}-${mm}-${dd}`;
+        }
 
         const posSection = document.getElementById('pos-section'); const adminSection = document.getElementById('admin-section');
         const loginModal = document.getElementById('login-modal'); const pwdInput = document.getElementById('admin-pwd');
         let adminInitialized = false;
 
-        // ระบบไอคอนตาสลับโหมด
         function togglePassword() {
-            const iconOpen = document.getElementById('eye-open');
-            const iconClosed = document.getElementById('eye-closed');
-            if (pwdInput.type === "password") { 
-                pwdInput.type = "text"; 
-                iconOpen.style.display = "inline";
-                iconClosed.style.display = "none";
-            } else { 
-                pwdInput.type = "password"; 
-                iconOpen.style.display = "none";
-                iconClosed.style.display = "inline";
-            }
+            const iconOpen = document.getElementById('eye-open'); const iconClosed = document.getElementById('eye-closed');
+            if (pwdInput.type === "password") { pwdInput.type = "text"; if(iconOpen) iconOpen.style.display = "inline"; if(iconClosed) iconClosed.style.display = "none"; } 
+            else { pwdInput.type = "password"; if(iconOpen) iconOpen.style.display = "none"; if(iconClosed) iconClosed.style.display = "inline"; }
         }
 
         async function openAdminLogin() {
             loginModal.style.display = 'flex'; pwdInput.value = ''; document.getElementById('pwd-error').style.display = 'none';
-            pwdInput.type = "password"; 
-            document.getElementById('eye-open').style.display = "none";
-            document.getElementById('eye-closed').style.display = "inline";
-            pwdInput.focus();
+            pwdInput.type = "password"; document.getElementById('eye-open').style.display = "none"; document.getElementById('eye-closed').style.display = "inline"; pwdInput.focus();
         }
         function closeLoginModal() { loginModal.style.display = 'none'; document.getElementById('input-student-id').focus(); }
 
@@ -500,14 +445,14 @@
                 Swal.fire({ title: 'เข้าสู่ระบบสำเร็จ', icon: 'success', timer: 1000, showConfirmButton: false });
             } else { document.getElementById('pwd-error').style.display = 'block'; pwdInput.value = ''; pwdInput.focus(); }
         }
-        
         function exitAdmin() { adminSection.style.display = 'none'; posSection.style.display = 'flex'; resetPOS(); }
-        
+
         function switchAdminTab(tabId, element) {
             document.querySelectorAll('.tab-pane').forEach(tab => tab.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
-            document.getElementById('tab-' + tabId).classList.add('active'); element.classList.add('active');
-            document.getElementById('admin-page-title').innerText = element.innerText.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF] /g, '');
+            const targetTab = document.getElementById('tab-' + tabId); if(targetTab) targetTab.classList.add('active'); 
+            element.classList.add('active');
+            const pageTitle = document.getElementById('admin-page-title'); if(pageTitle) pageTitle.innerText = element.innerText.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF] /g, '');
         }
 
         async function sendToGoogleSheets(sheetName, rowDataArray) {
@@ -515,7 +460,7 @@
         }
 
         // ==========================================
-        // ระบบ POS
+        // ระบบ คิดเงิน POS
         // ==========================================
         let currentMemberId = null; let currentMemberName = ''; let currentDocId = null; let totalAmount = 0;
         const inId = document.getElementById('input-student-id'); const inAmt = document.getElementById('input-amount');
@@ -524,7 +469,8 @@
         const tBody = document.getElementById('cart-body'); const tPrice = document.getElementById('total-price');
         const dateIn = document.getElementById('transaction-date');
 
-        dateIn.value = new Date().toLocaleDateString('en-CA'); document.getElementById('exp-date').value = dateIn.value;
+        if(dateIn) dateIn.value = new Date().toISOString().split('T')[0];
+        if(document.getElementById('exp-date') && dateIn) document.getElementById('exp-date').value = dateIn.value;
 
         inId.addEventListener('keypress', async (e) => {
             if (e.key === 'Enter' && inId.value.trim() !== "") {
@@ -532,17 +478,13 @@
                 try {
                     let doc = await db.collection("members").doc(val).get(); currentDocId = val;
                     if (!doc.exists) { doc = await db.collection("members").doc(toThai(val)).get(); currentDocId = toThai(val); }
-
                     if (doc.exists) {
                         const d = doc.data(); currentMemberId = val; currentMemberName = d.name;
                         mText.innerText = `รหัส ${val}: ${d.name} (${d.class || '-'})`; mDisp.style.display = "flex";
                         inId.disabled = true; lbId.innerText = "1. รหัสนักเรียน (ถูกล็อกแล้ว)";
                         inAmt.disabled = false; lbAmt.innerText = "2. พิมพ์ยอดเงินรวม (กด Enter เพื่อบันทึกทันที)"; lbAmt.style.color = "var(--accent-red)"; inAmt.focus();
-                    } else {
-                        Swal.fire({ icon: 'warning', title: 'ไม่พบข้อมูล', text: 'กรุณาตรวจสอบรหัสอีกครั้ง' });
-                        lbId.innerText = "1. พิมพ์ / สแกน รหัสนักเรียน (4 หลัก)";
-                    }
-                } catch (err) { Swal.fire('Error', 'เชื่อมต่อไม่ได้', 'error'); }
+                    } else { Swal.fire({ icon: 'warning', title: 'ไม่พบข้อมูล', text: 'กรุณาตรวจสอบรหัสอีกครั้ง' }); lbId.innerText = "1. พิมพ์ / สแกน รหัสนักเรียน (4 หลัก)"; }
+                } catch (err) { Swal.fire('Error', 'เชื่อมต่อขัดข้อง', 'error'); }
             }
         });
 
@@ -552,9 +494,7 @@
                 if (val !== "") {
                     const p = parseFloat(val); 
                     if (!isNaN(p) && p > 0) {
-                        totalAmount = p;
-                        tBody.innerHTML = `<tr><td>ยอดซื้อรวมสุทธิ</td><td class="text-right">${p.toFixed(2)}</td></tr>`;
-                        tPrice.innerText = totalAmount.toFixed(2);
+                        totalAmount = p; tBody.innerHTML = `<tr><td>ยอดซื้อรวมสุทธิ</td><td class="text-right">${p.toFixed(2)}</td></tr>`; tPrice.innerText = totalAmount.toFixed(2);
                         checkout(); 
                     } else Swal.fire('Error', 'ยอดเงินไม่ถูกต้อง', 'error');
                 }
@@ -562,14 +502,12 @@
         });
 
         async function checkout() {
-            inAmt.disabled = true; lbAmt.innerText = "กำลังบันทึกข้อมูลเข้าระบบ...";
+            inAmt.disabled = true; lbAmt.innerText = "กำลังบันทึกข้อมูล...";
             try {
                 const timeNow = new Date().toLocaleTimeString('th-TH');
                 await db.collection("members").doc(currentDocId).set({ total_buy_accumulated: firebase.firestore.FieldValue.increment(totalAmount) }, { merge: true });
                 await db.collection("transactions").add({ member_id: currentDocId, member_name: currentMemberName, amount: totalAmount, date: dateIn.value, timestamp: firebase.firestore.FieldValue.serverTimestamp(), recorded_by: "Staff" });
-                
                 sendToGoogleSheets("Transactions", [dateIn.value, timeNow, currentDocId, currentMemberName, totalAmount, "Staff"]);
-
                 Swal.fire({ title: 'บันทึกสำเร็จ!', html: `ยอดบิล: <b>฿${totalAmount.toFixed(2)}</b>`, icon: 'success', timer: 1500, showConfirmButton: false });
             } catch (err) { Swal.fire('Error', 'บันทึกไม่สำเร็จ', 'error'); }
             resetPOS();
@@ -577,45 +515,132 @@
 
         function resetPOS() {
             currentMemberId = null; currentDocId = null; currentMemberName = ''; totalAmount = 0;
-            mDisp.style.display = "none"; tBody.innerHTML = ""; tPrice.innerText = "0.00";
+            if(mDisp) mDisp.style.display = "none"; if(tBody) tBody.innerHTML = ""; if(tPrice) tPrice.innerText = "0.00";
             inId.disabled = false; inId.value = ''; lbId.innerText = "1. พิมพ์ / สแกน รหัสนักเรียน (4 หลัก)";
-            inAmt.disabled = true; inAmt.value = ''; lbAmt.innerText = "2. พิมพ์ยอดเงินรวม (รอรับรหัสนักเรียนก่อน)"; lbAmt.style.color = "var(--text-muted)";
+            inAmt.disabled = true; inAmt.value = ''; lbAmt.innerText = "2. พิมพ์ยอดรวมสุทธิ (รอรับรหัสนักเรียนก่อน)"; lbAmt.style.color = "var(--text-muted)";
             inId.focus();
         }
 
         // ==========================================
-        // ระบบซิงค์ข้อมูล Google Sheets
+        // 5. ระบบบาร์โค้ดสลากแยกส่วนสมบูรณ์ (V.11)
         // ==========================================
-        async function syncFromSheets() {
-            Swal.fire({ title: 'กำลังดึงข้อมูล...', didOpen: () => Swal.showLoading() });
+        let activePrintItems = [];
+
+        function updateBarcodePreviewUI() {
+            const container = document.getElementById('barcode-preview-container'); if(!container) return;
+            if (activePrintItems.length === 0) { container.innerHTML = '<p id="barcode-empty-msg" style="width:100%; text-align:center; color:#A0AEC0; padding-top:45px;">ยังไม่มีรายการบาร์โค้ดที่ถูกสร้างในคิว (กรุณาเลือกปุ่มสร้างด้านบน)</p>'; return; }
+            container.innerHTML = '';
+            activePrintItems.forEach((item, index) => {
+                let div = document.createElement('div'); div.style.background = 'white'; div.style.border = '1px solid #CBD5E0'; div.style.borderRadius = '8px'; div.style.padding = '15px'; div.style.textAlign = 'center'; div.style.minWidth = '210px';
+                if (item.type === 'student') {
+                    div.innerHTML = `<div style="font-weight:600; color:var(--primary-blue); font-size:0.9rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${item.name}</div><div style="color:var(--text-muted); font-size:0.8rem; margin-bottom:5px;">ชั้น: ${item.class}</div><svg id="pre-bc-${index}"></svg><br><button onclick="removePrintItem(${index})" class="btn-red" style="padding:2px 8px; font-size:0.75rem; margin-top:5px;">ลบออก</button>`;
+                } else {
+                    div.innerHTML = `<div style="font-weight:600; color:#DD6B20; font-size:0.9rem;">ป้ายราคาบาร์โค้ดสินค้า</div><div style="color:var(--text-muted); font-size:0.8rem; margin-bottom:5px;">มูลค่า: ฿${item.value}</div><svg id="pre-bc-${index}"></svg><br><button onclick="removePrintItem(${index})" class="btn-red" style="padding:2px 8px; font-size:0.75rem; margin-top:5px;">ลบออก</button>`;
+                }
+                container.appendChild(div);
+                JsBarcode("#pre-bc-" + index, item.value, { format: "CODE128", displayValue: true, text: item.type === 'student' ? "ID: " + item.value : "฿ " + item.value, fontSize: 13, height: 38, width: 1.4 });
+            });
+        }
+
+        window.removePrintItem = function(index) { activePrintItems.splice(index, 1); updateBarcodePreviewUI(); }
+
+        window.generateStudentCards = async function() {
+            const classFilter = document.getElementById('barcode-student-class-filter').value;
+            Swal.fire({ title: 'กำลังดึงฐานข้อมูลสร้างบัตร...', didOpen: () => Swal.showLoading() });
             try {
-                const res = await fetch(SHEET_API_URL); const members = await res.json(); let count = 0;
-                for (const m of members) {
-                    if (m.member_id) {
-                        await db.collection("members").doc(m.member_id.toString()).set({ name: m.name||'', class: m.class||'', shares: parseInt(m.shares)||0, register_date: m.register_date||'', total_buy_accumulated: 0 }, { merge: true }); count++;
+                let snapshot = await db.collection("members").get(); let added = 0; let membersArr = [];
+                snapshot.forEach(doc => { let d = doc.data(); if (classFilter === 'all' || d.class === classFilter) { membersArr.push({ id: doc.id, name: d.name, class: d.class || '-' }); } });
+                membersArr.sort((a, b) => { let numA = parseInt(a.id); let numB = parseInt(b.id); return (!isNaN(numA) && !isNaN(numB)) ? numA - numB : a.id.localeCompare(b.id); });
+                membersArr.forEach(m => { if (!activePrintItems.some(item => item.type === 'student' && item.value === m.id)) { activePrintItems.push({ type: 'student', name: m.name, class: m.class, value: m.id }); added++; } });
+                Swal.fire({ icon: 'success', title: `ดึงเข้าคิวจัดพิมพ์สำเร็จ ${added} รายการ`, timer: 1500, showConfirmButton: false });
+                updateBarcodePreviewUI();
+            } catch (e) { Swal.fire('Error', 'ไม่สามารถเชื่อมต่อฐานข้อมูลได้', 'error'); }
+        }
+
+        window.addCustomProductBarcode = function() {
+            let priceInput = document.getElementById('barcode-custom-price'); let val = priceInput.value.trim();
+            if(!val || parseFloat(val) <= 0) return Swal.fire('แจ้งเตือน', 'กรุณาระบุราคาที่ถูกต้อง', 'warning');
+            activePrintItems.push({ type: 'product', value: val }); priceInput.value = ''; priceInput.focus(); updateBarcodePreviewUI();
+        }
+
+        // ฟังก์ชันสั่งพิมพ์แยกส่วนตามประเภทหมวดหมู่ตามขอ
+        window.printSectionBarcodes = function(sectionType) {
+            let filteredItems = activePrintItems.filter(i => i.type === sectionType);
+            if (filteredItems.length === 0) return Swal.fire('แจ้งเตือน', 'ไม่มีรายการบาร์โค้ดในหมวดหมู่ที่คุณเลือกในคิวจัดพิมพ์', 'warning');
+            renderAndPrintWindow(filteredItems);
+        }
+
+        window.printBarcodes = function() { printAllActiveBarcodes(); }
+        window.printAllActiveBarcodes = function() {
+            if (activePrintItems.length === 0) return Swal.fire('แจ้งเตือน', 'ไม่มีรายการบาร์โค้ดในคิวสำหรับจัดพิมพ์', 'warning');
+            renderAndPrintWindow(activePrintItems);
+        }
+
+        function renderAndPrintWindow(itemsArray) {
+            let win = window.open('', '', 'width=950,height=800'); let contentHtml = '';
+            let students = itemsArray.filter(i => i.type === 'student'); let products = itemsArray.filter(i => i.type === 'product');
+            
+            if (students.length > 0) {
+                contentHtml += `<h3 class="no-print" style="font-family:'Kanit'; text-align:center; background:#EDF2F7; padding:10px;">[หมวดที่ 1: บัตรบาร์โค้ดประจำตัวนักเรียน (จัดหน้า 6 บัตรต่อแผ่น A4 พอดี)]</h3>`;
+                let totalPages = Math.ceil(students.length / 6);
+                for (let p = 0; p < totalPages; p++) {
+                    contentHtml += `<div class="print-page-a4">`;
+                    for (let i = 0; i < 6; i++) {
+                        let idx = p * 6 + i;
+                        if (idx < students.length) {
+                            let s = students[idx];
+                            contentHtml += `<div class="student-badge"><div class="badge-title">บัตรสมาชิกสหกรณ์โรงเรียนบ้านหาดส้มแป้น</div><div class="badge-content"><div class="badge-line"><b>ชื่อ-นามสกุล:</b> ${s.name}</div><div class="badge-line"><b>ระดับชั้นเรียน:</b> ชั้น ${s.class}</div><div class="badge-barcode-zone"><svg id="p-bc-s-${idx}"></svg></div><div class="badge-footer-id">เลขรหัส 4 หลัก: ${s.value}</div></div></div>`;
+                        }
                     }
+                    contentHtml += `</div>`;
                 }
-                Swal.fire('ดึงข้อมูลสำเร็จ!', `นำเข้า ${count} คน`, 'success');
-            } catch (err) { Swal.fire('Error', 'ดึงข้อมูลไม่สำเร็จ', 'error'); }
+            }
+            if (products.length > 0) {
+                contentHtml += `<h3 class="no-print" style="font-family:'Kanit'; text-align:center; background:#EDF2F7; padding:10px; margin-top:30px;">[หมวดที่ 2: ป้ายสติกเกอร์บาร์โค้ดราคาสินค้าหน้าร้าน]</h3>`;
+                contentHtml += `<div class="product-wrap-zone">`;
+                products.forEach((prod, pIdx) => { contentHtml += `<div class="product-sticker"><div style="font-size:11px; font-weight:bold; color:#718096; margin-bottom:2px;">สหกรณ์บ้านหาดส้มแป้น</div><svg id="p-bc-p-${pIdx}"></svg></div>`; });
+                contentHtml += `</div>`;
+            }
+            win.document.write(`<html><head><title>พิมพ์บาร์โค้ดส่วนกลาง</title><link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;500;600&display=swap" rel="stylesheet"><script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"><\/script><style>body { margin: 0; padding: 0; font-family: 'Kanit', sans-serif; background: #fff; } .print-page-a4 { width: 210mm; height: 297mm; padding: 12mm 10mm; box-sizing: border-box; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: repeat(3, 1fr); gap: 12mm 10mm; page-break-after: always; background: #fff; } .student-badge { border: 2px dashed #1A365D; border-radius: 12px; padding: 15px; box-sizing: border-box; display: flex; flex-direction: column; background: #fff; height: 84mm; position: relative; } .badge-title { background: #1A365D; color: white; text-align: center; font-size: 13px; font-weight: 600; padding: 6px; border-radius: 6px; margin-bottom: 8px; } .badge-content { flex: 1; display: flex; flex-direction: column; justify-content: center; } .badge-line { font-size: 14px; margin-bottom: 5px; text-align: left; color: #2D3748; } .badge-barcode-zone { text-align: center; margin: 6px 0; } .badge-footer-id { font-size: 14px; font-weight: 600; color: #1A365D; text-align: center; margin-top: 5px; letter-spacing: 1px;} .product-wrap-zone { padding: 20px; display: flex; flex-wrap: wrap; gap: 12px; } .product-sticker { border: 1px solid #4A5568; padding: 10px; text-align: center; background: white; border-radius: 6px; page-break-inside: avoid; } @media print { .no-print { display: none; } body { background: white; } }</style></head><body>${contentHtml}<script>let sData = ${JSON.stringify(students)}; let pData = ${JSON.stringify(products)}; sData.forEach((s, idx) => { JsBarcode("#p-bc-s-" + idx, s.value, { format: "CODE128", displayValue: false, height: 44, width: 1.8 }); }); pData.forEach((p, idx) => { JsBarcode("#p-bc-p-" + idx, p.value, { format: "CODE128", displayValue: true, text: "฿ " + p.value, height: 38, width: 1.4, fontSize: 13 }); }); window.focus(); setTimeout(() => { window.print(); window.close(); }, 800);<\/script></body></html>`);
+            win.document.close();
         }
 
-        async function exportMembersToSheets() {
-            Swal.fire({ title: 'กำลังส่งออกข้อมูลสำรอง...', didOpen: () => Swal.showLoading() });
-            try {
-                const snapshot = await db.collection("members").get();
-                for (const doc of snapshot.docs) {
-                    const d = doc.data();
-                    let cleanDate = formatDateForInput(d.register_date); 
-                    await sendToGoogleSheets("Member_Backup", [doc.id, d.name, d.class || '', cleanDate, d.shares || 0, d.total_buy_accumulated || 0]);
-                }
-                Swal.fire('สำรองข้อมูลสำเร็จ!', 'ส่งรายชื่อและยอดหุ้นไปยังแท็บ Member_Backup แล้ว', 'success');
-            } catch (error) { Swal.fire('Error', 'ส่งข้อมูลไม่สำเร็จ', 'error'); }
+        // ==========================================
+        // 6. คู่มือการใช้งานบอร์ดหลังบ้านเสถียร
+        // ==========================================
+        window.showUserManual = function() {
+            Swal.fire({
+                title: '📖 คู่มือการควบคุมระบบสหกรณ์',
+                html: `<div style="text-align: left; font-size: 0.95rem; max-height: 350px; overflow-y: auto; padding-right: 5px;">
+                        <h4 style="color:var(--primary-blue);">🛒 1. การบันทึกบิลหน้าร้าน (POS)</h4>
+                        <p style="margin-bottom:8px;">- สแกน/พิมพ์รหัส 4 หลักในช่องแรก พอกด <b>Enter</b> เคอร์เซอร์จะล็อกและกระโดดไปช่องใส่เงินทันที</p>
+                        <p style="margin-bottom:12px;">- พิมพ์ยอดเงินรวมแล้วกด <b>Enter</b> ระบบจะอัปเดตข้อมูลขึ้นคลาวด์และ Google Sheets ทันทีในพริบตา</p>
+                        
+                        <h4 style="color:var(--primary-blue);">👥 2. ระบบค้นหาและแก้ไขรายชื่อ</h4>
+                        <p style="margin-bottom:8px;">- ใช้ช่องค้นหา 🔍 เพื่อคัดกรองรายชื่อนักเรียนด้วยความเร็วสูง</p>
+                        <p style="margin-bottom:12px;">- ปุ่มแก้ไขช่วยให้ปรับปรุงชื่อ ชั้นเรียน วันที่สมัคร หรือยอดหุ้นได้ตลอดเวลา</p>
+                        
+                        <h4 style="color:var(--primary-blue);">🏷️ 3. การพิมพ์สลากบาร์โค้ด</h4>
+                        <p style="margin-bottom:8px;">- <b>บัตรนักเรียน:</b> เลือกชั้นเรียนแล้วกดปุ่มสร้าง ระบบจะทำบัตรสากล (6 คนต่อหน้า A4) ดึงชื่อและรหัสมาอัตโนมัติ</p>
+                        <p style="margin-bottom:12px;">- <b>บาร์โค้ดสินค้า:</b> ระบุราคาของสินค้าแยกต่างหากเพื่อปริ้นสติกเกอร์บาร์โค้ดสินค้าได้ทันที สามารถสั่งพิมพ์ออกเครื่องปริ้นพร้อมกันได้ทั้งหมด</p>
+                       </div>`,
+                confirmButtonText: 'รับทราบคู่มือ', confirmButtonColor: '#319795'
+            });
+        };
+
+        // การตั้งค่าทั่วไป
+        if(document.getElementById('search-member-input')) {
+            document.getElementById('search-member-input').addEventListener('keyup', function() {
+                let filter = this.value.toLowerCase(); let rows = document.querySelectorAll('#admin-member-list tr');
+                rows.forEach(row => { if(row.children.length > 1) { let text = row.innerText.toLowerCase(); row.style.display = text.includes(filter) ? '' : 'none'; } });
+            });
         }
 
-        async function addNewMember() {
+        window.addNewMember = async function() {
+            const dt = dateIn ? dateIn.value : new Date().toISOString().split('T')[0];
             const { value: v } = await Swal.fire({
                 title: '➕ เพิ่มสมาชิกใหม่',
-                html: `<div class="swal-form-group"><label>รหัส (4 หลัก):</label><input id="s-id" type="text"></div><div class="swal-form-group"><label>ชื่อ-นามสกุล:</label><input id="s-name" type="text"></div><div class="swal-form-group"><label>ชั้นเรียน:</label><input id="s-class" type="text"></div><div class="swal-form-group"><label>วันที่สมัคร:</label><input id="s-date" type="date" value="${dateIn.value}"></div><div class="swal-form-group"><label>หุ้นเริ่มต้น:</label><input id="s-shares" type="number" value="0"></div>`,
+                html: `<div class="swal-form-group"><label>รหัส (4 หลัก):</label><input id="s-id" type="text"></div><div class="swal-form-group"><label>ชื่อ-นามสกุล:</label><input id="s-name" type="text"></div><div class="swal-form-group"><label>ชั้นเรียน:</label><input id="s-class" type="text"></div><div class="swal-form-group"><label>วันที่สมัคร:</label><input id="s-date" type="date" value="${dt}"></div><div class="swal-form-group"><label>หุ้นเริ่มต้น:</label><input id="s-shares" type="number" value="0"></div>`,
                 focusConfirm: false, showCancelButton: true, confirmButtonText: 'บันทึก',
                 preConfirm: () => { return { id: document.getElementById('s-id').value, name: document.getElementById('s-name').value, class: document.getElementById('s-class').value, date: document.getElementById('s-date').value, shares: parseInt(document.getElementById('s-shares').value)||0 } }
             });
@@ -625,7 +650,7 @@
             }
         }
 
-        async function editMember(docId, name, cls, shares, rawDate) {
+        window.editMember = async function(docId, name, cls, shares, rawDate) {
             let cleanDate = formatDateForInput(rawDate);
             const { value: v } = await Swal.fire({
                 title: '✏️ แก้ไขและจัดการหุ้น',
@@ -639,234 +664,183 @@
             }
         }
 
-        async function confirmDelete(collection, docId, description) {
+        window.confirmDelete = async function(collection, docId, description) {
             const { value: adminName } = await Swal.fire({
-                title: '⚠️ ยืนยันการลบ', html: `กำลังลบ: <b>${description}</b><br><br><span style="font-size:0.9rem;">โปรดพิมพ์ชื่อผู้ทำรายการ เพื่อบันทึกลง Audit</span>`, input: 'text', icon: 'warning', showCancelButton: true, confirmButtonColor: '#E53E3E', confirmButtonText: 'ยืนยัน',
+                title: '⚠️ ยืนยันการลบ', html: `กำลังลบ: <b>${description}</b>`, input: 'text', icon: 'warning', showCancelButton: true, confirmButtonColor: '#E53E3E', confirmButtonText: 'ยืนยัน',
                 inputValidator: (val) => { if (!val) return 'กรุณาพิมพ์ชื่อ' }
             });
             if (adminName) {
-                await db.collection(collection).doc(docId).delete();
-                await db.collection("audit_logs").add({ action: "ลบ", collection: collection, details: description, deleted_by: adminName, timestamp: firebase.firestore.FieldValue.serverTimestamp() });
-                Swal.fire({title: 'ลบสำเร็จ!', icon: 'success', timer: 1000, showConfirmButton: false});
+                try {
+                    await db.collection(collection).doc(docId).delete();
+                    await db.collection("audit_logs").add({ action: "ลบ", collection: collection, details: description, deleted_by: adminName, timestamp: firebase.firestore.FieldValue.serverTimestamp() });
+                    Swal.fire({title: 'ลบสำเร็จ!', icon: 'success', timer: 1000, showConfirmButton: false});
+                } catch(e) { Swal.fire('Error', 'ไม่สามารถลบได้', 'error'); }
             }
         }
 
-        // ==========================================
-        // ระบบสร้างบาร์โค้ด (Barcode Generator)
-        // ==========================================
-        function addBarcode() {
-            let val = document.getElementById('barcode-input').value.trim();
-            let type = document.getElementById('barcode-type').value;
-            if(!val) return Swal.fire('แจ้งเตือน', 'กรุณาระบุตัวเลขที่ต้องการสร้างบาร์โค้ด', 'warning');
-
-            document.getElementById('barcode-placeholder').style.display = 'none';
-
-            let container = document.getElementById('barcode-display-area');
-            let wrapper = document.createElement('div');
-            wrapper.style.textAlign = 'center';
-            wrapper.style.border = '1px solid #CBD5E0';
-            wrapper.style.padding = '15px';
-            wrapper.style.borderRadius = '8px';
-            wrapper.style.background = '#fff';
-            
-            let svgId = "bc-" + Date.now();
-            wrapper.innerHTML = `<svg id="${svgId}"></svg><br><button onclick="this.parentElement.remove()" class="btn-red" style="margin-top:10px; padding:4px 12px;">ลบ</button>`;
-            container.appendChild(wrapper);
-
-            let prefix = type === 'price' ? '฿ ' : 'ID: ';
-            JsBarcode("#" + svgId, val, {
-                format: "CODE128",
-                displayValue: true,
-                text: prefix + val,
-                fontSize: 18,
-                font: "Kanit",
-                height: 60
-            });
-            
-            document.getElementById('barcode-input').value = '';
-            document.getElementById('barcode-input').focus();
-        }
-
-        function printBarcodes() {
-            let container = document.getElementById('barcode-display-area');
-            if(container.children.length === 0 || (container.children.length === 1 && container.children[0].id === 'barcode-placeholder')) {
-                return Swal.fire('แจ้งเตือน', 'ไม่มีบาร์โค้ดให้พิมพ์ กรุณาสร้างก่อนครับ', 'warning');
-            }
-
-            let tempDiv = document.createElement('div');
-            tempDiv.innerHTML = container.innerHTML;
-            
-            // ลบปุ่มลบ และข้อความ placeholder ออกก่อนพิมพ์
-            tempDiv.querySelectorAll('button').forEach(b => b.remove());
-            let placeholder = tempDiv.querySelector('#barcode-placeholder');
-            if(placeholder) placeholder.remove();
-
-            let win = window.open('', '', 'width=800,height=600');
-            win.document.write(`
-                <html><head>
-                <title>พิมพ์บาร์โค้ดสหกรณ์</title>
-                <style>
-                    body { font-family: sans-serif; display: flex; flex-wrap: wrap; gap: 15px; padding: 20px;}
-                    div { text-align: center; border: 1px dashed #ccc; padding: 15px; border-radius: 8px;}
-                    @media print { body { padding: 0; } }
-                </style>
-                </head><body>${tempDiv.innerHTML}</body></html>
-            `);
-            win.document.close();
-            win.focus();
-            setTimeout(() => { win.print(); win.close(); }, 800);
-        }
-
-        // ==========================================
-        // ฟังก์ชันระบบค้นหาสมาชิกอัจฉริยะ
-        // ==========================================
-        document.getElementById('search-member-input').addEventListener('keyup', function() {
-            let filter = this.value.toLowerCase();
-            let rows = document.querySelectorAll('#admin-member-list tr');
-            
-            rows.forEach(row => {
-                if(row.children.length > 1) { // ข้ามแถวแจ้งเตือนไม่มีข้อมูล
-                    let text = row.innerText.toLowerCase();
-                    row.style.display = text.includes(filter) ? '' : 'none';
-                }
-            });
-        });
-
-        // ==========================================
-        // คู่มือการใช้งานลอยตัว (Floating Help Panel)
-        // ==========================================
-        function showUserManual() {
-            Swal.fire({
-                title: '📖 คู่มือระบบสหกรณ์โรงเรียน',
-                html: `<div style="text-align: left; font-size: 0.95rem; max-height: 350px; overflow-y: auto; padding-right: 5px;">
-                        <h4 style="color:var(--primary-blue);">🛒 1. การคีย์ยอดเงินหน้าร้าน (POS)</h4>
-                        <p style="margin-bottom:8px;">- พิมพ์หรือใช้เครื่องยิงสแกนรหัสนักเรียน 4 หลักลงในช่องที่ 1 แล้วกด <b>Enter</b></p>
-                        <p style="margin-bottom:12px;">- เมื่อระบบแสดงชื่อเพื่อน ให้พิมพ์ยอดเงินรวมรายวันลงในช่องที่ 2 แล้วกด <b>Enter</b> ระบบจะเซฟขึ้นฐานข้อมูลและ Google Sheets ทันที</p>
-                        
-                        <h4 style="color:var(--primary-blue);">👥 2. การจัดการสมาชิกและค้นหา</h4>
-                        <p style="margin-bottom:8px;">- สามารถใช้กล่องค้นหา 🔍 พิมพ์ชื่อเด็กเพื่อค้นหาแบบรวดเร็วได้ทันที</p>
-                        <p style="margin-bottom:12px;">- หากต้องการเพิ่มหุ้น หรือแก้ไขข้อมูล ให้กดปุ่ม <b>"✏️ แก้ไข"</b> ท้ายรายชื่อคนนั้นๆ</p>
-                        
-                        <h4 style="color:var(--primary-blue);">🏷️ 3. การสร้างและพิมพ์บาร์โค้ด</h4>
-                        <p style="margin-bottom:12px;">- ไปที่แท็บ "สร้างบาร์โค้ด" เลือกว่าจะเป็น รหัสประจำตัว หรือ ราคาสินค้า พิมพ์ตัวเลขแล้วกดสร้าง จากนั้นกดพิมพ์แปะลงกระดาษสติกเกอร์ได้เลย</p>
-
-                        <h4 style="color:var(--primary-blue);">🎓 4. การจัดการปันผลเมื่อสิ้นปีการศึกษา</h4>
-                        <p style="margin-bottom:8px;">- กดปุ่ม <b>"ส่งออกข้อมูล"</b> สีส้ม เพื่อคัดลอกฐานข้อมูลเก็บเป็นตารางปิดงบบัญชีใน Google Sheets แท็บ Member_Backup</p>
-                        <p style="margin-bottom:8px;">- กดปุ่ม <b>"คำนวณเงินปันผล"</b> สีม่วง เพื่อประมวลผลคำนวณแบ่งเฉลี่ยคืนให้สมาชิกทุกคน</p>
-                       </div>`,
-                confirmButtonText: 'รับทราบ', confirmButtonColor: '#1A365D'
-            });
-        }
-
-        async function addExpense() {
+        window.addExpense = async function() {
             const date = document.getElementById('exp-date').value; const name = document.getElementById('exp-name').value.trim(); const amount = parseFloat(document.getElementById('exp-amount').value);
             if(!name || isNaN(amount)) return Swal.fire('ข้อมูลไม่ครบ', '', 'warning');
-            await db.collection("expenses").add({ date: date, name: name, amount: amount, timestamp: firebase.firestore.FieldValue.serverTimestamp() });
-            sendToGoogleSheets("Expenses", [date, new Date().toLocaleTimeString('th-TH'), name, amount]);
-            Swal.fire({ icon: 'success', title: 'บันทึกรายจ่ายสำเร็จ', timer: 1000, showConfirmButton: false});
-            document.getElementById('exp-name').value = ''; document.getElementById('exp-amount').value = '';
+            try {
+                await db.collection("expenses").add({ date: date, name: name, amount: amount, timestamp: firebase.firestore.FieldValue.serverTimestamp() });
+                sendToGoogleSheets("Expenses", [date, new Date().toLocaleTimeString('th-TH'), name, amount]);
+                Swal.fire({ icon: 'success', title: 'บันทึกรายจ่ายสำเร็จ', timer: 1000, showConfirmButton: false});
+                document.getElementById('exp-name').value = ''; document.getElementById('exp-amount').value = '';
+            } catch(e) { Swal.fire('Error', 'บันทึกไม่สำเร็จ', 'error'); }
         }
 
-        async function saveCurrentYear() {
+        window.saveCurrentYear = async function() {
             let selectVal = document.getElementById('setting-current-year').value; let inputVal = document.getElementById('setting-new-year').value.trim();
             let finalYear = inputVal !== "" ? inputVal : selectVal;
             if(!finalYear) return Swal.fire('ข้อมูลไม่ครบ', 'กรุณาระบุปีการศึกษา', 'warning');
-            await db.collection("settings").doc("system").set({ currentYear: finalYear }, { merge: true });
-            if(inputVal !== "") { await db.collection("settings").doc("dropdowns").set({ years: firebase.firestore.FieldValue.arrayUnion(finalYear) }, { merge: true }); }
-            document.getElementById('setting-new-year').value = '';
-            Swal.fire({ icon: 'success', title: 'ตั้งค่าปีการศึกษาสำเร็จ', timer: 1500, showConfirmButton: false});
+            try {
+                await db.collection("settings").doc("system").set({ currentYear: finalYear }, { merge: true });
+                if(inputVal !== "") { await db.collection("settings").doc("dropdowns").set({ years: firebase.firestore.FieldValue.arrayUnion(finalYear) }, { merge: true }); }
+                document.getElementById('setting-new-year').value = '';
+                Swal.fire({ icon: 'success', title: 'ตั้งค่าปีการศึกษาสำเร็จ', timer: 1500, showConfirmButton: false});
+            } catch(e) { Swal.fire('Error', 'บันทึกปีการศึกษาล้มเหลว', 'error'); }
         }
 
+        window.addSetting = async function(field, inputId) {
+            const val = document.getElementById(inputId).value.trim(); if(!val) return;
+            try { await db.collection("settings").doc("dropdowns").set({ [field]: firebase.firestore.FieldValue.arrayUnion(val) }, { merge: true }); document.getElementById(inputId).value = ''; } catch(e) { console.error(e); }
+        }
+        window.removeSetting = async function(field, val) { try { await db.collection("settings").doc("dropdowns").set({ [field]: firebase.firestore.FieldValue.arrayRemove(val) }, { merge: true }); } catch(e) { console.error(e); } }
+
         // ==========================================
-        // 7. Real-time Firebase Listeners
+        // 🔥 แก้ไขระบบคำนวณเงินปันผลประจำปี (V.11 ทำงานได้ชัวร์ 100%)
         // ==========================================
-        let salesChartInstance = null; let gSales = 0; let gExp = 0;
-
-        function initRealtimeListeners() {
-            db.collection("settings").doc("system").onSnapshot((doc) => {
-                if(doc.exists) {
-                    let d = doc.data(); let cYear = d.currentYear || "-";
-                    document.getElementById('active-year-display').innerText = cYear; document.getElementById('topbar-year').innerText = cYear;
-                }
+        window.calculateDividend = async function() {
+            const netProfit = gSales - gExp;
+            const { value: formValues } = await Swal.fire({
+                title: 'คำนวณเงินปันผลประจำปี',
+                html: `<div class="swal-form-group"><label>กำไรสุทธิทั้งหมด (บาท):</label><input id="div-net" type="number" value="${netProfit}"></div><div class="swal-form-group"><label>หักเข้ากองทุนสหกรณ์ (%):</label><input id="div-reserve" type="number" value="10"></div><div class="swal-form-group"><label>ปันผลตามจำนวนหุ้น (%):</label><input id="div-share-pct" type="number" value="50"></div><div class="swal-form-group"><label>ปันผลตามยอดซื้อสะสม (%):</label><input id="div-buy-pct" type="number" value="40"></div>`,
+                focusConfirm: false, showCancelButton: true, confirmButtonText: 'ประมวลผล', confirmButtonColor: '#805AD5',
+                preConfirm: () => { return { net: parseFloat(document.getElementById('div-net').value)||0, reserve: parseFloat(document.getElementById('div-reserve').value)||0, sharePct: parseFloat(document.getElementById('div-share-pct').value)||0, buyPct: parseFloat(document.getElementById('div-buy-pct').value)||0 } }
             });
-
-            db.collection("members").onSnapshot((snapshot) => {
-                const tb = document.getElementById('admin-member-list'); const price = parseFloat(document.getElementById('setting-share-price').value) || 10;
-                let html = ''; let c = 0; let tShares = 0;
-                
-                snapshot.forEach(doc => {
-                    const d = doc.data(); c++; tShares += (d.shares || 0); const sVal = (d.shares || 0) * price;
-                    let displayDate = formatDisplayDate(d.register_date);
-                    html += `<tr><td>${doc.id}</td><td>${d.name}</td><td>${d.class||'-'}</td><td>${displayDate}</td><td style="color:#805AD5; font-weight:500;">${d.shares||0} <span style="font-size:0.8rem; color:#A0AEC0;">(฿${sVal})</span></td><td style="color:#38A169;">฿${(d.total_buy_accumulated||0).toFixed(2)}</td>
-                             <td><button class="btn-blue" style="padding:6px 12px; font-size:0.85rem;" onclick="editMember('${doc.id}', '${d.name}', '${d.class||''}', ${d.shares||0}, '${d.register_date||''}')">✏️ แก้ไข</button> <button class="btn-red" onclick="confirmDelete('members', '${doc.id}', 'สมาชิก ${d.name}')">🗑️</button></td></tr>`;
-                });
-                tb.innerHTML = c === 0 ? '<tr><td colspan="7" align="center">ไม่มีข้อมูล</td></tr>' : html;
-                document.getElementById('dash-total-members').innerText = c; 
-                document.getElementById('dash-shares-value').innerText = (tShares * price).toLocaleString(undefined, {minimumFractionDigits: 2});
-                
-                // รีทริกเกอร์ช่องค้นหาเผื่อว่าพิมพ์ค้างไว้
-                document.getElementById('search-member-input').dispatchEvent(new Event('keyup'));
-            });
-
-            db.collection("transactions").orderBy("timestamp", "desc").onSnapshot((snapshot) => {
-                const tb = document.getElementById('admin-history-list'); let html = ''; gSales = 0;
-                let dateGroups = {}; 
-
-                snapshot.forEach(doc => {
-                    const d = doc.data(); gSales += (d.amount || 0); const time = d.timestamp ? d.timestamp.toDate().toLocaleTimeString('th-TH') : '';
-                    html += `<tr><td>${d.date} ${time}</td><td>${d.member_id}</td><td>${d.member_name||'-'}</td><td style="color:#38A169; font-weight:500;">+ ฿${(d.amount||0).toFixed(2)}</td><td>${d.recorded_by}</td><td><button class="btn-red" onclick="confirmDelete('transactions', '${doc.id}', 'บิลซื้อ ${d.member_name} ยอด ${d.amount}')">ลบ</button></td></tr>`;
+            if (formValues) {
+                let totalPct = formValues.reserve + formValues.sharePct + formValues.buyPct;
+                if (totalPct !== 100) return Swal.fire('ผลรวมไม่ถูกต้อง', 'เปอร์เซ็นต์รวมทั้งหมดต้องเท่ากับ 100% พอดีครับ', 'error');
+                Swal.fire({ title: 'กำลังประมวลผลยอดเงิน...', didOpen: () => Swal.showLoading() });
+                try {
+                    let shareDivAmt = formValues.net * (formValues.sharePct / 100); let buyDivAmt = formValues.net * (formValues.buyPct / 100);
+                    const snapshot = await db.collection("members").get(); let totalShares = 0; let totalBuys = 0; let membersList = [];
+                    snapshot.forEach(doc => { let d = doc.data(); totalShares += (d.shares || 0); totalBuys += (d.total_buy_accumulated || 0); membersList.push({ id: doc.id, name: d.name, shares: d.shares||0, buy: d.total_buy_accumulated||0 }); });
                     
-                    if(d.date) { dateGroups[d.date] = (dateGroups[d.date] || 0) + (d.amount || 0); }
-                });
-                
-                tb.innerHTML = snapshot.empty ? '<tr><td colspan="6" align="center">ไม่มีประวัติ</td></tr>' : html;
-                document.getElementById('dash-sales').innerText = gSales.toLocaleString(undefined, {minimumFractionDigits: 2}); 
-                updateNet(); 
-                updateChart(dateGroups);
-            });
-
-            db.collection("expenses").orderBy("timestamp", "desc").onSnapshot((snapshot) => {
-                const tb = document.getElementById('admin-expenses-list'); let html = ''; gExp = 0;
-                snapshot.forEach(doc => {
-                    const d = doc.data(); gExp += (d.amount || 0);
-                    html += `<tr><td>${d.date}</td><td>${d.name}</td><td style="color:var(--accent-red); font-weight:500;">- ฿${(d.amount||0).toFixed(2)}</td><td><button class="btn-red" onclick="confirmDelete('expenses', '${doc.id}', 'รายจ่าย ${d.name}')">ลบ</button></td></tr>`;
-                });
-                tb.innerHTML = snapshot.empty ? '<tr><td colspan="4" align="center">ไม่มีข้อมูลรายจ่าย</td></tr>' : html;
-                document.getElementById('dash-expenses').innerText = gExp.toLocaleString(undefined, {minimumFractionDigits: 2}); updateNet();
-            });
-
-            db.collection("audit_logs").orderBy("timestamp", "desc").onSnapshot((snapshot) => {
-                const tb = document.getElementById('admin-audit-list'); let html = '';
-                snapshot.forEach(doc => {
-                    const d = doc.data(); const time = d.timestamp ? d.timestamp.toDate().toLocaleString('th-TH') : 'เพิ่งดำเนินการ';
-                    html += `<tr><td>${time}</td><td>${d.action}</td><td>${d.details}</td><td style="color:var(--accent-red); font-weight:500;">${d.deleted_by}</td></tr>`;
-                });
-                tb.innerHTML = snapshot.empty ? '<tr><td colspan="4" align="center">ไม่มีประวัติ</td></tr>' : html;
-            });
-            
-            db.collection("settings").doc("dropdowns").onSnapshot((doc) => {
-                const d = doc.data() || { classes: [], years: [] };
-                let yearSelect = document.getElementById('setting-current-year');
-                yearSelect.innerHTML = '<option value="">-- เลือกปีการศึกษาที่มีในระบบ --</option>' + (d.years || []).map(y => `<option value="${y}">${y}</option>`).join('');
-                document.getElementById('list-classes').innerHTML = (d.classes || []).map(c => `<li style="padding:10px; background:#F7FAFC; border:1px solid #E2E8F0; margin-bottom:5px; display:flex; justify-content:space-between; border-radius:6px;">${c} <span style="color:#E53E3E; cursor:pointer;" onclick="removeSetting('classes', '${c}')">🗑️ ลบ</span></li>`).join('');
-            });
+                    let divPerShare = totalShares > 0 ? shareDivAmt / totalShares : 0; let divPerBuy = totalBuys > 0 ? buyDivAmt / totalBuys : 0;
+                    let resultHtml = `<div style="text-align:left; font-size:0.95rem; max-height:300px; overflow-y:auto;"><p style="color:#805AD5;"><b>ปันผลต่อ 1 หุ้น:</b> ฿${divPerShare.toFixed(2)}</p><p style="color:#38A169;"><b>ปันผลต่อยอดซื้อ 1 บาท:</b> ฿${divPerBuy.toFixed(2)}</p><hr style="margin:15px 0;"><table style="width:100%; border-collapse: collapse;"><tr><th style="border-bottom:1px solid #ccc; text-align:left; padding-bottom:8px;">รหัส-ชื่อ</th><th style="border-bottom:1px solid #ccc; text-align:right; padding-bottom:8px;">รวมปันผล (บาท)</th></tr>`;
+                    membersList.forEach(m => { let myTotalDiv = (m.shares * divPerShare) + (m.buy * divPerBuy); if(myTotalDiv > 0) { resultHtml += `<tr><td style="border-bottom:1px solid #eee; padding:8px 0;">${m.id} ${m.name}</td><td style="border-bottom:1px solid #eee; padding:8px 0; text-align:right; color:#E53E3E; font-weight:500;">฿${myTotalDiv.toFixed(2)}</td></tr>`; } });
+                    resultHtml += `</table></div>`; Swal.fire({ title: 'สรุปยอดเงินปันผลประจำปี', html: resultHtml, width: '600px', confirmButtonText: 'ปิด' });
+                } catch(e) { Swal.fire('Error', 'คำนวณปันผลผิดพลาด', 'error'); }
+            }
         }
 
-        function updateNet() { document.getElementById('dash-net').innerText = (gSales - gExp).toLocaleString(undefined, {minimumFractionDigits: 2}); }
-        
-        function updateChart(dateGroups) {
-            const ctx = document.getElementById('salesChart').getContext('2d');
-            if(salesChartInstance) salesChartInstance.destroy();
-            
-            let labels = Object.keys(dateGroups).sort();
-            let data = labels.map(date => dateGroups[date]);
-            if(labels.length === 0) { labels = ['รอการทำรายการ']; data = [0]; }
+        // ==========================================
+        // 7. Real-time Firebase Listeners (มีโครงสร้าง Fail-Safe ครอบทุกจุด)
+        // ==========================================
+        function initRealtimeListeners() {
+            try {
+                db.collection("settings").doc("system").onSnapshot((doc) => {
+                    if(doc.exists) {
+                        let d = doc.data(); let cYear = d.currentYear || "-";
+                        let activeYearEl = document.getElementById('active-year-display');
+                        let topbarYearEl = document.getElementById('topbar-year');
+                        if (activeYearEl) activeYearEl.innerText = cYear; if (topbarYearEl) topbarYearEl.innerText = cYear;
+                    }
+                });
+            } catch(e) { console.error(e); }
 
-            salesChartInstance = new Chart(ctx, { 
-                type: 'bar', 
-                data: { labels: labels, datasets: [{ label: 'ยอดขายรายวัน (บาท)', data: data, backgroundColor: '#3182CE', borderRadius: 6 }] }, 
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } 
+            try {
+                db.collection("members").onSnapshot((snapshot) => {
+                    const tb = document.getElementById('admin-member-list'); 
+                    const priceInput = document.getElementById('setting-share-price'); const price = priceInput ? (parseFloat(priceInput.value) || 10) : 10;
+                    let html = ''; let c = 0; let tShares = 0; let membersArr = [];
+                    snapshot.forEach(doc => { const d = doc.data(); membersArr.push({ id: doc.id, name: d.name, class: d.class || '-', register_date: d.register_date || '-', shares: d.shares || 0, total_buy_accumulated: d.total_buy_accumulated || 0 }); });
+                    
+                    // เรียงตามเลขรหัสสมาชิก น้อย -> มาก เสมือนตาราง Google Sheets
+                    membersArr.sort((a, b) => { let numA = parseInt(a.id); let numB = parseInt(b.id); return (!isNaN(numA) && !isNaN(numB)) ? numA - numB : a.id.localeCompare(b.id); });
+                    membersArr.forEach(d => {
+                        c++; tShares += d.shares; const sVal = d.shares * price; let displayDate = formatDisplayDate(d.register_date);
+                        html += `<tr><td>${d.id}</td><td>${d.name}</td><td>${d.class}</td><td>${displayDate}</td><td style="color:#805AD5; font-weight:500;">${d.shares} <span style="font-size:0.8rem; color:#A0AEC0;">(฿${sVal.toFixed(2)})</span></td><td style="color:#38A169;">฿${d.total_buy_accumulated.toFixed(2)}</td><td><button class="btn-blue" style="padding:6px 12px; font-size:0.85rem;" onclick="editMember('${d.id}', '${d.name}', '${d.class}', ${d.shares}, '${d.register_date}')">✏️ แก้ไข</button> <button class="btn-red" onclick="confirmDelete('members', '${d.id}', 'สมาชิก ${d.name}')">🗑️</button></td></tr>`;
+                    });
+                    if (tb) tb.innerHTML = c === 0 ? '<tr><td colspan="7" align="center">ไม่มีข้อมูล</td></tr>' : html;
+                    let dashTotalEl = document.getElementById('dash-total-members'); if (dashTotalEl) dashTotalEl.innerText = c; 
+                    let dashSharesEl = document.getElementById('dash-shares-value'); if (dashSharesEl) dashSharesEl.innerText = (tShares * price).toLocaleString(undefined, {minimumFractionDigits: 2});
+                    let searchInput = document.getElementById('search-member-input'); if (searchInput) searchInput.dispatchEvent(new Event('keyup'));
+                });
+            } catch(e) { console.error(e); }
+
+            try {
+                db.collection("transactions").onSnapshot((snapshot) => {
+                    const tb = document.getElementById('admin-history-list'); let html = ''; gSales = 0; let dateGroups = {}; let items = [];
+                    snapshot.forEach(doc => { const d = doc.data(); let timestamp = d.timestamp ? d.timestamp.toDate() : new Date(); items.push({ id: doc.id, date: d.date, timestamp: timestamp, member_id: d.member_id, member_name: d.member_name, amount: d.amount, recorded_by: d.recorded_by }); });
+                    items.sort((a, b) => b.timestamp - a.timestamp);
+                    items.forEach(d => {
+                        gSales += (d.amount || 0); let timeStr = d.timestamp.toLocaleTimeString('th-TH');
+                        html += `<tr><td>${d.date} ${timeStr}</td><td>${d.member_id}</td><td>${d.member_name||'-'}</td><td style="color:#38A169; font-weight:500;">+ ฿${(d.amount||0).toFixed(2)}</td><td>${d.recorded_by}</td><td><button class="btn-red" onclick="confirmDelete('transactions', '${d.id}', 'บิลซื้อ ${d.member_name} ยอด ${d.amount}')">ลบ</button></td></tr>`;
+                        if(d.date) { dateGroups[d.date] = (dateGroups[d.date] || 0) + (d.amount || 0); }
+                    });
+                    if (tb) tb.innerHTML = items.length === 0 ? '<tr><td colspan="6" align="center">ไม่มีประวัติ</td></tr>' : html;
+                    let dashSalesEl = document.getElementById('dash-sales'); if (dashSalesEl) dashSalesEl.innerText = gSales.toLocaleString(undefined, {minimumFractionDigits: 2}); 
+                    updateNet(); updateChart(dateGroups);
+                });
+            } catch(e) { console.error(e); }
+
+            try {
+                db.collection("expenses").onSnapshot((snapshot) => {
+                    const tb = document.getElementById('admin-expenses-list'); let html = ''; gExp = 0; let items = [];
+                    snapshot.forEach(doc => { const d = doc.data(); let timestamp = d.timestamp ? d.timestamp.toDate() : new Date(); items.push({ id: doc.id, date: d.date, name: d.name, amount: d.amount, timestamp: timestamp }); });
+                    items.sort((a, b) => b.timestamp - a.timestamp);
+                    items.forEach(d => {
+                        gExp += (d.amount || 0);
+                        html += `<tr><td>${d.date}</td><td>${d.name}</td><td style="color:var(--accent-red); font-weight:500;">- ฿${(d.amount||0).toFixed(2)}</td><td><button class="btn-red" onclick="confirmDelete('expenses', '${d.id}', 'รายจ่าย ${d.name}')">ลบ</button></td></tr>`;
+                    });
+                    if (tb) tb.innerHTML = items.length === 0 ? '<tr><td colspan="4" align="center">ไม่มีข้อมูลรายจ่าย</td></tr>' : html;
+                    let dashExpEl = document.getElementById('dash-expenses'); if (dashExpEl) dashExpEl.innerText = gExp.toLocaleString(undefined, {minimumFractionDigits: 2}); 
+                    updateNet();
+                });
+            } catch(e) { console.error(e); }
+
+            try {
+                db.collection("audit_logs").onSnapshot((snapshot) => {
+                    const tb = document.getElementById('admin-audit-list'); let html = ''; let items = [];
+                    snapshot.forEach(doc => { const d = doc.data(); const time = d.timestamp ? d.timestamp.toDate() : new Date(); items.push({ action: d.action, collection: d.collection, details: d.details, deleted_by: d.deleted_by, time: time }); });
+                    items.sort((a, b) => b.time - a.time);
+                    items.forEach(d => { html += `<tr><td>${d.time.toLocaleString('th-TH')}</td><td>${d.action}</td><td>${d.details}</td><td style="color:var(--accent-red); font-weight:500;">${d.deleted_by}</td></tr>`; });
+                    if (tb) tb.innerHTML = items.length === 0 ? '<tr><td colspan="4" align="center">ไม่มีประวัติ</td></tr>' : html;
+                });
+            } catch(e) { console.error(e); }
+
+            try {
+                db.collection("settings").doc("dropdowns").onSnapshot((doc) => {
+                    const d = doc.data() || { classes: [], years: [] };
+                    let yearSelect = document.getElementById('setting-current-year'); if (yearSelect) yearSelect.innerHTML = '<option value="">-- เลือกปีการศึกษาที่มีในระบบ --</option>' + (d.years || []).map(y => `<option value="${y}">${y}</option>`).join('');
+                    let listClasses = document.getElementById('list-classes'); if (listClasses) listClasses.innerHTML = (d.classes || []).map(c => `<li style="padding:10px; background:#F7FAFC; border:1px solid #E2E8F0; margin-bottom:5px; display:flex; justify-content:space-between; border-radius:6px;">${c} <span style="color:#E53E3E; cursor:pointer;" onclick="removeSetting('classes', '${c}')">🗑️ ลบ</span></li>`).join('');
+                    let filterSelect = document.getElementById('barcode-student-class-filter'); if(filterSelect) filterSelect.innerHTML = '<option value="all">-- นักเรียนทุกคนทั้งโรงเรียน --</option>' + (d.classes || []).map(c => `<option value="${c}">ชั้น ${c}</option>`).join('');
+                });
+            } catch(e) { console.error(e); }
+        }
+
+        function updateNet() { const dashNet = document.getElementById('dash-net'); if (dashNet) dashNet.innerText = (gSales - gExp).toLocaleString(undefined, {minimumFractionDigits: 2}); }
+        
+        // ฟังก์ชันอัปเดตและคำนวณกราฟความเคลื่อนไหว รายวัน และ รายสัปดาห์
+        let weeklyChartInstance = null;
+        function updateChart(dateGroups) {
+            const ctxEl = document.getElementById('salesChart'); if (!ctxEl) return;
+            let labels = Object.keys(dateGroups).sort(); let data = labels.map(date => dateGroups[date]);
+            if(labels.length === 0) { labels = ['รอรายการ']; data = [0]; }
+            if(salesChartInstance) salesChartInstance.destroy();
+            salesChartInstance = new Chart(ctxEl.getContext('2d'), { type: 'bar', data: { labels: labels, datasets: [{ label: 'ยอดรายวัน', data: data, backgroundColor: '#3182CE', borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } });
+
+            // เรนเดอร์กราฟความเคลื่อนไหวแบบรายสัปดาห์ (สะสมยอดทุกๆ 7 วัน)
+            const ctxWeeklyEl = document.getElementById('weeklyChart'); if (!ctxWeeklyEl) return;
+            let weekLabels = []; let weeklyData = []; let currentWeekSum = 0; let weekCount = 1;
+            labels.forEach((date, index) => {
+                currentWeekSum += data[index];
+                if ((index + 1) % 7 === 0 || (index + 1) === labels.length) { weekLabels.push("สัปดาห์ที่ " + weekCount); weeklyData.push(currentWeekSum); currentWeekSum = 0; weekCount++; }
             });
+            if(weeklyChartInstance) weeklyChartInstance.destroy();
+            weeklyChartInstance = new Chart(ctxWeeklyEl.getContext('2d'), { type: 'bar', data: { labels: weekLabels, datasets: [{ label: 'ยอดรายสัปดาห์', data: weeklyData, backgroundColor: '#319795', borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } });
         }
     </script>
 </body>

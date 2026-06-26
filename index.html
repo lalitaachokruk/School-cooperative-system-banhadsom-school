@@ -588,13 +588,17 @@
             } catch (err) { Swal.fire('Error', 'ดึงข้อมูลไม่สำเร็จ', 'error'); }
         }
 
-        window.exportMembersToSheets = async function() {
+       window.exportMembersToSheets = async function() {
             Swal.fire({ title: 'กำลังส่งออกข้อมูลสำรอง...', didOpen: () => Swal.showLoading() });
             try {
                 const snapshot = await db.collection("members").get();
                 for (const doc of snapshot.docs) {
                     const d = doc.data();
-                    await sendToGoogleSheets("Member_Backup", [doc.id, d.name, d.class || '', d.register_date || '', d.shares || 0, d.total_buy_accumulated || 0]);
+                    
+                    // เรียกใช้ตัวแปลงวันที่ ให้กลายเป็น 5 มิ.ย. 2567 ก่อนส่งลง Sheets
+                    let niceDate = formatDisplayDate(d.register_date); 
+                    
+                    await sendToGoogleSheets("Member_Backup", [doc.id, d.name, d.class || '', niceDate, d.shares || 0, d.total_buy_accumulated || 0]);
                 }
                 Swal.fire('สำรองข้อมูลสำเร็จ!', 'ส่งรายชื่อและยอดหุ้นไปยังแท็บ Member_Backup แล้ว', 'success');
             } catch (error) { Swal.fire('Error', 'ส่งข้อมูลไม่สำเร็จ', 'error'); }

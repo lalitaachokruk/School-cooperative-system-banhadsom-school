@@ -66,7 +66,7 @@
            3. หน้า Admin Dashboard (Sidebar & Main)
         ========================================== */
         #admin-section { display: none; height: 100vh; overflow: hidden; }
-        .admin-sidebar { width: 260px; background: white; border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 20px 0; flex-shrink: 0;}
+        .admin-sidebar { width: 260px; background: white; border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 20px 0; flex-shrink: 0; transition: width 0.3s;}
         .admin-brand { text-align: center; padding: 0 20px 20px; border-bottom: 1px solid var(--border-color); margin-bottom: 15px; }
         .admin-brand img { height: 60px; margin-bottom: 10px; }
         .nav-item { padding: 12px 25px; display: block; color: var(--text-muted); cursor: pointer; font-size: 1.05rem; border-left: 4px solid transparent; transition: 0.2s;}
@@ -75,7 +75,7 @@
 
         .admin-main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
         .admin-topbar { height: 70px; background: white; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; padding: 0 30px; flex-shrink: 0;}
-        .admin-content { padding: 30px; max-width: 1400px; margin: 0 auto; width: 100%; overflow-y: auto; flex: 1;}
+        .admin-content { padding: 30px; max-width: 1400px; margin: 0 auto; width: 100%; overflow-y: auto; flex: 1; overflow-x: hidden;}
         .tab-pane { display: none; }
         .tab-pane.active { display: block; }
 
@@ -88,8 +88,9 @@
         .btn-red { background: white; color: var(--accent-red); border: 1px solid var(--accent-red); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-family: 'Kanit'; font-size: 0.85rem;}
         .btn-red:hover { background: #FFF5F5; }
         
-        .admin-table-container { max-height: 500px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 6px; margin-top: 15px;}
-        .admin-table { width: 100%; border-collapse: collapse; }
+        /* ปรับปรุงตารางให้รองรับ iPad (เลื่อนแนวนอนได้ถ้าข้อมูลเยอะ) */
+        .admin-table-container { max-height: 500px; overflow-y: auto; overflow-x: auto; border: 1px solid var(--border-color); border-radius: 6px; margin-top: 15px; width: 100%;}
+        .admin-table { width: 100%; border-collapse: collapse; min-width: 800px; } /* บังคับความกว้างขั้นต่ำไม่ให้ตารางเบียดกันบน iPad */
         .admin-table th { background: #F7FAFC; padding: 12px; border-bottom: 1px solid var(--border-color); text-align: left; position: sticky; top: 0; z-index: 1;}
         .admin-table td { padding: 12px; border-bottom: 1px solid var(--border-color); vertical-align: middle;}
         
@@ -101,13 +102,20 @@
         .swal-form-group label { display: block; font-size: 0.95rem; color: var(--primary-blue); margin-bottom: 5px; font-weight: 500; }
         .swal-form-group input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-family: 'Kanit'; outline: none; box-sizing: border-box; }
         .swal-form-group input:focus { border-color: var(--secondary-blue); }
+
+        /* ==========================================
+           ปรับการแสดงผลบนจอ iPad (แนวนอน) ให้สมบูรณ์แบบ
+        ========================================== */
+        @media (max-width: 1180px) {
+            .admin-sidebar { width: 220px; } /* ลดขนาดเมนูแถบข้างลงเล็กน้อย */
+            .nav-item { padding: 12px 15px; font-size: 1rem; }
+            .stats-grid { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 15px; } /* ให้กล่องสรุปย่อตัวพอดีกรอบ */
+            .admin-content { padding: 20px; }
+        }
     </style>
 </head>
 <body>
 
-    <!-- ==========================================
-         โมดูล 1: หน้าขายของ (POS)
-    =========================================== -->
     <div id="pos-section">
         <header class="pos-navbar">
             <h1><img src="https://www.banhadsompan.ac.th/_files_school/86101511/data/86101511_0_20240629-000624.png" alt="โลโก้">ระบบสหกรณ์โรงเรียนบ้านหาดส้มแป้น</h1>
@@ -150,16 +158,12 @@
         </main>
     </div>
 
-    <!-- ==========================================
-         โมดูล 2: ระบบ Login เข้าแอดมิน (อัปเดตระบบดวงตา)
-    =========================================== -->
     <div id="login-modal">
         <div class="modal-box">
             <span class="close-btn" onclick="closeLoginModal()">×</span>
             <h3 style="color: var(--primary-blue); font-size: 1.4rem;">🔒 ยืนยันตัวตน (Admin)</h3>
             <p style="color: var(--text-muted); margin-top: 10px;">กรุณากรอกรหัสผ่านเพื่อเข้าสู่ระบบควบคุม</p>
             
-            <!-- กรอกรหัสผ่านพร้อมไอคอนเปิด/ปิดตา -->
             <div style="position: relative; margin: 20px 0;">
                 <input type="password" id="admin-pwd" placeholder="••••••••" autocomplete="off" style="margin: 0; padding-right: 45px; width: 100%;">
                 <span id="toggle-pwd-icon" onclick="togglePassword()" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 1.2rem; user-select: none;">👁️</span>
@@ -170,9 +174,6 @@
         </div>
     </div>
 
-    <!-- ==========================================
-         โมดูล 3: ระบบหลังบ้าน (Admin Dashboard)
-    =========================================== -->
     <div id="admin-section">
         <aside class="admin-sidebar">
             <div class="admin-brand">
@@ -194,7 +195,6 @@
             <header class="admin-topbar">
                 <h2 id="admin-page-title" style="color: var(--primary-blue); font-size: 1.3rem;">ภาพรวมบัญชี</h2>
                 
-                <!-- อัปเดต Topbar ให้แสดงปีการศึกษาปัจจุบันด้วย -->
                 <div style="background: #FFF5F5; color: var(--accent-red); padding: 8px 16px; border-radius: 20px; font-size: 0.9rem; border: 1px solid #FEB2B2; display: flex; gap: 15px; align-items: center;">
                     <span>ปีการศึกษา: <b id="topbar-year">-</b></span>
                     <span style="border-left: 1px solid #FEB2B2; padding-left: 15px;">ผู้ใช้งาน: <span id="admin-name">Admin</span></span>
@@ -202,7 +202,6 @@
             </header>
 
             <div class="admin-content">
-                <!-- แท็บ 1: ภาพรวม (Dashboard) -->
                 <div id="tab-dashboard" class="tab-pane active">
                     <div class="stats-grid">
                         <div class="stat-box"><p>ยอดขายรวม</p><h3 id="dash-sales">0.00</h3></div>
@@ -217,7 +216,6 @@
                     </div>
                 </div>
 
-                <!-- แท็บ 2: สมาชิก -->
                 <div id="tab-members" class="tab-pane">
                     <div class="admin-card">
                         <div style="display: flex; justify-content: space-between; align-items: flex-end;">
@@ -245,7 +243,6 @@
                     </div>
                 </div>
 
-                <!-- แท็บ 3: ประวัติการซื้อ -->
                 <div id="tab-history" class="tab-pane">
                     <div class="admin-card">
                         <h3 style="color: var(--primary-blue);">📜 ประวัติการทำรายการแบบเรียลไทม์</h3>
@@ -258,7 +255,6 @@
                     </div>
                 </div>
 
-                <!-- แท็บ 4: รายจ่าย -->
                 <div id="tab-expenses" class="tab-pane">
                     <div class="admin-card">
                         <h3 style="color: var(--primary-blue); margin-bottom: 20px;">💸 บันทึกรายจ่ายอื่นๆ (หักลบกำไร)</h3>
@@ -277,7 +273,6 @@
                     </div>
                 </div>
 
-                <!-- แท็บ 5: ประวัติการแก้ไข (Audit Log) -->
                 <div id="tab-audit" class="tab-pane">
                     <div class="admin-card">
                         <h3 style="color: var(--primary-blue);">📑 ประวัติการลบข้อมูล (Audit Log)</h3>
@@ -290,19 +285,17 @@
                     </div>
                 </div>
 
-                <!-- แท็บ 6: ตั้งค่าระบบ (อัปเดตระบบปีการศึกษา) -->
                 <div id="tab-settings" class="tab-pane">
                     <div class="admin-card">
                         <h3 style="color: var(--primary-blue); margin-bottom: 20px;">⚙️ ตั้งค่าระบบ</h3>
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
                             
-                            <!-- 1. ตั้งค่าปีการศึกษาปัจจุบัน (ใหม่) -->
                             <div style="background: #F7FAFC; padding: 20px; border-radius: 10px; border: 1px solid var(--border-color); grid-column: 1 / -1;">
                                 <h4 style="color: var(--primary-blue);">🎓 ตั้งค่าปีการศึกษาปัจจุบัน (ระบบทำการ)</h4>
-                                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 10px;">ระบบจะบันทึกยอดขายและปันผลอิงตามปีการศึกษานี้ หากจบปีแล้วให้มาเปลี่ยนที่นี่ครับ</p>
+                                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 10px;">ระบบจะอิงปีการศึกษานี้ หากจบปีแล้วให้มาเปลี่ยนที่นี่</p>
                                 <div class="form-row" style="margin-top: 10px;">
                                     <select id="setting-current-year" style="flex:1; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-family: 'Kanit';">
-                                        <option value="">-- เลือกปีการศึกษาที่มีในระบบ --</option>
+                                        <option value="">-- เลือกปีการศึกษา --</option>
                                     </select>
                                     <input type="text" id="setting-new-year" placeholder="หรือพิมพ์ปีใหม่ เช่น 2568" style="flex:1;">
                                     <button class="btn-blue" onclick="saveCurrentYear()">บันทึกปีปัจจุบัน</button>
@@ -312,7 +305,6 @@
                                 </div>
                             </div>
 
-                            <!-- 2. ตั้งค่าราคาหุ้น -->
                             <div style="background: #F7FAFC; padding: 20px; border-radius: 10px; border: 1px solid var(--border-color);">
                                 <h4 style="color: var(--primary-blue);">💰 ตั้งค่าราคาหุ้น (ต่อหน่วย)</h4>
                                 <div class="form-row" style="margin-top: 10px;">
@@ -321,7 +313,6 @@
                                 </div>
                             </div>
                             
-                            <!-- 3. ตั้งค่าห้องเรียน -->
                             <div style="background: #F7FAFC; padding: 20px; border-radius: 10px; border: 1px solid var(--border-color);">
                                 <h4 style="color: var(--primary-blue);">🏫 ระดับชั้นเรียน</h4>
                                 <div class="form-row" style="margin-top: 10px;">
@@ -340,7 +331,7 @@
 
     <script>
         // ==========================================
-        // ตั้งค่า API ขาออก
+        // URL ของ Google Apps Script ของคุณ
         // ==========================================
         const SHEET_API_URL = "https://script.google.com/macros/s/AKfycbwnXkLLhzRf38_c268mD5_aKN447wO87sJVRzJcntB-0zjgm_Y1vQHotgNQZXrq3T7few/exec";
 
@@ -365,22 +356,13 @@
         function togglePassword() {
             const pwd = document.getElementById('admin-pwd');
             const icon = document.getElementById('toggle-pwd-icon');
-            if (pwd.type === "password") {
-                pwd.type = "text";
-                icon.innerText = "🙈"; 
-            } else {
-                pwd.type = "password";
-                icon.innerText = "👁️";
-            }
+            if (pwd.type === "password") { pwd.type = "text"; icon.innerText = "🙈"; } 
+            else { pwd.type = "password"; icon.innerText = "👁️"; }
         }
 
         async function openAdminLogin() {
-            loginModal.style.display = 'flex';
-            pwdInput.value = '';
-            document.getElementById('pwd-error').style.display = 'none';
-            pwdInput.type = "password";
-            document.getElementById('toggle-pwd-icon').innerText = "👁️";
-            pwdInput.focus();
+            loginModal.style.display = 'flex'; pwdInput.value = ''; document.getElementById('pwd-error').style.display = 'none';
+            pwdInput.type = "password"; document.getElementById('toggle-pwd-icon').innerText = "👁️"; pwdInput.focus();
         }
         function closeLoginModal() { loginModal.style.display = 'none'; document.getElementById('input-student-id').focus(); }
 
@@ -392,8 +374,7 @@
                 if(!adminInitialized) { initRealtimeListeners(); adminInitialized = true; }
                 Swal.fire({ title: 'เข้าสู่ระบบสำเร็จ', icon: 'success', timer: 1000, showConfirmButton: false });
             } else {
-                document.getElementById('pwd-error').style.display = 'block';
-                pwdInput.value = ''; pwdInput.focus();
+                document.getElementById('pwd-error').style.display = 'block'; pwdInput.value = ''; pwdInput.focus();
             }
         }
         
@@ -410,8 +391,7 @@
         // ระบบ POST ข้อมูลกลับเข้า Google Sheets
         // ==========================================
         async function sendToGoogleSheets(sheetName, rowDataArray) {
-            try {
-                await fetch(SHEET_API_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ sheetName: sheetName, rowData: rowDataArray }) });
+            try { await fetch(SHEET_API_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify({ sheetName: sheetName, rowData: rowDataArray }) });
             } catch (error) { console.error(error); }
         }
 
@@ -574,10 +554,8 @@
 
             if(!finalYear) return Swal.fire('ข้อมูลไม่ครบ', 'กรุณาระบุปีการศึกษา', 'warning');
 
-            // บันทึกปีการศึกษาปัจจุบัน
             await db.collection("settings").doc("system").set({ currentYear: finalYear }, { merge: true });
             
-            // ถ้าเป็นการพิมพ์ใหม่ ให้เอาไปเพิ่มใน Dropdown ด้วย
             if(inputVal !== "") {
                 await db.collection("settings").doc("dropdowns").set({ years: firebase.firestore.FieldValue.arrayUnion(finalYear) }, { merge: true });
             }
@@ -607,8 +585,8 @@
                 let html = ''; let c = 0; let tShares = 0;
                 snapshot.forEach(doc => {
                     const d = doc.data(); c++; tShares += (d.shares || 0); const sVal = (d.shares || 0) * price;
-                    html += `<tr><td>${doc.id}</td><td>${d.name}</td><td>${d.class||'-'}</td><td>${d.register_date||'-'}</td><td style="color:#805AD5; font-weight:500;">${d.shares||0} <span style="font-size:0.8rem; color:#A0AEC0;">(฿${sVal})</span></td><td style="color:#38A169;">฿${(d.total_buy_accumulated||0).toFixed(2)}</td>
-                             <td><button class="btn-blue" style="padding:6px 12px; font-size:0.85rem;" onclick="editMember('${doc.id}', '${d.name}', '${d.class||''}', ${d.shares||0}, '${d.register_date||''}')">✏️ แก้ไข</button> <button class="btn-red" onclick="confirmDelete('members', '${doc.id}', 'สมาชิก ${d.name}')">🗑️</button></td></tr>`;
+                    html += `<tr><td>${doc.id}</td><td style="min-width: 150px;">${d.name}</td><td>${d.class||'-'}</td><td>${d.register_date||'-'}</td><td style="color:#805AD5; font-weight:500; min-width: 100px;">${d.shares||0} <span style="font-size:0.8rem; color:#A0AEC0;">(฿${sVal})</span></td><td style="color:#38A169; min-width: 100px;">฿${(d.total_buy_accumulated||0).toFixed(2)}</td>
+                             <td style="min-width: 150px;"><button class="btn-blue" style="padding:6px 12px; font-size:0.85rem;" onclick="editMember('${doc.id}', '${d.name}', '${d.class||''}', ${d.shares||0}, '${d.register_date||''}')">✏️ แก้ไข</button> <button class="btn-red" onclick="confirmDelete('members', '${doc.id}', 'สมาชิก ${d.name}')">🗑️</button></td></tr>`;
                 });
                 tb.innerHTML = c === 0 ? '<tr><td colspan="7" align="center">ไม่มีข้อมูล</td></tr>' : html;
                 document.getElementById('dash-total-members').innerText = c; document.getElementById('dash-shares-value').innerText = (tShares * price).toLocaleString();
@@ -647,7 +625,6 @@
             db.collection("settings").doc("dropdowns").onSnapshot((doc) => {
                 const d = doc.data() || { classes: [], years: [] };
                 
-                // ดึงปีการศึกษาไปใส่ใน Select
                 let yearSelect = document.getElementById('setting-current-year');
                 yearSelect.innerHTML = '<option value="">-- เลือกปีการศึกษาที่มีในระบบ --</option>' + (d.years || []).map(y => `<option value="${y}">${y}</option>`).join('');
                 

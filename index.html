@@ -398,20 +398,16 @@
         // ฟังก์ชันแปลงวันที่ให้แสดงผลสวยงามและแก้บั๊กตัว T
         function formatDisplayDate(dateString) {
             if (!dateString || dateString === '-') return '-';
-            
-            if (typeof dateString === 'string' && dateString.includes('T')) {
+            try {
                 let d = new Date(dateString);
                 if (!isNaN(d.getTime())) {
                     let year = d.getFullYear();
+                    if (year < 2500) year += 543;
                     let day = d.getDate();
                     let months = ["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
-                    let month = months[d.getMonth()];
-                    
-                    if (year < 2500) year += 543;
-                    
-                    return `${day} ${month} ${year}`;
+                    return `${day} ${months[d.getMonth()]} ${year}`;
                 }
-            }
+            } catch(e) {}
             return dateString;
         }
 
@@ -878,7 +874,8 @@
                     
                     membersArr.forEach(d => {
                         c++; tShares += d.shares; const sVal = d.shares * price;
-                        html += `<tr><td>${d.id}</td><td style="min-width: 150px;">${d.name}</td><td>${d.class}</td><td>${d.register_date}</td><td style="color:#805AD5; font-weight:500; min-width: 100px;">${d.shares} <span style="font-size:0.8rem; color:#A0AEC0;">(฿${sVal.toFixed(2)})</span></td><td style="color:#38A169; min-width: 100px;">฿${d.total_buy_accumulated.toFixed(2)}</td>
+                        let displayDate = formatDisplayDate(d.register_date); // <--- เพิ่มตัวสั่งงานตรงนี้!
+                        html += `<tr><td>${d.id}</td><td style="min-width: 150px;">${d.name}</td><td>${d.class}</td><td>${displayDate}</td><td style="color:#805AD5; font-weight:500; min-width: 100px;">${d.shares} <span style="font-size:0.8rem; color:#A0AEC0;">(฿${sVal.toFixed(2)})</span></td><td style="color:#38A169; min-width: 100px;">฿${d.total_buy_accumulated.toFixed(2)}</td>
                                  <td style="min-width: 150px;"><button class="btn-blue" style="padding:6px 12px; font-size:0.85rem;" onclick="editMember('${d.id}', '${d.name}', '${d.class}', ${d.shares}, '${d.register_date}')">✏️ แก้ไข</button> <button class="btn-red" onclick="confirmDelete('members', '${d.id}', 'สมาชิก ${d.name}')">🗑️</button></td></tr>`;
                     });
                     if (tb) tb.innerHTML = c === 0 ? '<tr><td colspan="7" align="center">ไม่มีข้อมูล</td></tr>' : html;

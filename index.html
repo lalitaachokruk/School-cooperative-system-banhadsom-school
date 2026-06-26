@@ -55,7 +55,7 @@
         .highlight-price { color: var(--accent-red); font-size: 1.8rem; font-weight: 600; }
 
         /* ==========================================
-           2. ระบบ Login & ไอคอนดวงตาเวกเตอร์แบบสมบูรณ์
+           2. ระบบ Login & ไอคอนดวงตาเวกเตอร์
         ========================================== */
         #login-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(10, 25, 47, 0.7); backdrop-filter: blur(5px); display: none; justify-content: center; align-items: center; z-index: 9999; }
         .modal-box { background: white; padding: 40px; border-radius: var(--radius-md); text-align: center; width: 100%; max-width: 400px; position: relative; }
@@ -101,7 +101,6 @@
         .form-row { display: flex; gap: 10px; margin-bottom: 15px; align-items: center;}
         .form-row input, .form-row select { padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-family: 'Kanit'; outline: none; }
         
-        /* ปุ่มคู่มือดีไซน์เรียบหรูสีครามทะเลลึก */
         #floating-manual-btn { position: fixed; bottom: 25px; right: 25px; z-index: 999; background-color: #319795; color: white; border: none; border-radius: 50%; width: 55px; height: 55px; font-size: 1.4rem; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.2); display: flex; align-items: center; justify-content: center; transition: 0.3s; }
         #floating-manual-btn:hover { background-color: #234e52; transform: scale(1.05); }
 
@@ -382,27 +381,21 @@
         function toArabic(text) { const t=['๐','๑','๒','๓','๔','๕','๖','๗','๘','๙']; return text.replace(/[๐-๙]/g, m => t.indexOf(m)); }
         function toThai(text) { const t=['๐','๑','๒','๓','๔','๕','๖','๗','๘','๙']; return text.replace(/[0-9]/g, m => t[m]); }
 
-        // ฟังก์ชันลอจิกช่วยกรองและล็อกปี พ.ศ. ขั้นเด็ดขาด (ป้องกันการเพี้ยนเป็น 2510)
+        // ฟังก์ชันลอจิกช่วยล็อกปี พ.ศ. ขั้นเด็ดขาด (ป้องกันการเพี้ยนเป็น 2510)
         function formatDisplayDate(dateString) {
             if (!dateString || dateString === '-') return '-';
             
-            // ตรวจสอบแบบ String ดิบ เพื่อดึงปี ค.ศ. คลาดเคลื่อนออกโดยตรง
-            let rawYear = null;
-            if (typeof dateString === 'string') {
-                if (dateString.includes('T')) { rawYear = parseInt(dateString.split('-')[0]); }
-                else if (dateString.includes('/')) { let pts = dateString.split('/'); if(pts.length === 3) rawYear = parseInt(pts[2]); }
-            }
-
             let d = new Date(dateString);
             if (isNaN(d.getTime())) return dateString; 
 
-            let year = rawYear ? rawYear : d.getFullYear();
+            let year = d.getFullYear();
             let day = d.getDate();
             let months = ["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
             let month = months[d.getMonth()];
             
-            // ล็อกตัวเลขปี พ.ศ. ให้เป็นช่วงปกติของปีการศึกษาปัจจุบัน
+            // ล็อกตัวเลขปี พ.ศ. ให้ถูกต้องตามมาตรฐานปฏิทินไทย
             if (year >= 1960 && year <= 1999) { year = 2500 + (year % 100); } 
+            else if (year < 1960) { year = year + 543; }
             else if (year >= 2000 && year < 2500) { year = year + 543; }
 
             return `${day} ${month} ${year}`;
@@ -448,7 +441,7 @@
         function exitAdmin() { adminSection.style.display = 'none'; posSection.style.display = 'flex'; resetPOS(); }
 
         // ==========================================
-        // ระบบบริหารจัดการคิวจัดพิมพ์บาร์โค้ด (V.9)
+        // ระบบจัดคิวและจัดพิมบาร์โค้ด
         // ==========================================
         let activePrintItems = [];
 
@@ -519,7 +512,6 @@
             let students = activePrintItems.filter(i => i.type === 'student');
             let products = activePrintItems.filter(i => i.type === 'product');
             
-            // 1. จัดพิมบัตรนักเรียนแบบตาราง Grid 6 ใบต่อหนึ่งหน้า A4 พอดีเป๊ะตามสั่ง
             if (students.length > 0) {
                 contentHtml += `<h3 class="no-print" style="font-family:'Kanit'; text-align:center; background:#EDF2F7; padding:10px;">[หมวดที่ 1: บัตรบาร์โค้ดประจำตัวนักเรียน (จัดหน้า 6 บัตรต่อแผ่น A4)]</h3>`;
                 let totalPages = Math.ceil(students.length / 6);
@@ -546,9 +538,8 @@
                 }
             }
             
-            // 2. จัดพิมพ์บาร์โค้ดสินค้าสติกเกอร์แยกสัดส่วนเด็ดขาด
             if (products.length > 0) {
-                contentHtml += `<h3 class="no-print" style="font-family:'Kanit'; text-align:center; background:#EDF2F7; padding:10px; margin-top:30px;">[หมวดที่ 2: ป้ายสติกเกอร์บาร์코้ดราคาสินค้าหน้าร้าน]</h3>`;
+                contentHtml += `<h3 class="no-print" style="font-family:'Kanit'; text-align:center; background:#EDF2F7; padding:10px; margin-top:30px;">[หมวดที่ 2: ป้ายสติกเกอร์บาร์โค้ดราคาสินค้าหน้าร้าน]</h3>`;
                 contentHtml += `<div class="product-wrap-zone">`;
                 products.forEach((prod, pIdx) => {
                     contentHtml += `
@@ -608,15 +599,8 @@
         }
 
         // ==========================================
-        // ระบบส่งออกข้อมูลและ Listeners ระบบปกติ
+        // ฟังก์ชันระบบทั่วไป
         // ==========================================
-        function switchAdminTab(tabId, element) {
-            document.querySelectorAll('.tab-pane').forEach(tab => tab.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
-            document.getElementById('tab-' + tabId).classList.add('active'); element.classList.add('active');
-            document.getElementById('admin-page-title').innerText = element.innerText.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF] /g, '');
-        }
-
         document.getElementById('search-member-input').addEventListener('keyup', function() {
             let filter = this.value.toLowerCase(); let rows = document.querySelectorAll('#admin-member-list tr');
             rows.forEach(row => { if(row.children.length > 1) { let text = row.innerText.toLowerCase(); row.style.display = text.includes(filter) ? '' : 'none'; } });
@@ -645,28 +629,34 @@
         async function addExpense() {
             const date = document.getElementById('exp-date').value; const name = document.getElementById('exp-name').value.trim(); const amount = parseFloat(document.getElementById('exp-amount').value);
             if(!name || isNaN(amount)) return Swal.fire('ข้อมูลไม่ครบ', '', 'warning');
-            await db.collection("expenses").add({ date: date, name: name, amount: amount, timestamp: firebase.firestore.FieldValue.serverTimestamp() });
-            sendToGoogleSheets("Expenses", [date, new Date().toLocaleTimeString('th-TH'), name, amount]);
-            Swal.fire({ icon: 'success', title: 'บันทึกรายจ่ายสำเร็จ', timer: 1000, showConfirmButton: false});
-            document.getElementById('exp-name').value = ''; document.getElementById('exp-amount').value = '';
+            try {
+                await db.collection("expenses").add({ date: date, name: name, amount: amount, timestamp: firebase.firestore.FieldValue.serverTimestamp() });
+                sendToGoogleSheets("Expenses", [date, new Date().toLocaleTimeString('th-TH'), name, amount]);
+                Swal.fire({ icon: 'success', title: 'บันทึกรายจ่ายสำเร็จ', timer: 1000, showConfirmButton: false});
+                document.getElementById('exp-name').value = ''; document.getElementById('exp-amount').value = '';
+            } catch(e) { Swal.fire('Error', 'บันทึกไม่สำเร็จ', 'error'); }
         }
 
         async function saveCurrentYear() {
             let selectVal = document.getElementById('setting-current-year').value; let inputVal = document.getElementById('setting-new-year').value.trim();
             let finalYear = inputVal !== "" ? inputVal : selectVal;
             if(!finalYear) return Swal.fire('ข้อมูลไม่ครบ', 'กรุณาระบุปีการศึกษา', 'warning');
-            await db.collection("settings").doc("system").set({ currentYear: finalYear }, { merge: true });
-            if(inputVal !== "") { await db.collection("settings").doc("dropdowns").set({ years: firebase.firestore.FieldValue.arrayUnion(finalYear) }, { merge: true }); }
-            document.getElementById('setting-new-year').value = '';
-            Swal.fire({ icon: 'success', title: 'ตั้งค่าปีการศึกษาสำเร็จ', timer: 1500, showConfirmButton: false});
+            try {
+                await db.collection("settings").doc("system").set({ currentYear: finalYear }, { merge: true });
+                if(inputVal !== "") { await db.collection("settings").doc("dropdowns").set({ years: firebase.firestore.FieldValue.arrayUnion(finalYear) }, { merge: true }); }
+                document.getElementById('setting-new-year').value = '';
+                Swal.fire({ icon: 'success', title: 'ตั้งค่าปีการศึกษาสำเร็จ', timer: 1500, showConfirmButton: false});
+            } catch(e) { Swal.fire('Error', 'บันทึกปีการศึกษาล้มเหลว', 'error'); }
         }
 
         async function addSetting(field, inputId) {
             const val = document.getElementById(inputId).value.trim(); if(!val) return;
-            await db.collection("settings").doc("dropdowns").set({ [field]: firebase.firestore.FieldValue.arrayUnion(val) }, { merge: true });
-            document.getElementById(inputId).value = '';
+            try {
+                await db.collection("settings").doc("dropdowns").set({ [field]: firebase.firestore.FieldValue.arrayUnion(val) }, { merge: true });
+                document.getElementById(inputId).value = '';
+            } catch(e) { console.error(e); }
         }
-        async function removeSetting(field, val) { await db.collection("settings").doc("dropdowns").set({ [field]: firebase.firestore.FieldValue.arrayRemove(val) }, { merge: true }); }
+        async function removeSetting(field, val) { try { await db.collection("settings").doc("dropdowns").set({ [field]: firebase.firestore.FieldValue.arrayRemove(val) }, { merge: true }); } catch(e) { console.error(e); } }
 
         async function calculateDividend() {
             const netProfit = gSales - gExp;
@@ -680,80 +670,137 @@
                 let totalPct = formValues.reserve + formValues.sharePct + formValues.buyPct;
                 if (totalPct !== 100) return Swal.fire('ผลรวมไม่ถูกต้อง', 'เปอร์เซ็นต์รวมทั้งหมดต้องเท่ากับ 100%', 'error');
                 Swal.fire({ title: 'กำลังคำนวณยอด...', didOpen: () => Swal.showLoading() });
-                let shareDivAmt = formValues.net * (formValues.sharePct / 100); let buyDivAmt = formValues.net * (formValues.buyPct / 100);
-                const snapshot = await db.collection("members").get(); let totalShares = 0; let totalBuys = 0; let membersList = [];
-                snapshot.forEach(doc => { let d = doc.data(); totalShares += (d.shares || 0); totalBuys += (d.total_buy_accumulated || 0); membersList.push({ id: doc.id, name: d.name, shares: d.shares||0, buy: d.total_buy_accumulated||0 }); });
-                let divPerShare = totalShares > 0 ? shareDivAmt / totalShares : 0; let divPerBuy = totalBuys > 0 ? buyDivAmt / totalBuys : 0;
-                let resultHtml = `<div style="text-align:left; font-size:0.95rem; max-height:300px; overflow-y:auto;"><p style="color:#805AD5;"><b>ปันผลต่อ 1 หุ้น:</b> ฿${divPerShare.toFixed(2)}</p><p style="color:#38A169;"><b>ปันผลต่อยอดซื้อ 1 บาท:</b> ฿${divPerBuy.toFixed(2)}</p><hr style="margin:15px 0;"><table style="width:100%; border-collapse: collapse;"><tr><th style="border-bottom:1px solid #ccc; text-align:left; padding-bottom:8px;">รหัส-ชื่อ</th><th style="border-bottom:1px solid #ccc; text-align:right; padding-bottom:8px;">รวมปันผล (บาท)</th></tr>`;
-                membersList.forEach(m => { let myTotalDiv = (m.shares * divPerShare) + (m.buy * divPerBuy); if(myTotalDiv > 0) { resultHtml += `<tr><td style="border-bottom:1px solid #eee; padding:8px 0;">${m.id} ${m.name}</td><td style="border-bottom:1px solid #eee; padding:8px 0; text-align:right; color:#E53E3E; font-weight:500;">฿${myTotalDiv.toFixed(2)}</td></tr>`; } });
-                resultHtml += `</table></div>`; Swal.fire({ title: 'สรุปยอดเงินปันผลประจำปี', html: resultHtml, width: '600px', confirmButtonText: 'ปิด' });
+                try {
+                    let shareDivAmt = formValues.net * (formValues.sharePct / 100); let buyDivAmt = formValues.net * (formValues.buyPct / 100);
+                    const snapshot = await db.collection("members").get(); let totalShares = 0; let totalBuys = 0; let membersList = [];
+                    snapshot.forEach(doc => { let d = doc.data(); totalShares += (d.shares || 0); totalBuys += (d.total_buy_accumulated || 0); membersList.push({ id: doc.id, name: d.name, shares: d.shares||0, buy: d.total_buy_accumulated||0 }); });
+                    let divPerShare = totalShares > 0 ? shareDivAmt / totalShares : 0; let divPerBuy = totalBuys > 0 ? buyDivAmt / totalBuys : 0;
+                    let resultHtml = `<div style="text-align:left; font-size:0.95rem; max-height:300px; overflow-y:auto;"><p style="color:#805AD5;"><b>ปันผลต่อ 1 หุ้น:</b> ฿${divPerShare.toFixed(2)}</p><p style="color:#38A169;"><b>ปันผลต่อยอดซื้อ 1 บาท:</b> ฿${divPerBuy.toFixed(2)}</p><hr style="margin:15px 0;"><table style="width:100%; border-collapse: collapse;"><tr><th style="border-bottom:1px solid #ccc; text-align:left; padding-bottom:8px;">รหัส-ชื่อ</th><th style="border-bottom:1px solid #ccc; text-align:right; padding-bottom:8px;">รวมปันผล (บาท)</th></tr>`;
+                    membersList.forEach(m => { let myTotalDiv = (m.shares * divPerShare) + (m.buy * divPerBuy); if(myTotalDiv > 0) { resultHtml += `<tr><td style="border-bottom:1px solid #eee; padding:8px 0;">${m.id} ${m.name}</td><td style="border-bottom:1px solid #eee; padding:8px 0; text-align:right; color:#E53E3E; font-weight:500;">฿${myTotalDiv.toFixed(2)}</td></tr>`; } });
+                    resultHtml += `</table></div>`; Swal.fire({ title: 'สรุปยอดเงินปันผลประจำปี', html: resultHtml, width: '600px', confirmButtonText: 'ปิด' });
+                } catch(e) { Swal.fire('Error', 'คำนวณปันผลผิดพลาด', 'error'); }
             }
         }
 
+        // ==========================================
+        // 5. สถาปัตยกรรม Real-time Listeners (Client-Side Sorting)
+        // แก้ไขโครงสร้างแยก Try-Catch เด็ดขาด ป้องกันบั๊กและอาการค้างทั้งหมด
+        // ==========================================
+        let salesChartInstance = null; let gSales = 0; let gExp = 0;
+
         function initRealtimeListeners() {
-            db.collection("settings").doc("system").onSnapshot((doc) => { if(doc.exists) { let d = doc.data(); let cYear = d.currentYear || "-"; document.getElementById('active-year-display').innerText = cYear; document.getElementById('topbar-year').innerText = cYear; } });
-
-            // ตารางสมาชิกและการสะสมหุ้นแบบสมบูรณ์
-            db.collection("members").onSnapshot((snapshot) => {
-                const tb = document.getElementById('admin-member-list'); const price = parseFloat(document.getElementById('setting-share-price').value) || 10;
-                let html = ''; let c = 0; let tShares = 0;
-                snapshot.forEach(doc => {
-                    const d = doc.data(); c++; tShares += (d.shares || 0); const sVal = (d.shares || 0) * price;
-                    let displayDate = formatDisplayDate(d.register_date);
-                    html += `<tr><td>${doc.id}</td><td>${d.name}</td><td>${d.class||'-'}</td><td>${displayDate}</td><td style="color:#805AD5; font-weight:500;">${d.shares||0} <span style="font-size:0.8rem; color:#A0AEC0;">(฿${sVal.toFixed(2)})</span></td><td style="color:#38A169;">฿${(d.total_buy_accumulated||0).toFixed(2)}</td>
-                             <td><button class="btn-blue" style="padding:6px 12px; font-size:0.85rem;" onclick="editMember('${doc.id}', '${d.name}', '${d.class||''}', ${d.shares||0}, '${d.register_date||''}')">✏️ แก้ไข</button> <button class="btn-red" onclick="confirmDelete('members', '${doc.id}', 'สมาชิก ${d.name}')">🗑️</button></td></tr>`;
+            // 5.1 ระบบตรวจสอบปีการศึกษาปัจจุบัน
+            try {
+                db.collection("settings").doc("system").onSnapshot((doc) => {
+                    if(doc.exists) {
+                        let d = doc.data(); let cYear = d.currentYear || "-";
+                        document.getElementById('active-year-display').innerText = cYear; document.getElementById('topbar-year').innerText = cYear;
+                    }
                 });
-                tb.innerHTML = c === 0 ? '<tr><td colspan="7" align="center">ไม่มีข้อมูล</td></tr>' : html;
-                document.getElementById('dash-total-members').innerText = c; 
-                document.getElementById('dash-shares-value').innerText = (tShares * price).toLocaleString(undefined, {minimumFractionDigits: 2});
-                document.getElementById('search-member-input').dispatchEvent(new Event('keyup'));
-            });
+            } catch(e) { console.error(e); }
 
-            db.collection("transactions").orderBy("timestamp", "desc").onSnapshot((snapshot) => {
-                const tb = document.getElementById('admin-history-list'); let html = ''; gSales = 0; let dateGroups = {};
-                snapshot.forEach(doc => {
-                    const d = doc.data(); gSales += (d.amount || 0); const time = d.timestamp ? d.timestamp.toDate().toLocaleTimeString('th-TH') : '';
-                    html += `<tr><td>${d.date} ${time}</td><td>${d.member_id}</td><td>${d.member_name||'-'}</td><td style="color:#38A169; font-weight:500;">+ ฿${(d.amount||0).toFixed(2)}</td><td>${d.recorded_by}</td><td><button class="btn-red" onclick="confirmDelete('transactions', '${doc.id}', 'บิลซื้อ ${d.member_name} ยอด ${d.amount}')">ลบ</button></td></tr>`;
-                    if(d.date) { dateGroups[d.date] = (dateGroups[d.date] || 0) + (d.amount || 0); }
+            // 5.2 ตารางข้อมูลสมาชิกและผู้ถือหุ้น
+            try {
+                db.collection("members").onSnapshot((snapshot) => {
+                    const tb = document.getElementById('admin-member-list'); const price = parseFloat(document.getElementById('setting-share-price').value) || 10;
+                    let html = ''; let c = 0; let tShares = 0;
+                    snapshot.forEach(doc => {
+                        const d = doc.data(); c++; tShares += (d.shares || 0); const sVal = (d.shares || 0) * price;
+                        let displayDate = formatDisplayDate(d.register_date);
+                        html += `<tr><td>${doc.id}</td><td>${d.name}</td><td>${d.class||'-'}</td><td>${displayDate}</td><td style="color:#805AD5; font-weight:500;">${d.shares||0} <span style="font-size:0.8rem; color:#A0AEC0;">(฿${sVal.toFixed(2)})</span></td><td style="color:#38A169;">฿${(d.total_buy_accumulated||0).toFixed(2)}</td>
+                                 <td><button class="btn-blue" style="padding:6px 12px; font-size:0.85rem;" onclick="editMember('${doc.id}', '${d.name}', '${d.class||''}', ${d.shares||0}, '${d.register_date||''}')">✏️ แก้ไข</button> <button class="btn-red" onclick="confirmDelete('members', '${doc.id}', 'สมาชิก ${d.name}')">🗑️</button></td></tr>`;
+                    });
+                    tb.innerHTML = c === 0 ? '<tr><td colspan="7" align="center">ไม่มีข้อมูล</td></tr>' : html;
+                    document.getElementById('dash-total-members').innerText = c; 
+                    document.getElementById('dash-shares-value').innerText = (tShares * price).toLocaleString(undefined, {minimumFractionDigits: 2});
+                    document.getElementById('search-member-input').dispatchEvent(new Event('keyup'));
                 });
-                tb.innerHTML = snapshot.empty ? '<tr><td colspan="6" align="center">ไม่มีประวัติ</td></tr>' : html;
-                document.getElementById('dash-sales').innerText = gSales.toLocaleString(undefined, {minimumFractionDigits: 2}); updateNet(); updateChart(dateGroups);
-            });
+            } catch(e) { console.error(e); }
 
-            db.collection("expenses").orderBy("timestamp", "desc").onSnapshot((snapshot) => {
-                const tb = document.getElementById('admin-expenses-list'); let html = ''; gExp = 0;
-                snapshot.forEach(doc => {
-                    const d = doc.data(); gExp += (d.amount || 0);
-                    html += `<tr><td>${d.date}</td><td>${d.name}</td><td style="color:var(--accent-red); font-weight:500;">- ฿${(d.amount||0).toFixed(2)}</td><td><button class="btn-red" onclick="confirmDelete('expenses', '${doc.id}', 'รายจ่าย ${d.name}')">ลบ</button></td></tr>`;
-                });
-                tb.innerHTML = snapshot.empty ? '<tr><td colspan="4" align="center">ไม่มีข้อมูลรายจ่าย</td></tr>' : html;
-                document.getElementById('dash-expenses').innerText = gExp.toLocaleString(undefined, {minimumFractionDigits: 2}); updateNet();
-            });
+            // 5.3 ประวัติบันทึกรายการ (Client-Side Sorting ป้องกันปัญหากราฟล่มและค่าสับสน)
+            try {
+                db.collection("transactions").onSnapshot((snapshot) => {
+                    const tb = document.getElementById('admin-history-list'); let html = ''; gSales = 0;
+                    let dateGroups = {}; let items = [];
 
-            db.collection("audit_logs").orderBy("timestamp", "desc").onSnapshot((snapshot) => {
-                const tb = document.getElementById('admin-audit-list'); let html = '';
-                snapshot.forEach(doc => {
-                    const d = doc.data(); const time = d.timestamp ? d.timestamp.toDate().toLocaleString('th-TH') : 'เพิ่งดำเนินการ';
-                    html += `<tr><td>${time}</td><td>${d.action}</td><td>${d.details}</td><td style="color:var(--accent-red); font-weight:500;">${d.deleted_by}</td></tr>`;
+                    snapshot.forEach(doc => {
+                        const d = doc.data(); 
+                        let timestamp = d.timestamp ? d.timestamp.toDate() : new Date();
+                        items.push({ id: doc.id, date: d.date, timestamp: timestamp, member_id: d.member_id, member_name: d.member_name, amount: d.amount, recorded_by: d.recorded_by });
+                    });
+
+                    // เรียงประวัติจากใหม่ไปเก่าตามเวลาจริงบนเครื่องหน้าเว็บ
+                    items.sort((a, b) => b.timestamp - a.timestamp);
+
+                    items.forEach(d => {
+                        gSales += (d.amount || 0);
+                        let timeStr = d.timestamp.toLocaleTimeString('th-TH');
+                        html += `<tr><td>${d.date} ${timeStr}</td><td>${d.member_id}</td><td>${d.member_name||'-'}</td><td style="color:#38A169; font-weight:500;">+ ฿${(d.amount||0).toFixed(2)}</td><td>${d.recorded_by}</td><td><button class="btn-red" onclick="confirmDelete('transactions', '${d.id}', 'บิลซื้อ ${d.member_name} ยอด ${d.amount}')">ลบ</button></td></tr>`;
+                        if(d.date) { dateGroups[d.date] = (dateGroups[d.date] || 0) + (d.amount || 0); }
+                    });
+                    
+                    tb.innerHTML = items.length === 0 ? '<tr><td colspan="6" align="center">ไม่มีประวัติ</td></tr>' : html;
+                    document.getElementById('dash-sales').innerText = gSales.toLocaleString(undefined, {minimumFractionDigits: 2}); 
+                    updateNet(); 
+                    updateChart(dateGroups);
                 });
-                tb.innerHTML = snapshot.empty ? '<tr><td colspan="4" align="center">ไม่มีประวัติ</td></tr>' : html;
-            });
+            } catch(e) { console.error(e); }
+
+            // 5.4 ตารางรายจ่ายอื่นๆ
+            try {
+                db.collection("expenses").onSnapshot((snapshot) => {
+                    const tb = document.getElementById('admin-expenses-list'); let html = ''; gExp = 0; let items = [];
+                    snapshot.forEach(doc => {
+                        const d = doc.data();
+                        let timestamp = d.timestamp ? d.timestamp.toDate() : new Date();
+                        items.push({ id: doc.id, date: d.date, name: d.name, amount: d.amount, timestamp: timestamp });
+                    });
+
+                    items.sort((a, b) => b.timestamp - a.timestamp);
+
+                    items.forEach(d => {
+                        gExp += (d.amount || 0);
+                        html += `<tr><td>${d.date}</td><td>${d.name}</td><td style="color:var(--accent-red); font-weight:500;">- ฿${(d.amount||0).toFixed(2)}</td><td><button class="btn-red" onclick="confirmDelete('expenses', '${d.id}', 'รายจ่าย ${d.name}')">ลบ</button></td></tr>`;
+                    });
+                    tb.innerHTML = items.length === 0 ? '<tr><td colspan="4" align="center">ไม่มีข้อมูลรายจ่าย</td></tr>' : html;
+                    document.getElementById('dash-expenses').innerText = gExp.toLocaleString(undefined, {minimumFractionDigits: 2}); updateNet();
+                });
+            } catch(e) { console.error(e); }
+
+            // 5.5 ประวัติการลบข้อมูล (Audit Log)
+            try {
+                db.collection("audit_logs").onSnapshot((snapshot) => {
+                    const tb = document.getElementById('admin-audit-list'); let html = ''; let items = [];
+                    snapshot.forEach(doc => {
+                        const d = doc.data(); const time = d.timestamp ? d.timestamp.toDate() : new Date();
+                        items.push({ action: d.action, collection: d.collection, details: d.details, deleted_by: d.deleted_by, time: time });
+                    });
+
+                    items.sort((a, b) => b.time - a.time);
+
+                    items.forEach(d => {
+                        html += `<tr><td>${d.time.toLocaleString('th-TH')}</td><td>${d.action}</td><td>${d.details}</td><td style="color:var(--accent-red); font-weight:500;">${d.deleted_by}</td></tr>`;
+                    });
+                    tb.innerHTML = items.length === 0 ? '<tr><td colspan="4" align="center">ไม่มีประวัติ</td></tr>' : html;
+                });
+            } catch(e) { console.error(e); }
             
-            db.collection("settings").doc("dropdowns").onSnapshot((doc) => {
-                const d = doc.data() || { classes: [], years: [] };
-                let yearSelect = document.getElementById('setting-current-year');
-                yearSelect.innerHTML = '<option value="">-- เลือกปีการศึกษาที่มีในระบบ --</option>' + (d.years || []).map(y => `<option value="${y}">${y}</option>`).join('');
-                document.getElementById('list-classes').innerHTML = (d.classes || []).map(c => `<li style="padding:10px; background:#F7FAFC; border:1px solid #E2E8F0; margin-bottom:5px; display:flex; justify-content:space-between; border-radius:6px;">${c} <span style="color:#E53E3E; cursor:pointer;" onclick="removeSetting('classes', '${c}')">🗑️ ลบ</span></li>`).join('');
-                
-                // คัดลอกชั้นเรียนไปใส่ใน Filter ตัวจัดบาร์โค้ดอัตโนมัติ
-                let filterSelect = document.getElementById('barcode-student-class-filter');
-                if(filterSelect) { filterSelect.innerHTML = '<option value="all">-- นักเรียนทุกคนทั้งโรงเรียน --</option>' + (d.classes || []).map(c => `<option value="${c}">ชั้น ${c}</option>`).join(''); }
-            });
+            // 5.6 ตารางควบคุมข้อมูล ดรอปดาวน์ระบบ
+            try {
+                db.collection("settings").doc("dropdowns").onSnapshot((doc) => {
+                    const d = doc.data() || { classes: [], years: [] };
+                    let yearSelect = document.getElementById('setting-current-year');
+                    yearSelect.innerHTML = '<option value="">-- เลือกปีการศึกษาที่มีในระบบ --</option>' + (d.years || []).map(y => `<option value="${y}">${y}</option>`).join('');
+                    document.getElementById('list-classes').innerHTML = (d.classes || []).map(c => `<li style="padding:10px; background:#F7FAFC; border:1px solid #E2E8F0; margin-bottom:5px; display:flex; justify-content:space-between; border-radius:6px;">${c} <span style="color:#E53E3E; cursor:pointer;" onclick="removeSetting('classes', '${c}')">🗑️ ลบ</span></li>`).join('');
+                });
+            } catch(e) { console.error(e); }
         }
 
         function updateNet() { document.getElementById('dash-net').innerText = (gSales - gExp).toLocaleString(undefined, {minimumFractionDigits: 2}); }
+        
         function updateChart(dateGroups) {
-            const ctx = document.getElementById('salesChart').getContext('2d'); if(salesChartInstance) salesChartInstance.destroy();
+            const ctx = document.getElementById('salesChart').getContext('2d');
+            if(salesChartInstance) salesChartInstance.destroy();
             let labels = Object.keys(dateGroups).sort(); let data = labels.map(date => dateGroups[date]);
             if(labels.length === 0) { labels = ['รอการทำรายการ']; data = [0]; }
             salesChartInstance = new Chart(ctx, { type: 'bar', data: { labels: labels, datasets: [{ label: 'ยอดขายรายวัน (บาท)', data: data, backgroundColor: '#3182CE', borderRadius: 6 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } });

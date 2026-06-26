@@ -6,385 +6,302 @@
     <title>ระบบสหกรณ์โรงเรียนบ้านหาดส้มแป้น</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
-    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.1.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.1.0/firebase-firestore-compat.js"></script>
 
     <style>
         :root {
             --primary-blue: #1A365D;
-            --secondary-blue: #2B6CB0;
+            --secondary-blue: #3182CE;
             --accent-red: #E53E3E;
-            --bg-main: #F4F7FE; /* พื้นหลังสีเทาอมฟ้า หรูหราสบายตา */
+            --bg-body: #F8FAFC;
             --bg-white: #FFFFFF;
             --text-main: #2D3748;
-            --text-light: #718096;
+            --text-muted: #718096;
             --border-color: #E2E8F0;
-            --border-radius: 16px;
-            --shadow-card: 0px 10px 25px rgba(0, 0, 0, 0.05);
+            --radius-md: 10px;
         }
 
-        body {
-            font-family: 'Kanit', sans-serif;
-            background-color: var(--bg-main);
-            color: var(--text-main);
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Kanit', sans-serif; }
+        body { background-color: var(--bg-body); color: var(--text-main); overflow-x: hidden; }
 
-        /* แถบเมนูด้านบน */
-        .navbar {
-            background-color: var(--bg-white);
-            width: 100%;
-            padding: 15px 40px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-sizing: border-box;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.03);
-            border-bottom: 3px solid var(--primary-blue);
-        }
+        /* ==========================================
+           1. หน้า POS (จุดขาย)
+        ========================================== */
+        #pos-section { display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+        .pos-navbar { background: var(--bg-white); width: 100%; padding: 15px 40px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.03); border-bottom: 3px solid var(--primary-blue); }
+        .pos-navbar h1 { margin: 0; font-size: 1.4rem; color: var(--primary-blue); font-weight: 600; display: flex; align-items: center; gap: 15px;}
+        .pos-navbar img { height: 40px; }
+        .btn-admin-toggle { background: transparent; color: var(--text-muted); border: 1px solid var(--border-color); padding: 8px 16px; border-radius: 8px; cursor: pointer; transition: 0.3s; }
+        .btn-admin-toggle:hover { background: var(--primary-blue); color: white; }
 
-        .navbar-brand {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
+        .pos-container { width: 100%; max-width: 800px; margin-top: 40px; padding: 0 20px; margin-bottom: 50px;}
+        .pos-card { background: var(--bg-white); border-radius: var(--radius-md); box-shadow: 0 10px 25px rgba(0,0,0,0.05); padding: 40px; }
 
-        .navbar h1 { 
-            margin: 0; 
-            font-size: 1.4rem; 
-            color: var(--primary-blue);
-            font-weight: 600;
-        }
-        
-        .admin-btn {
-            background-color: transparent;
-            color: var(--text-light);
-            border: 1px solid var(--border-color);
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-family: 'Kanit', sans-serif;
-            cursor: pointer;
-            transition: 0.3s;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .admin-btn:hover { 
-            background-color: var(--primary-blue); 
-            color: var(--bg-white);
-            border-color: var(--primary-blue);
-        }
+        .date-selector { background: #F8FAFC; border: 1px solid var(--border-color); padding: 15px; border-radius: 10px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; }
+        .date-selector input { font-family: 'Kanit'; padding: 8px 12px; border: 1px solid #CBD5E0; border-radius: 6px; outline: none; color: var(--primary-blue); font-weight: 500; font-size: 1.1rem;}
 
-        /* โครงสร้างพื้นที่หลัก */
-        .main-container {
-            width: 100%;
-            max-width: 800px;
-            margin-top: 40px;
-            padding: 0 20px;
-            box-sizing: border-box;
-        }
+        /* แยก 2 ช่อง Input */
+        .input-group { margin-bottom: 20px; }
+        .input-group label { display: block; font-size: 1.1rem; font-weight: 500; color: var(--primary-blue); margin-bottom: 8px; }
+        .pos-input { width: 100%; padding: 18px; font-size: 1.5rem; border: 2px solid var(--border-color); border-radius: 10px; outline: none; background: #F7FAFC; transition: 0.3s; }
+        .pos-input:focus { background: white; border-color: var(--secondary-blue); box-shadow: 0 0 0 4px rgba(43, 108, 176, 0.1); }
+        .pos-input:disabled { background: #EDF2F7; border-color: #E2E8F0; color: #A0AEC0; cursor: not-allowed; }
 
-        /* การ์ด POS */
-        .pos-card {
-            background-color: var(--bg-white);
-            border-radius: var(--border-radius);
-            box-shadow: var(--shadow-card);
-            padding: 40px;
-        }
+        .member-alert { background: #EBF8FF; border-left: 4px solid var(--secondary-blue); padding: 15px 20px; border-radius: 0 10px 10px 0; display: none; justify-content: space-between; align-items: center; margin-bottom: 20px; color: var(--secondary-blue); font-size: 1.2rem; }
+        .btn-cancel { background: rgba(43, 108, 176, 0.1); color: var(--secondary-blue); border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; }
 
-        .date-selector {
-            background-color: #F8FAFC;
-            border: 1px solid var(--border-color);
-            padding: 15px 20px;
-            border-radius: 10px;
-            margin-bottom: 25px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-        
-        .date-selector label {
-            font-weight: 500;
-            color: var(--text-main);
-            font-size: 1.1rem;
-        }
-        
-        .date-selector input[type="date"] {
-            font-family: 'Kanit', sans-serif;
-            font-size: 1.1rem;
-            padding: 10px 15px;
-            border: 1px solid #CBD5E0;
-            border-radius: 8px;
-            outline: none;
-            color: var(--primary-blue);
-            font-weight: 500;
-        }
-
-        .scan-section {
-            margin-bottom: 25px;
-        }
-
-        .scan-section label {
-            display: block;
-            font-size: 1.1rem;
-            font-weight: 500;
-            color: var(--primary-blue);
-            margin-bottom: 10px;
-        }
-
-        #data-input {
-            width: 100%;
-            padding: 20px;
-            font-size: 1.5rem;
-            font-family: 'Kanit', sans-serif;
-            border: 2px solid var(--border-color);
-            border-radius: 10px;
-            outline: none;
-            box-sizing: border-box;
-            transition: all 0.3s ease;
-            background-color: #F7FAFC;
-        }
-
-        #data-input:focus {
-            background-color: var(--bg-white);
-            border-color: var(--secondary-blue);
-            box-shadow: 0 0 0 4px rgba(43, 108, 176, 0.1);
-        }
-
-        .member-info {
-            background-color: #EBF8FF;
-            border-left: 4px solid var(--secondary-blue);
-            color: var(--secondary-blue);
-            padding: 18px 20px;
-            border-radius: 0 10px 10px 0;
-            font-size: 1.2rem;
-            display: none;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 25px;
-        }
-
-        .member-info button {
-            background-color: rgba(43, 108, 176, 0.1);
-            color: var(--secondary-blue);
-            border: none;
-            padding: 8px 15px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-family: 'Kanit';
-            font-weight: 500;
-            transition: 0.2s;
-        }
-        .member-info button:hover { background-color: rgba(43, 108, 176, 0.2); }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        th, td {
-            padding: 15px;
-            border-bottom: 1px solid var(--border-color);
-            text-align: left;
-        }
-
-        th {
-            color: var(--text-light);
-            font-weight: 500;
-            text-transform: uppercase;
-            font-size: 0.9rem;
-            letter-spacing: 0.5px;
-        }
-
+        .pos-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        .pos-table th { background: #F7FAFC; color: var(--text-muted); font-weight: 500; padding: 15px; text-align: left; }
+        .pos-table td { padding: 15px; border-bottom: 1px solid var(--border-color); }
         .text-right { text-align: right; }
+        .highlight-price { color: var(--accent-red); font-size: 1.8rem; font-weight: 600; }
 
-        .total-row td {
-            font-size: 1.4rem;
-            font-weight: 600;
-            color: var(--text-main);
-            border-bottom: none;
-            padding-top: 25px;
-        }
+        /* ==========================================
+           2. โมดูล Login
+        ========================================== */
+        #login-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(10, 25, 47, 0.7); backdrop-filter: blur(5px); display: none; justify-content: center; align-items: center; z-index: 9999; }
+        .modal-box { background: white; padding: 40px; border-radius: var(--radius-md); text-align: center; width: 100%; max-width: 400px; position: relative; }
+        .close-btn { position: absolute; top: 15px; right: 20px; font-size: 1.5rem; cursor: pointer; color: var(--text-muted); }
+        .modal-box input { width: 100%; padding: 15px; font-size: 1.1rem; border: 2px solid var(--border-color); border-radius: 8px; margin: 20px 0; text-align: center; letter-spacing: 2px; outline: none; }
+        .modal-box button { width: 100%; padding: 15px; background: var(--primary-blue); color: white; border: none; border-radius: 8px; font-size: 1.1rem; cursor: pointer; }
 
-        .total-row .highlight-price {
-            color: var(--accent-red);
-            font-size: 1.8rem;
-        }
-
-        /* ----------------------------------
-           ระบบ Modal สำหรับ Login แอดมิน
-        ----------------------------------- */
-        #login-modal {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(10, 25, 47, 0.7); /* พื้นหลังทึบแสง */
-            backdrop-filter: blur(5px);
-            display: none; /* ซ่อนไว้เป็นค่าเริ่มต้น */
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-        }
-
-        .modal-content {
-            background: var(--bg-white);
-            padding: 40px;
-            border-radius: var(--border-radius);
-            box-shadow: 0 15px 30px rgba(0,0,0,0.2);
-            width: 100%;
-            max-width: 400px;
-            text-align: center;
-            position: relative;
-        }
-
-        .close-modal {
-            position: absolute;
-            top: 15px; right: 20px;
-            font-size: 1.5rem;
-            cursor: pointer;
-            color: var(--text-light);
-        }
-
-        .modal-content h3 { color: var(--primary-blue); margin-bottom: 10px; font-size: 1.4rem; }
-        .modal-content p { color: var(--text-light); margin-bottom: 25px; }
-
-        .modal-content input {
-            width: 100%;
-            padding: 15px;
-            font-size: 1.1rem;
-            border: 2px solid var(--border-color);
-            border-radius: 8px;
-            outline: none;
-            margin-bottom: 20px;
-            box-sizing: border-box;
-            text-align: center;
-            letter-spacing: 2px;
-        }
-        .modal-content input:focus { border-color: var(--primary-blue); }
-
-        .modal-content button {
-            width: 100%;
-            padding: 15px;
-            background-color: var(--primary-blue);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 1.1rem;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-        .modal-content button:hover { background-color: var(--secondary-blue); }
+        /* ==========================================
+           3. หน้า Admin Dashboard
+        ========================================== */
+        #admin-section { display: none; height: 100vh; overflow: hidden; }
+        .admin-sidebar { width: 260px; background: white; border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 20px 0; flex-shrink: 0;}
+        .admin-brand { text-align: center; padding: 0 20px 20px; border-bottom: 1px solid var(--border-color); margin-bottom: 15px; }
+        .admin-brand img { height: 60px; margin-bottom: 10px; }
         
-        .error-msg {
-            color: var(--accent-red);
-            margin-top: 15px;
-            font-size: 0.95rem;
-            display: none;
-        }
+        .nav-item { padding: 15px 25px; display: block; color: var(--text-muted); cursor: pointer; font-size: 1.05rem; border-left: 4px solid transparent; }
+        .nav-item.active { background: #F0F7FF; color: var(--primary-blue); border-left-color: var(--primary-blue); font-weight: 500; }
 
+        .admin-main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .admin-topbar { height: 70px; background: white; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; padding: 0 30px; flex-shrink: 0;}
+        .admin-content { padding: 30px; max-width: 1400px; margin: 0 auto; width: 100%; overflow-y: auto; flex: 1;}
+
+        .tab-pane { display: none; }
+        .tab-pane.active { display: block; }
+
+        .admin-card { background: white; border-radius: var(--radius-md); box-shadow: 0 1px 3px rgba(0,0,0,0.05); padding: 25px; margin-bottom: 25px; border: 1px solid var(--border-color); }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 25px; }
+        .stat-box { padding: 20px; background: white; border-radius: 8px; border: 1px solid var(--border-color); border-left: 4px solid var(--secondary-blue); }
+        
+        .btn-blue { background: var(--secondary-blue); color: white; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-family: 'Kanit'; transition: 0.2s;}
+        .btn-blue:hover { background: var(--primary-blue); }
+        
+        .admin-table-container { max-height: 500px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 6px;}
+        .admin-table { width: 100%; border-collapse: collapse; }
+        .admin-table th { background: #F7FAFC; padding: 12px; border-bottom: 1px solid var(--border-color); text-align: left; position: sticky; top: 0; z-index: 1;}
+        .admin-table td { padding: 12px; border-bottom: 1px solid var(--border-color); }
+        
+        .form-row { display: flex; gap: 10px; margin-bottom: 15px; }
+        .form-row input, .form-row select { padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-family: 'Kanit'; outline: none; }
     </style>
 </head>
 <body>
 
+    <div id="pos-section">
+        <header class="pos-navbar">
+            <h1><img src="https://www.banhadsompan.ac.th/_files_school/86101511/data/86101511_0_20240629-000624.png" alt="โลโก้">ระบบสหกรณ์โรงเรียนบ้านหาดส้มแป้น</h1>
+            <button class="btn-admin-toggle" onclick="openLoginModal()">⚙️ ตั้งค่า (Admin)</button>
+        </header>
+
+        <main class="pos-container">
+            <div class="pos-card">
+                <div class="date-selector">
+                    <label>📅 วันที่บันทึกรายการ:</label>
+                    <input type="date" id="transaction-date">
+                </div>
+
+                <div class="input-group">
+                    <label id="label-student-id">1. พิมพ์ / สแกน รหัสนักเรียน (4 หลัก)</label>
+                    <input type="text" id="input-student-id" class="pos-input" placeholder="ระบุรหัสแล้วกด Enter..." autofocus autocomplete="off">
+                </div>
+
+                <div id="member-display" class="member-alert">
+                    <span id="member-name-text">ชื่อ: -</span>
+                    <button class="btn-cancel" onclick="resetPOS()">ยกเลิก / เปลี่ยนคน</button>
+                </div>
+
+                <div class="input-group">
+                    <label id="label-amount" style="color: var(--text-muted);">2. พิมพ์ยอดรวม หรือ ยิงบาร์โค้ดสินค้า (บาท)</label>
+                    <input type="text" id="input-amount" class="pos-input" placeholder="ระบุราคาแล้วกด Enter..." disabled autocomplete="off">
+                </div>
+
+                <table class="pos-table">
+                    <thead><tr><th>ยอดรวม / รายการสินค้า</th><th class="text-right">ราคา (บาท)</th></tr></thead>
+                    <tbody id="cart-body"></tbody>
+                    <tfoot>
+                        <tr>
+                            <td style="padding-top: 20px; font-size: 1.2rem; font-weight: 500;">ยอดซื้อรวมของบิลนี้</td>
+                            <td class="text-right highlight-price" id="total-price" style="padding-top: 20px;">0.00</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </main>
+    </div>
+
     <div id="login-modal">
-        <div class="modal-content">
-            <span class="close-modal" onclick="closeAdminLogin()">×</span>
-            <h3>🔒 ยืนยันตัวตน (Admin)</h3>
-            <p>กรุณากรอกรหัสผ่านเพื่อเข้าสู่ระบบควบคุม</p>
+        <div class="modal-box">
+            <span class="close-btn" onclick="closeLoginModal()">×</span>
+            <h3 style="color: var(--primary-blue); font-size: 1.4rem;">🔒 ยืนยันตัวตน (Admin)</h3>
+            <p style="color: var(--text-muted); margin-top: 10px;">กรุณากรอกรหัสผ่านเพื่อเข้าสู่ระบบควบคุม</p>
             <input type="password" id="admin-pwd" placeholder="••••••••" autocomplete="off">
             <button onclick="verifyAdmin()">เข้าสู่ระบบ</button>
-            <div id="pwd-error" class="error-msg">รหัสผ่านไม่ถูกต้อง!</div>
+            <p id="pwd-error" style="color: var(--accent-red); display: none; margin-top: 15px;">รหัสผ่านไม่ถูกต้อง!</p>
         </div>
     </div>
 
-    <header class="navbar">
-        <div class="navbar-brand">
-            <h1>ระบบสหกรณ์โรงเรียนบ้านหาดส้มแป้น</h1>
-        </div>
-        <button class="admin-btn" onclick="openAdminLogin()">⚙️ ตั้งค่า (Admin)</button>
-    </header>
-
-    <main class="main-container">
-        <div class="pos-card">
+    <div id="admin-section">
+        <aside class="admin-sidebar">
+            <div class="admin-brand">
+                <img src="https://www.banhadsompan.ac.th/_files_school/86101511/data/86101511_0_20240629-000624.png" alt="Logo">
+                <h3 style="color: var(--primary-blue);">ศูนย์ควบคุม</h3>
+            </div>
             
-            <div class="date-selector">
-                <label for="transaction-date">📅 วันที่บันทึกรายการ:</label>
-                <input type="date" id="transaction-date">
+            <a class="nav-item active" onclick="switchAdminTab('dashboard', this)">📊 ภาพรวมบัญชี (Dashboard)</a>
+            <a class="nav-item" onclick="switchAdminTab('members', this)">👥 จัดการสมาชิก & หุ้น</a>
+            <a class="nav-item" onclick="switchAdminTab('history', this)">📜 ประวัติการซื้อรายบุคคล</a>
+            <a class="nav-item" onclick="switchAdminTab('expenses', this)">💸 บันทึกรายจ่ายอื่นๆ</a>
+            <a class="nav-item" onclick="switchAdminTab('settings', this)">⚙️ ตั้งค่าระบบ</a>
+            
+            <a class="nav-item" onclick="exitAdmin()" style="margin-top: auto; color: var(--accent-red);">⬅️ ออกจากระบบ (กลับไป POS)</a>
+        </aside>
+
+        <main class="admin-main">
+            <header class="admin-topbar">
+                <h2 id="admin-page-title" style="color: var(--primary-blue); font-size: 1.3rem;">ภาพรวมบัญชี (Dashboard)</h2>
+                <div style="background: #FFF5F5; color: var(--accent-red); padding: 8px 16px; border-radius: 20px; font-size: 0.9rem; border: 1px solid #FEB2B2;">
+                    ผู้ใช้งาน: <span id="admin-name">Admin</span>
+                </div>
+            </header>
+
+            <div class="admin-content">
+                
+                <div id="tab-dashboard" class="tab-pane active">
+                    <div class="stats-grid">
+                        <div class="stat-box"><p>ยอดขายรวม</p><h3 id="dash-sales">0.00</h3></div>
+                        <div class="stat-box" style="border-left-color: var(--accent-red);"><p>รายจ่ายอื่นๆ</p><h3 id="dash-expenses">0.00</h3></div>
+                        <div class="stat-box"><p>กำไรสุทธิ</p><h3 id="dash-net" style="color: #38A169;">0.00</h3></div>
+                        <div class="stat-box" style="border-left-color: #805AD5;"><p>มูลค่าหุ้นรวม (บาท)</p><h3 id="dash-shares-value" style="color: #805AD5;">0.00</h3></div>
+                        <div class="stat-box"><p>สมาชิกทั้งหมด</p><h3 id="dash-total-members">-</h3></div>
+                    </div>
+                    <div class="admin-card">
+                        <h3 style="margin-bottom: 20px; color: var(--primary-blue);">📈 กราฟความเคลื่อนไหว (Real-time)</h3>
+                        <canvas id="salesChart" height="60"></canvas>
+                    </div>
+                </div>
+
+                <div id="tab-members" class="tab-pane">
+                    <div class="admin-card">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 10px;">
+                            <div>
+                                <h3 style="color: var(--primary-blue);">ฐานข้อมูลสมาชิก และ หุ้นสหกรณ์</h3>
+                                <p style="color: var(--text-muted); margin-top: 5px;">ตารางรวมสมาชิก (อัปเดตข้อมูลอัตโนมัติตามการซื้อหน้าร้าน)</p>
+                            </div>
+                            <div style="display: flex; gap: 10px;">
+                                <button class="btn-blue" id="btn-sync-sheets" onclick="syncFromSheets()">⬇️ ดึงรายชื่อจาก Sheets</button>
+                            </div>
+                        </div>
+                        
+                        <div class="admin-table-container">
+                            <table class="admin-table">
+                                <thead><tr><th>รหัส</th><th>ชื่อ-สกุล</th><th>ชั้นเรียน</th><th>จำนวนหุ้น</th><th>ยอดซื้อสะสม</th><th>จัดการ</th></tr></thead>
+                                <tbody id="admin-member-list">
+                                    <tr><td colspan="6" style="text-align: center; padding: 20px;">⏳ กำลังเชื่อมต่อฐานข้อมูล...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="admin-card" style="border-left: 4px solid #805AD5; display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <h3 style="color: #805AD5; margin-bottom: 5px;">💰 ระบบสำรองข้อมูล และ ปันผล</h3>
+                            <p style="color: var(--text-muted);">ส่งยอดหุ้นและยอดซื้อกลับไปบันทึกใน Google Sheets</p>
+                        </div>
+                        <button class="btn-blue" style="background: #805AD5;" onclick="alert('ระบบเตรียมพร้อมเชื่อมต่อ Google Sheets Webhook แล้ว')">📤 ส่งข้อมูลออกไปยัง Sheets</button>
+                    </div>
+                </div>
+
+                <div id="tab-history" class="tab-pane">
+                    <div class="admin-card">
+                        <h3 style="color: var(--primary-blue); margin-bottom: 20px;">📜 ประวัติการทำรายการแบบเรียลไทม์</h3>
+                        <div class="admin-table-container">
+                            <table class="admin-table">
+                                <thead><tr><th>วันที่-เวลา</th><th>รหัสสมาชิก</th><th>ยอดเงิน (บาท)</th><th>ผู้บันทึก</th></tr></thead>
+                                <tbody id="admin-history-list"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="tab-expenses" class="tab-pane">
+                    <div class="admin-card">
+                        <h3 style="color: var(--primary-blue); margin-bottom: 20px;">💸 บันทึกรายจ่ายอื่นๆ (หักลบกำไร)</h3>
+                        <div class="form-row">
+                            <input type="date" id="exp-date" style="width: 150px;">
+                            <input type="text" id="exp-name" placeholder="ชื่อรายการ (เช่น ค่าอุปกรณ์)" style="flex: 1;">
+                            <input type="number" id="exp-amount" placeholder="จำนวนเงิน" style="width: 150px;">
+                            <button class="btn-blue" onclick="addExpense()">บันทึกรายจ่าย</button>
+                        </div>
+                        
+                        <div class="admin-table-container" style="margin-top: 20px;">
+                            <table class="admin-table">
+                                <thead><tr><th>วันที่</th><th>รายการ</th><th>จำนวนเงิน (บาท)</th></tr></thead>
+                                <tbody id="admin-expenses-list"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="tab-settings" class="tab-pane">
+                    <div class="admin-card">
+                        <h3 style="color: var(--primary-blue); margin-bottom: 20px;">⚙️ ตั้งค่าระบบ</h3>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+                            <div style="background: #F7FAFC; padding: 20px; border-radius: 10px; border: 1px solid var(--border-color);">
+                                <h4 style="color: var(--primary-blue);">💰 ตั้งค่าราคาหุ้น (ต่อหน่วย)</h4>
+                                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 10px;">ใช้คำนวณมูลค่าหุ้นรวมในหน้า Dashboard</p>
+                                <div style="display: flex; gap: 10px;">
+                                    <input type="number" id="setting-share-price" value="10" style="flex:1; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 1.1rem; text-align: center;">
+                                    <button class="btn-blue" onclick="alert('อัปเดตราคาหุ้นเรียบร้อย')">บันทึกราคา</button>
+                                </div>
+                            </div>
+                            
+                            <div style="background: #F7FAFC; padding: 20px; border-radius: 10px; border: 1px solid var(--border-color);">
+                                <h4 style="color: var(--primary-blue);">📅 ปีการศึกษา / เทอม</h4>
+                                <div style="display: flex; gap: 10px; margin-top: 10px;">
+                                    <input type="text" placeholder="เช่น 2568 เทอม 1" style="flex:1; padding: 10px; border: 1px solid #ccc; border-radius: 6px;">
+                                    <button class="btn-blue">เพิ่ม</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
-
-            <div class="scan-section">
-                <label id="input-label">1. พิมพ์ / สแกน รหัสนักเรียน (4 หลัก)</label>
-                <input type="number" id="data-input" placeholder="ระบุข้อมูลแล้วกด Enter..." autofocus autocomplete="off">
-            </div>
-
-            <div id="member-display" class="member-info">
-                <span id="member-name-text">ชื่อนักเรียน: -</span>
-                <button onclick="resetPOS()">ยกเลิก</button>
-            </div>
-
-            <table id="cart-table">
-                <thead>
-                    <tr>
-                        <th>รายการ</th>
-                        <th class="text-right">ราคา (บาท)</th>
-                    </tr>
-                </thead>
-                <tbody id="cart-body"></tbody>
-                <tfoot>
-                    <tr class="total-row">
-                        <td>ยอดซื้อรวมของบิลนี้</td>
-                        <td class="text-right highlight-price" id="total-price">0.00</td>
-                    </tr>
-                </tfoot>
-            </table>
-
-        </div>
-    </main>
+        </main>
+    </div>
 
     <script>
-        // ------------------------------------------------
-        // ส่วนจัดการ Modal (เข้าสู่ระบบ Admin)
-        // ------------------------------------------------
-        const modal = document.getElementById('login-modal');
-        const pwdInput = document.getElementById('admin-pwd');
-        const pwdError = document.getElementById('pwd-error');
-
-        function openAdminLogin() {
-            modal.style.display = 'flex';
-            pwdInput.value = '';
-            pwdError.style.display = 'none';
-            pwdInput.focus();
+        // ==========================================
+        // 1. แปลงเลข (ไทย <-> อารบิก) 
+        // ==========================================
+        function toArabic(text) {
+            const thaiNumbers = ['๐','๑','๒','๓','๔','๕','๖','๗','๘','๙'];
+            return text.replace(/[๐-๙]/g, match => thaiNumbers.indexOf(match));
+        }
+        function toThai(text) {
+            const thaiNumbers = ['๐','๑','๒','๓','๔','๕','๖','๗','๘','๙'];
+            return text.replace(/[0-9]/g, match => thaiNumbers[match]);
         }
 
-        function closeAdminLogin() {
-            modal.style.display = 'none';
-            document.getElementById('data-input').focus(); // กลับมาโฟกัสช่องพิมพ์บาร์โค้ด
-        }
-
-        // ดักจับ Enter ในช่องกรอกรหัสผ่าน
-        pwdInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') verifyAdmin();
-        });
-
-        function verifyAdmin() {
-            if (pwdInput.value === "Bhsp2026") {
-                // ถ้ารหัสผ่านถูก ให้เปลี่ยนหน้าไปยังไฟล์ admin.html
-                window.location.href = "admin.html"; 
-            } else {
-                pwdError.style.display = 'block';
-                pwdInput.value = '';
-                pwdInput.focus();
-            }
-        }
-
-        // ------------------------------------------------
-        // ส่วนระบบขายและคิดเงิน (POS)
-        // ------------------------------------------------
+        // ==========================================
+        // 2. ตั้งค่า Firebase
+        // ==========================================
         const firebaseConfig = {
             apiKey: "AIzaSyAYaXrrNOCRbC7uDVc4tXHMDQcSiwswxoo",
             authDomain: "school-cooperative-system.firebaseapp.com",
@@ -396,99 +313,274 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
+        // ==========================================
+        // 3. ระบบ POS (แยกช่อง Input อัจฉริยะ)
+        // ==========================================
         let currentMemberId = null; 
         let totalAmount = 0;
+        let actualDocId = null; 
 
-        const dataInput = document.getElementById('data-input');
-        const inputLabel = document.getElementById('input-label');
+        const inputStudentId = document.getElementById('input-student-id');
+        const inputAmount = document.getElementById('input-amount');
+        const labelStudentId = document.getElementById('label-student-id');
+        const labelAmount = document.getElementById('label-amount');
         const memberDisplay = document.getElementById('member-display');
         const memberNameText = document.getElementById('member-name-text');
         const cartBody = document.getElementById('cart-body');
         const totalPriceElement = document.getElementById('total-price');
         const dateInput = document.getElementById('transaction-date');
 
-        // ตั้งค่าวันที่ปัจจุบัน
         const today = new Date();
-        const localISO = new Date(today.getTime() - (today.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
-        dateInput.value = localISO;
+        dateInput.value = new Date(today.getTime() - (today.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
+        document.getElementById('exp-date').value = dateInput.value;
 
-        // ดักจับ Enter ในช่องรับข้อมูลหลัก
-        dataInput.addEventListener('keypress', function(e) {
+        // ดักจับ Enter ในช่อง 1 (รหัสนักเรียน)
+        inputStudentId.addEventListener('keypress', async function(e) {
             if (e.key === 'Enter') {
-                const inputValue = dataInput.value.trim();
-                
-                if (inputValue === "" && totalAmount > 0) {
-                    checkout();
-                } else if (inputValue !== "") {
-                    processInput(inputValue);
+                let val = toArabic(inputStudentId.value.trim());
+                if (val !== "") {
+                    labelStudentId.innerText = "กำลังค้นหา...";
+                    let thaiId = toThai(val);
+                    try {
+                        let doc = await db.collection("members").doc(val).get();
+                        actualDocId = val;
+                        if (!doc.exists) { doc = await db.collection("members").doc(thaiId).get(); actualDocId = thaiId; }
+
+                        if (doc.exists) {
+                            const d = doc.data();
+                            currentMemberId = val;
+                            memberNameText.innerText = `รหัส ${val}: ${d.name} (${d.class || '-'})`;
+                            memberDisplay.style.display = "flex";
+                            
+                            // ล็อกช่องรหัส เปิดช่องเงิน และเปลี่ยนโฟกัส
+                            inputStudentId.disabled = true;
+                            labelStudentId.innerText = "1. รหัสนักเรียน (ถูกล็อกแล้ว)";
+                            inputAmount.disabled = false;
+                            labelAmount.style.color = "var(--accent-red)";
+                            inputAmount.focus();
+                        } else {
+                            alert("ไม่พบรหัสนักเรียนในระบบ!");
+                            labelStudentId.innerText = "1. พิมพ์ / สแกน รหัสนักเรียน (4 หลัก)";
+                        }
+                    } catch (err) { console.error(err); alert("ข้อผิดพลาดฐานข้อมูล"); }
                 }
-                dataInput.value = ''; 
             }
         });
 
-        async function processInput(value) {
-            if (currentMemberId === null) {
-                inputLabel.innerText = "กำลังค้นหารหัสนักเรียน...";
-                try {
-                    const doc = await db.collection("members").doc(value).get();
-                    if (doc.exists) {
-                        const memberData = doc.data();
-                        currentMemberId = value;
-                        memberNameText.innerText = `รหัส ${value}: ด.ช./ด.ญ. ${memberData.name} (${memberData.class})`;
-                        memberDisplay.style.display = "flex";
-                        
-                        inputLabel.innerText = "2. พิมพ์ / สแกน ยอดรวมเงิน (บาท)";
-                        inputLabel.style.color = "var(--accent-red)"; 
-                    } else {
-                        alert("ไม่พบรหัสนักเรียนนี้ในระบบ กรุณาลองใหม่");
-                        inputLabel.innerText = "1. พิมพ์ / สแกน รหัสนักเรียน (4 หลัก)";
-                    }
-                } catch (error) {
-                    console.error("Error:", error);
-                }
-            } 
-            else {
-                const price = parseFloat(value);
-                if (!isNaN(price) && price > 0) {
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td style="color: var(--text-main);">ยอดซื้อรวม</td>
-                        <td class="text-right">${price.toFixed(2)}</td>
-                    `;
-                    cartBody.appendChild(tr);
+        // ดักจับ Enter ในช่อง 2 (จำนวนเงิน)
+        inputAmount.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                let val = toArabic(inputAmount.value.trim());
+                // ถ้าช่องว่าง แล้วมียอดรวมอยู่แล้ว -> ชำระเงิน
+                if (val === "" && totalAmount > 0) {
+                    checkout();
+                } else if (val !== "") {
+                    const price = parseFloat(val); 
+                    if (!isNaN(price) && price > 0) {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `<td>รายการสินค้า / ยอดรวม</td><td class="text-right">${price.toFixed(2)}</td>`;
+                        cartBody.appendChild(tr);
 
-                    totalAmount += price;
-                    totalPriceElement.innerText = totalAmount.toFixed(2);
-                    
-                    inputLabel.innerText = "3. กด Enter อีกครั้ง เพื่อบันทึกข้อมูล";
-                    inputLabel.style.color = "#38A169";
-                } else {
-                    alert("กรุณากรอกยอดเงินเป็นตัวเลขที่ถูกต้อง");
+                        totalAmount += price;
+                        totalPriceElement.innerText = totalAmount.toFixed(2);
+                        
+                        labelAmount.innerText = "3. กด Enter อีกครั้ง (ตอนช่องว่าง) เพื่อบันทึกข้อมูล";
+                        labelAmount.style.color = "#38A169";
+                        inputAmount.value = '';
+                    } else { alert("ยอดเงินไม่ถูกต้อง"); }
                 }
             }
-        }
+        });
 
-        function checkout() {
-            const selectedDate = dateInput.value;
-            if (!selectedDate || currentMemberId === null || totalAmount === 0) return;
+        async function checkout() {
+            if (!dateInput.value || !currentMemberId || totalAmount === 0) return;
+            
+            inputAmount.disabled = true;
+            labelAmount.innerText = "กำลังบันทึกข้อมูล...";
 
-            // การแจ้งเตือนเมื่อบันทึกเสร็จ
-            alert(`บันทึกข้อมูลเรียบร้อย!\n\nวันที่: ${selectedDate} \nรหัสสมาชิก: ${currentMemberId}\nยอดซื้อรวม: ฿${totalAmount.toFixed(2)}`);
+            try {
+                // บันทึก Firebase (Real-time)
+                await db.collection("members").doc(actualDocId).set({
+                    total_buy_accumulated: firebase.firestore.FieldValue.increment(totalAmount)
+                }, { merge: true });
+
+                await db.collection("transactions").add({
+                    member_id: actualDocId,
+                    amount: totalAmount,
+                    date: dateInput.value,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                    recorded_by: "Admin_Bhsp" 
+                });
+
+                alert(`บันทึกข้อมูลสำเร็จ!\nยอดรวม: ฿${totalAmount.toFixed(2)}`);
+            } catch (error) { console.error(error); alert("บันทึกไม่สำเร็จ"); }
+
             resetPOS();
         }
 
         function resetPOS() {
-            currentMemberId = null;
-            totalAmount = 0;
-            
+            currentMemberId = null; actualDocId = null; totalAmount = 0;
             memberDisplay.style.display = "none";
-            cartBody.innerHTML = "";
-            totalPriceElement.innerText = "0.00";
+            cartBody.innerHTML = ""; totalPriceElement.innerText = "0.00";
             
-            inputLabel.innerText = "1. พิมพ์ / สแกน รหัสนักเรียน (4 หลัก)";
-            inputLabel.style.color = "var(--primary-blue)";
+            inputStudentId.disabled = false; inputStudentId.value = '';
+            labelStudentId.innerText = "1. พิมพ์ / สแกน รหัสนักเรียน (4 หลัก)";
             
-            dataInput.focus();
+            inputAmount.disabled = true; inputAmount.value = '';
+            labelAmount.innerText = "2. พิมพ์ยอดรวม หรือ ยิงบาร์โค้ดสินค้า (บาท)";
+            labelAmount.style.color = "var(--text-muted)";
+            
+            inputStudentId.focus();
+        }
+
+        // ==========================================
+        // 4. ระบบ Admin Login & SPA Navigation
+        // ==========================================
+        const posSection = document.getElementById('pos-section');
+        const adminSection = document.getElementById('admin-section');
+        const loginModal = document.getElementById('login-modal');
+        const pwdInput = document.getElementById('admin-pwd');
+        
+        let adminInitialized = false;
+
+        function openLoginModal() { loginModal.style.display = 'flex'; pwdInput.value = ''; document.getElementById('pwd-error').style.display = 'none'; pwdInput.focus(); }
+        function closeLoginModal() { loginModal.style.display = 'none'; inputStudentId.focus(); }
+        pwdInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') verifyAdmin(); });
+
+        function verifyAdmin() {
+            if (pwdInput.value === "Bhsp2026") {
+                loginModal.style.display = 'none'; posSection.style.display = 'none'; adminSection.style.display = 'flex';
+                if(!adminInitialized) { initRealtimeListeners(); adminInitialized = true; }
+            } else {
+                document.getElementById('pwd-error').style.display = 'block'; pwdInput.value = ''; pwdInput.focus();
+            }
+        }
+        function exitAdmin() { adminSection.style.display = 'none'; posSection.style.display = 'flex'; resetPOS(); }
+
+        function switchAdminTab(tabId, element) {
+            document.querySelectorAll('.tab-pane').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+            document.getElementById('tab-' + tabId).classList.add('active'); element.classList.add('active');
+            document.getElementById('admin-page-title').innerText = element.innerText.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF] /g, '');
+        }
+
+        // ==========================================
+        // 5. ระบบดึงข้อมูลจาก Sheets ลง Firebase
+        // ==========================================
+        const SHEET_API_URL = "https://script.google.com/macros/s/AKfycbwHj-Igmnm99WoxgskAc4-0NmyjsC6r6gC83AX0_f1n_nIWmLYQ0dR30F8xDJBTmEvdNw/exec";
+        async function syncFromSheets() {
+            const btn = document.getElementById('btn-sync-sheets'); btn.innerText = "⏳ กำลังดึง..."; btn.disabled = true;
+            try {
+                const response = await fetch(SHEET_API_URL);
+                const members = await response.json();
+                let count = 0;
+                for (const m of members) {
+                    if (m.member_id && m.member_id !== "") {
+                        await db.collection("members").doc(m.member_id.toString()).set({ name: m.name || '', class: m.class || '', shares: 0, total_buy_accumulated: 0 }, { merge: true });
+                        count++;
+                    }
+                }
+                alert(`ดึงข้อมูลสำเร็จ ${count} คน`); btn.innerText = "⬇️ ดึงรายชื่อจาก Sheets";
+            } catch (err) { console.error(err); alert("เชื่อมต่อ Sheets ไม่สำเร็จ"); btn.innerText = "ลองใหม่"; }
+            btn.disabled = false;
+        }
+
+        // ==========================================
+        // 6. Real-time Firebase Listeners (หัวใจหลักที่ทำให้ไม่ต้องรีเฟรช)
+        // ==========================================
+        let salesChartInstance = null;
+        let globalTotalSales = 0;
+        let globalTotalExpenses = 0;
+
+        function initRealtimeListeners() {
+            // 6.1 ตารางสมาชิก และ สรุปหุ้น
+            db.collection("members").onSnapshot((snapshot) => {
+                const tbody = document.getElementById('admin-member-list');
+                const sharePrice = parseFloat(document.getElementById('setting-share-price').value) || 10;
+                let html = ''; let count = 0; let totalShares = 0;
+
+                snapshot.forEach(doc => {
+                    const d = doc.data();
+                    count++;
+                    totalShares += (d.shares || 0);
+                    html += `<tr>
+                        <td style="font-weight: 500;">${doc.id}</td><td>${d.name}</td><td>${d.class || '-'}</td>
+                        <td style="color: #805AD5;">${d.shares || 0} หุ้น</td>
+                        <td style="color: #38A169;">฿${(d.total_buy_accumulated || 0).toFixed(2)}</td>
+                        <td><button class="btn-blue" style="font-size: 0.8rem;">เพิ่มหุ้น</button></td>
+                    </tr>`;
+                });
+                
+                if (count === 0) html = '<tr><td colspan="6" style="text-align: center;">ไม่มีข้อมูล</td></tr>';
+                tbody.innerHTML = html;
+                
+                document.getElementById('dash-total-members').innerText = count;
+                document.getElementById('dash-shares-value').innerText = (totalShares * sharePrice).toLocaleString(undefined, {minimumFractionDigits: 2});
+            });
+
+            // 6.2 ตารางประวัติการซื้อ และ ยอดขายรวม
+            db.collection("transactions").orderBy("timestamp", "desc").onSnapshot((snapshot) => {
+                const tbody = document.getElementById('admin-history-list');
+                let html = ''; globalTotalSales = 0;
+                
+                snapshot.forEach(doc => {
+                    const d = doc.data();
+                    globalTotalSales += (d.amount || 0);
+                    html += `<tr><td>${d.date}</td><td>${d.member_id}</td><td style="color: #38A169;">+ ฿${(d.amount || 0).toFixed(2)}</td><td>${d.recorded_by}</td></tr>`;
+                });
+                
+                if(snapshot.empty) html = '<tr><td colspan="4" style="text-align: center;">ไม่มีประวัติ</td></tr>';
+                tbody.innerHTML = html;
+                document.getElementById('dash-sales').innerText = globalTotalSales.toLocaleString(undefined, {minimumFractionDigits: 2});
+                updateNetProfit();
+                updateChart();
+            });
+
+            // 6.3 ตารางรายจ่าย
+            db.collection("expenses").orderBy("date", "desc").onSnapshot((snapshot) => {
+                const tbody = document.getElementById('admin-expenses-list');
+                let html = ''; globalTotalExpenses = 0;
+                
+                snapshot.forEach(doc => {
+                    const d = doc.data();
+                    globalTotalExpenses += (d.amount || 0);
+                    html += `<tr><td>${d.date}</td><td>${d.name}</td><td style="color: var(--accent-red);">- ฿${(d.amount || 0).toFixed(2)}</td></tr>`;
+                });
+                
+                if(snapshot.empty) html = '<tr><td colspan="3" style="text-align: center;">ไม่มีรายจ่าย</td></tr>';
+                tbody.innerHTML = html;
+                document.getElementById('dash-expenses').innerText = globalTotalExpenses.toLocaleString(undefined, {minimumFractionDigits: 2});
+                updateNetProfit();
+            });
+        }
+
+        function updateNetProfit() {
+            const net = globalTotalSales - globalTotalExpenses;
+            document.getElementById('dash-net').innerText = net.toLocaleString(undefined, {minimumFractionDigits: 2});
+        }
+
+        function updateChart() {
+            const ctx = document.getElementById('salesChart').getContext('2d');
+            if(salesChartInstance) salesChartInstance.destroy();
+            salesChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: { labels: ['ยอดรวมปัจจุบัน'], datasets: [{ label: 'ยอดขายรวม (บาท)', data: [globalTotalSales], backgroundColor: '#3182CE', borderRadius: 4 }] },
+                options: { responsive: true, plugins: { legend: { display: false } }, maintainAspectRatio: false }
+            });
+        }
+
+        // ฟังก์ชันบันทึกรายจ่ายเข้า Firebase
+        async function addExpense() {
+            const date = document.getElementById('exp-date').value;
+            const name = document.getElementById('exp-name').value.trim();
+            const amount = parseFloat(document.getElementById('exp-amount').value);
+            
+            if(!date || !name || isNaN(amount)) return alert("กรุณากรอกข้อมูลรายจ่ายให้ครบถ้วน");
+            
+            try {
+                await db.collection("expenses").add({ date: date, name: name, amount: amount, timestamp: firebase.firestore.FieldValue.serverTimestamp() });
+                document.getElementById('exp-name').value = ''; document.getElementById('exp-amount').value = '';
+            } catch(e) { console.error(e); alert("บันทึกไม่สำเร็จ"); }
         }
     </script>
 </body>

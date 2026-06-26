@@ -395,8 +395,34 @@
         function toArabic(text) { const t=['๐','๑','๒','๓','๔','๕','๖','๗','๘','๙']; return text.replace(/[๐-๙]/g, m => t.indexOf(m)); }
         function toThai(text) { const t=['๐','๑','๒','๓','๔','๕','๖','๗','๘','๙']; return text.replace(/[0-9]/g, m => t[m]); }
 
-        // ดึงข้อมูลดิบจากชีส 100% ไม่ดัดแปลงเดาคำ
-        function formatDisplayDate(dateString) { return dateString || '-'; }
+        // ฟังก์ชันแปลงวันที่ให้แสดงผลสวยงามและแก้บั๊กตัว T
+        function formatDisplayDate(dateString) {
+            if (!dateString || dateString === '-') return '-';
+            
+            if (typeof dateString === 'string' && dateString.includes('T')) {
+                let d = new Date(dateString);
+                if (!isNaN(d.getTime())) {
+                    let year = d.getFullYear();
+                    let day = d.getDate();
+                    let months = ["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
+                    let month = months[d.getMonth()];
+                    
+                    if (year < 2500) year += 543;
+                    
+                    return `${day} ${month} ${year}`;
+                }
+            }
+            return dateString;
+        }
+
+        // ฟังก์ชันแปลงวันที่สำหรับป๊อปอัปแก้ไขให้กรอกง่ายขึ้น
+        function formatDateForInput(dateString) {
+            if (!dateString || dateString === '-') return '';
+            if (typeof dateString === 'string' && dateString.includes('T')) {
+                return dateString.split('T')[0];
+            }
+            return dateString;
+        }
 
         const firebaseConfig = {
             apiKey: "AIzaSyAYaXrrNOCRbC7uDVc4tXHMDQcSiwswxoo",

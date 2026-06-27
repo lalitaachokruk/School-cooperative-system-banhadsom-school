@@ -300,6 +300,7 @@
 
                 <div id="tab-cashbook" class="tab-pane">
     <div class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 25px;">
+        <div class="stat-box" style="border-left-color: #D69E2E;"><p>ยอดยกมา / ทรัพย์สิน</p><h3 id="cash-total-asset" style="color: #D69E2E;">0.00</h3></div>
         <div class="stat-box" style="border-left-color: #38A169;"><p>รายรับสะสมภายนอก</p><h3 id="cash-total-income" style="color: #38A169;">0.00</h3></div>
         <div class="stat-box" style="border-left-color: #E53E3E;"><p>รายจ่ายสะสมภายนอก</p><h3 id="cash-total-expense" style="color: #E53E3E;">0.00</h3></div>
         <div class="stat-box" style="border-left-color: #3182CE;"><p>ยอดเงินคงเหลือสุทธิ</p><h3 id="cash-balance" style="color: #3182CE;">0.00</h3></div>
@@ -309,13 +310,14 @@
         <h3 style="color: var(--primary-blue); margin-bottom: 20px;">📝 บันทึกรายการ รายรับ - รายจ่าย (ระบบภายนอก)</h3>
         <div class="form-row" style="display: flex; gap: 10px; flex-wrap: wrap;">
             <input type="date" id="cash-date" style="width: 160px; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-family:'Kanit';">
-            <select id="cash-type" style="width: 130px; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-family: 'Kanit';">
+            <select id="cash-type" style="width: 160px; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-family: 'Kanit';">
+                <option value="asset">🟡 ยอดยกมา/ทุน</option>
                 <option value="income">🟢 รายรับ</option>
                 <option value="expense">🔴 รายจ่าย</option>
             </select>
             <input type="number" id="cash-amount" placeholder="จำนวนเงิน (บาท)" style="width: 160px; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-family:'Kanit';">
             <input type="text" id="cash-note" placeholder="ระบุหมายเหตุ / รายละเอียดรายการ" style="flex: 1; min-width: 200px; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-family:'Kanit';">
-            <button class="btn-blue" onclick="addCashbookRecord()">💾 บันทึกรายการ</button>
+            <button class="btn-blue" onclick="window.addCashbookRecord()">💾 บันทึกรายการ</button>
         </div>
 
         <div class="admin-table-container" style="margin-top: 20px;">
@@ -994,6 +996,7 @@
                 db.collection("cashbook").onSnapshot((snapshot) => {
                     const tb = document.getElementById('cashbook-list');
                     let html = '';
+                    let totalAsset = 0;
                     let totalIncome = 0;
                     let totalExpense = 0;
                     let items = [];
@@ -1008,7 +1011,16 @@
                     items.sort((a, b) => b.timestamp - a.timestamp);
 
                     items.forEach(d => {
-                        if (d.type === 'income') {
+                        if (d.type === 'asset') {
+                            totalAsset += d.amount;
+                            html += `<tr>
+                                <td>${d.date}</td>
+                                <td style="color:#D69E2E; font-weight:600;">🟡 ยอดยกมา/ทรัพย์สิน</td>
+                                <td style="color:#D69E2E; font-weight:600;">+ ฿${d.amount.toFixed(2)}</td>
+                                <td>${d.note}</td>
+                                <td><button class="btn-red" onclick="confirmDelete('cashbook', '${d.id}', 'รายการ: ${d.note}')">🗑️ ลบ</button></td>
+                            </tr>`;
+                        } else if (d.type === 'income') {
                             totalIncome += d.amount;
                             html += `<tr>
                                 <td>${d.date}</td>
@@ -1032,14 +1044,17 @@
                     if (tb) tb.innerHTML = items.length === 0 ? '<tr><td colspan="5" align="center">ยังไม่มีประวัติการบันทึกบัญชีภายนอก</td></tr>' : html;
                     
                     // ปรับยอดเงินสะสมและยอดคงเหลือบนหน้าแผงควบคุม
+                    let astEl = document.getElementById('cash-total-asset');
                     let incEl = document.getElementById('cash-total-income');
                     let expEl = document.getElementById('cash-total-expense');
                     let balEl = document.getElementById('cash-balance');
                     
+                    if (astEl) astEl.innerText = totalAsset.toLocaleString(undefined, {minimumFractionDigits: 2});
                     if (incEl) incEl.innerText = totalIncome.toLocaleString(undefined, {minimumFractionDigits: 2});
                     if (expEl) expEl.innerText = totalExpense.toLocaleString(undefined, {minimumFractionDigits: 2});
                     if (balEl) {
-                        let balance = totalIncome - totalExpense;
+                        // คำนวณ: (ยอดยกมา + รายรับ) - รายจ่าย = ยอดคงเหลือ
+                        let balance = totalAsset + totalIncome - totalExpense;
                         balEl.innerText = balance.toLocaleString(undefined, {minimumFractionDigits: 2});
                         balEl.style.color = balance >= 0 ? '#3182CE' : '#E53E3E';
                     }

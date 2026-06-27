@@ -116,6 +116,54 @@
             .stats-grid { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 15px; }
             .admin-content { padding: 20px; }
         }
+
+        /* ==========================================
+           อัปเกรดรองรับมือถือ (เฉพาะแท็บบัญชีรายรับ-รายจ่ายภายนอก)
+        ========================================== */
+        @media (max-width: 768px) {
+            /* 1. จัดเรียงฟอร์มกรอกข้อมูลให้เรียงลงมาเต็มจอมือถือพอดี */
+            #tab-cashbook .form-row {
+                flex-direction: column !important;
+                align-items: stretch !important;
+                gap: 12px !important;
+            }
+            #tab-cashbook .form-row input, 
+            #tab-cashbook .form-row select, 
+            #tab-cashbook .form-row button {
+                width: 100% !important;
+                max-width: 100% !important;
+                box-sizing: border-box;
+            }
+
+            /* 2. ปรับกล่องสรุปยอดทั้ง 4 กล่องให้แสดง 2 ช่องต่อแถว (อ่านง่ายไม่อึดอัด) */
+            #tab-cashbook .stats-grid {
+                grid-template-columns: repeat(2, 1fr) !important;
+                gap: 12px !important;
+            }
+            #tab-cashbook .stat-box {
+                padding: 12px 10px;
+                text-align: center;
+            }
+            #tab-cashbook .stat-box p {
+                font-size: 0.85rem;
+            }
+            #tab-cashbook .stat-box h3 {
+                font-size: 1.2rem;
+            }
+
+            /* 3. ป้องกันตารางบีบตัวจนตัวหนังสือเละ (ใช้วิธีใช้นิ้วปัดเลื่อนซ้ายขวาแทน) */
+            #tab-cashbook .admin-table th, 
+            #tab-cashbook .admin-table td {
+                white-space: nowrap;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            /* ถ้าเป็นมือถือจอเล็กมากๆ ให้กล่องยอดเรียงยาวลงมา 1 คอลัมน์เลย */
+            #tab-cashbook .stats-grid {
+                grid-template-columns: 1fr !important;
+            }
+        }
     </style>
 </head>
 <body>

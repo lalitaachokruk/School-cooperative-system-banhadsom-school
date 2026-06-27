@@ -195,6 +195,7 @@
             <a class="nav-item" onclick="switchAdminTab('members', this)">👥 จัดการสมาชิก & หุ้น</a>
             <a class="nav-item" onclick="switchAdminTab('history', this)">📜 ประวัติการซื้อ</a>
             <a class="nav-item" onclick="switchAdminTab('expenses', this)">💸 บันทึกรายจ่าย</a>
+            <a class="nav-item" onclick="switchAdminTab('cashbook', this)">💰 บัญชีรายรับ-รายจ่ายภายนอก</a>
             <a class="nav-item" onclick="switchAdminTab('barcode', this)">🏷️ สร้างบาร์โค้ดสลาก</a>
             <a class="nav-item" onclick="switchAdminTab('audit', this)">📑 ประวัติการแก้ไข</a>
             <a class="nav-item" onclick="switchAdminTab('settings', this)">⚙️ ตั้งค่าระบบ</a>
@@ -297,6 +298,45 @@
                     </div>
                 </div>
 
+                <div id="tab-cashbook" class="tab-pane">
+    <div class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 25px;">
+        <div class="stat-box" style="border-left-color: #38A169;"><p>รายรับสะสมภายนอก</p><h3 id="cash-total-income" style="color: #38A169;">0.00</h3></div>
+        <div class="stat-box" style="border-left-color: #E53E3E;"><p>รายจ่ายสะสมภายนอก</p><h3 id="cash-total-expense" style="color: #E53E3E;">0.00</h3></div>
+        <div class="stat-box" style="border-left-color: #3182CE;"><p>ยอดเงินคงเหลือสุทธิ</p><h3 id="cash-balance" style="color: #3182CE;">0.00</h3></div>
+    </div>
+
+    <div class="admin-card">
+        <h3 style="color: var(--primary-blue); margin-bottom: 20px;">📝 บันทึกรายการ รายรับ - รายจ่าย (ระบบภายนอก)</h3>
+        <div class="form-row" style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <input type="date" id="cash-date" style="width: 160px; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-family:'Kanit';">
+            <select id="cash-type" style="width: 130px; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-family: 'Kanit';">
+                <option value="income">🟢 รายรับ</option>
+                <option value="expense">🔴 รายจ่าย</option>
+            </select>
+            <input type="number" id="cash-amount" placeholder="จำนวนเงิน (บาท)" style="width: 160px; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-family:'Kanit';">
+            <input type="text" id="cash-note" placeholder="ระบุหมายเหตุ / รายละเอียดรายการ" style="flex: 1; min-width: 200px; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-family:'Kanit';">
+            <button class="btn-blue" onclick="addCashbookRecord()">💾 บันทึกรายการ</button>
+        </div>
+
+        <div class="admin-table-container" style="margin-top: 20px;">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>วันที่บันทึก</th>
+                        <th>ประเภทรายการ</th>
+                        <th>จำนวนเงิน</th>
+                        <th>หมายเหตุ / รายละเอียด</th>
+                        <th>จัดการ</th>
+                    </tr>
+                </thead>
+                <tbody id="cashbook-list">
+                    <tr><td colspan="5" align="center">⏳ กำลังดึงข้อมูลบัญชีภายนอก...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+                
                 <div id="tab-barcode" class="tab-pane">
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px;">
                         <div class="admin-card" style="border-top: 4px solid var(--secondary-blue); margin-bottom: 0;">
@@ -501,6 +541,9 @@
         if(dateIn) { dateIn.value = new Date().toLocaleDateString('en-CA'); }
         const expDate = document.getElementById('exp-date');
         if(expDate && dateIn) { expDate.value = dateIn.value; }
+        
+        // โค้ด 3.3 ที่เอามาวางเพิ่ม
+        if(document.getElementById('cash-date')) { document.getElementById('cash-date').value = dateIn.value; }
 
         if(inId) {
             inId.addEventListener('keypress', async (e) => {
@@ -944,8 +987,66 @@
                     let filterSelect = document.getElementById('barcode-student-class-filter');
                     if(filterSelect) filterSelect.innerHTML = '<option value="all">-- นักเรียนทุกคนทั้งโรงเรียน --</option>' + (d.classes || []).map(c => `<option value="${c}">ชั้น ${c}</option>`).join('');
                 });
-            } catch(e) { console.error("Dropdowns settings error:", e); }
-        }
+        } catch(e) { console.error("Dropdowns settings error:", e); }
+
+            // 5.7 ระบบดักจับและคำนวณบัญชีรายรับ-รายจ่ายภายนอกเด็ดขาด
+            try {
+                db.collection("cashbook").onSnapshot((snapshot) => {
+                    const tb = document.getElementById('cashbook-list');
+                    let html = '';
+                    let totalIncome = 0;
+                    let totalExpense = 0;
+                    let items = [];
+
+                    snapshot.forEach(doc => {
+                        const d = doc.data();
+                        let timestamp = d.timestamp ? d.timestamp.toDate() : new Date();
+                        items.push({ id: doc.id, date: d.date, type: d.type, amount: d.amount, note: d.note, timestamp: timestamp });
+                    });
+
+                    // จัดเรียงรายการจากใหม่ล่าสุดขึ้นก่อน
+                    items.sort((a, b) => b.timestamp - a.timestamp);
+
+                    items.forEach(d => {
+                        if (d.type === 'income') {
+                            totalIncome += d.amount;
+                            html += `<tr>
+                                <td>${d.date}</td>
+                                <td style="color:#38A169; font-weight:600;">🟢 รายรับ</td>
+                                <td style="color:#38A169; font-weight:600;">+ ฿${d.amount.toFixed(2)}</td>
+                                <td>${d.note}</td>
+                                <td><button class="btn-red" onclick="confirmDelete('cashbook', '${d.id}', 'รายการ: ${d.note}')">🗑️ ลบ</button></td>
+                            </tr>`;
+                        } else {
+                            totalExpense += d.amount;
+                            html += `<tr>
+                                <td>${d.date}</td>
+                                <td style="color:#E53E3E; font-weight:600;">🔴 รายจ่าย</td>
+                                <td style="color:#E53E3E; font-weight:600;">- ฿${d.amount.toFixed(2)}</td>
+                                <td>${d.note}</td>
+                                <td><button class="btn-red" onclick="confirmDelete('cashbook', '${d.id}', 'รายการ: ${d.note}')">🗑️ ลบ</button></td>
+                            </tr>`;
+                        }
+                    });
+
+                    if (tb) tb.innerHTML = items.length === 0 ? '<tr><td colspan="5" align="center">ยังไม่มีประวัติการบันทึกบัญชีภายนอก</td></tr>' : html;
+                    
+                    // ปรับยอดเงินสะสมและยอดคงเหลือบนหน้าแผงควบคุม
+                    let incEl = document.getElementById('cash-total-income');
+                    let expEl = document.getElementById('cash-total-expense');
+                    let balEl = document.getElementById('cash-balance');
+                    
+                    if (incEl) incEl.innerText = totalIncome.toLocaleString(undefined, {minimumFractionDigits: 2});
+                    if (expEl) expEl.innerText = totalExpense.toLocaleString(undefined, {minimumFractionDigits: 2});
+                    if (balEl) {
+                        let balance = totalIncome - totalExpense;
+                        balEl.innerText = balance.toLocaleString(undefined, {minimumFractionDigits: 2});
+                        balEl.style.color = balance >= 0 ? '#3182CE' : '#E53E3E';
+                    }
+                });
+            } catch(e) { console.error("Cashbook listener error:", e); }
+
+        } // <--- ต้องอยู่เหนือปีกกาปิดตัวนี้ (ซึ่งเป็นปีกกาปิดของฟังก์ชัน initRealtimeListeners)
 
         function updateNet() { 
             const dashNet = document.getElementById('dash-net');
@@ -968,6 +1069,32 @@
             if(weeklyChartInstance) weeklyChartInstance.destroy();
             weeklyChartInstance = new Chart(ctxWeeklyEl.getContext('2d'), { type: 'bar', data: { labels: weekLabels, datasets: [{ label: 'ยอดรายสัปดาห์', data: weeklyData, backgroundColor: '#319795', borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } });
         }
+        // ฟังก์ชันบันทึกรายรับรายจ่ายภายนอก
+window.addCashbookRecord = async function() {
+    const date = document.getElementById('cash-date').value;
+    const type = document.getElementById('cash-type').value;
+    const amount = parseFloat(document.getElementById('cash-amount').value);
+    const note = document.getElementById('cash-note').value.trim();
+
+    if(!date || isNaN(amount) || amount <= 0 || !note) {
+        return Swal.fire('ข้อมูลไม่สมบูรณ์', 'กรุณากรอกข้อมูลให้ครบถ้วน และระบุจำนวนเงินที่มากกว่า 0 บาทครับ', 'warning');
+    }
+
+    try {
+        await db.collection("cashbook").add({
+            date: date,
+            type: type,
+            amount: amount,
+            note: note,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        Swal.fire({ icon: 'success', title: 'บันทึกรายการสำเร็จ', timer: 1000, showConfirmButton: false });
+        document.getElementById('cash-amount').value = '';
+        document.getElementById('cash-note').value = '';
+    } catch(e) {
+        Swal.fire('Error', 'ไม่สามารถบันทึกรายการได้: ' + e.message, 'error');
+    }
+}
     </script>
 </body>
 </html>

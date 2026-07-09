@@ -194,17 +194,27 @@
                 </div>
 
                 <div class="input-group">
-                    <label id="label-amount" style="color: var(--text-muted);">2. พิมพ์ยอดรวมสุทธิ (กด Enter เพื่อบันทึกทันที)</label>
-                    <input type="text" id="input-amount" class="pos-input" placeholder="ระบุยอดเงินแล้วกด Enter..." disabled autocomplete="off">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <label id="label-amount" style="color: var(--text-muted); margin: 0; font-weight: 500;">2. รับชำระเงิน</label>
+                        <select id="pos-mode" style="padding: 5px 10px; border-radius: 6px; font-family: 'Kanit'; border: 1px solid var(--secondary-blue); background: #EBF8FF; color: var(--secondary-blue); font-weight: 500; outline: none; cursor: pointer;" onchange="changePosMode()">
+                            <option value="cart">🛒 โหมดสแกนบาร์โค้ด (ทีละชิ้น)</option>
+                            <option value="total">📝 โหมดพิมพ์ยอดรวม (พิมพ์ด่วน)</option>
+                        </select>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="text" id="input-amount" class="pos-input" placeholder="สแกนราคาสินค้า... (กด Enter ว่างๆ เพื่อจบบิล)" disabled autocomplete="off">
+                        <button id="btn-checkout" class="btn-blue" style="font-size: 1.2rem; padding: 0 25px; display: none; background: #38A169;" onclick="checkout()">✅ ชำระเงิน</button>
+                    </div>
                 </div>
 
                 <table class="pos-table">
-                    <thead><tr><th>รายการที่เพิ่งบันทึก</th><th class="text-right">ราคา (บาท)</th></tr></thead>
+                    <thead><tr><th>รายการสินค้า</th><th class="text-right">ราคา (บาท)</th><th style="width: 80px; text-align: center;">จัดการ</th></tr></thead>
                     <tbody id="cart-body"></tbody>
                     <tfoot>
                         <tr>
-                            <td style="padding-top: 20px; font-size: 1.2rem; font-weight: 500;">ยอดเงินที่บันทึกสำเร็จ</td>
+                            <td style="padding-top: 20px; font-size: 1.2rem; font-weight: 500;">ยอดเงินสุทธิ</td>
                             <td class="text-right highlight-price" id="total-price" style="padding-top: 20px;">0.00</td>
+                            <td></td>
                         </tr>
                     </tfoot>
                 </table>
@@ -393,9 +403,18 @@
                             <h4 style="color: var(--primary-blue); margin-bottom: 10px;">🪪 1. จัดทำบัตรประจำตัวสมาชิกนักเรียน</h4>
                             <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 15px;">ดึงรายชื่อจากฐานข้อมูลมาลงบัตร (ออกแบบให้พอดี 6 บัตรต่อ A4) มีรายละเอียดครบถ้วน</p>
                             <div class="form-row">
-                                <select id="barcode-student-class-filter" style="flex: 1; padding: 10px; border-radius:6px; border:1px solid #ccc; font-family:'Kanit';"></select>
-                                <button class="btn-blue" onclick="generateStudentCards()">✨ ดึงข้อมูลสร้างบัตร</button>
-                            </div>
+    <select id="barcode-class-filter" style="flex: 1; padding: 10px; border-radius: 6px; border: 1px solid #ccc; font-family: 'Kanit'; cursor: pointer;">
+        <option value="all">-- ดึงนักเรียนทุกคนทั้งโรงเรียน --</option>
+        <option value="ครู">👤 เฉพาะ ครู / บุคลากร</option>
+        <option value="ป.1/1">ชั้น ป.1/1</option>
+        <option value="ป.2/1">ชั้น ป.2/1</option>
+        <option value="ป.3/1">ชั้น ป.3/1</option>
+        <option value="ป.4/1">ชั้น ป.4/1</option>
+        <option value="ป.5/1">ชั้น ป.5/1</option>
+        <option value="ป.6/1">ชั้น ป.6/1</option>
+    </select>
+    <button class="btn-blue" onclick="loadFilteredMembersForBarcode()">✨ ดึงข้อมูลสร้างบัตร</button>
+</div>
                             <div style="text-align: right; margin-top: 10px;">
                                 <button class="btn-blue" style="background:#2B6CB0; font-size:0.85rem;" onclick="printSectionBarcodes('student')">🖨️ พิมพ์เฉพาะบัตรนักเรียน</button>
                             </div>
@@ -581,18 +600,17 @@
         // ==========================================
         // ระบบ POS (คิดเงิน)
         // ==========================================
-        let currentMemberId = null; let currentMemberName = ''; let currentDocId = null; let totalAmount = 0;
+        let currentMemberId = null; let currentMemberName = ''; let currentDocId = null; let totalAmount = 0; let cartItems = [];
         const inId = document.getElementById('input-student-id'); const inAmt = document.getElementById('input-amount');
         const lbId = document.getElementById('label-student-id'); const lbAmt = document.getElementById('label-amount');
         const mDisp = document.getElementById('member-display'); const mText = document.getElementById('member-name-text');
         const tBody = document.getElementById('cart-body'); const tPrice = document.getElementById('total-price');
         const dateIn = document.getElementById('transaction-date');
+        const btnCheckout = document.getElementById('btn-checkout');
 
         if(dateIn) { dateIn.value = new Date().toLocaleDateString('en-CA'); }
         const expDate = document.getElementById('exp-date');
         if(expDate && dateIn) { expDate.value = dateIn.value; }
-        
-        // โค้ด 3.3 ที่เอามาวางเพิ่ม
         if(document.getElementById('cash-date')) { document.getElementById('cash-date').value = dateIn.value; }
 
         if(inId) {
@@ -606,12 +624,14 @@
 
                         if (doc.exists) {
                             const d = doc.data(); currentMemberId = val; currentMemberName = d.name;
-                            mText.innerText = `รหัส ${val}: ${d.name} (${d.class || '-'})`; mDisp.style.display = "flex";
-                            inId.disabled = true; lbId.innerText = "1. รหัสนักเรียน (ถูกล็อกแล้ว)";
-                            inAmt.disabled = false; lbAmt.innerText = "2. พิมพ์ยอดเงินรวม (กด Enter เพื่อบันทึกทันที)"; lbAmt.style.color = "var(--accent-red)"; inAmt.focus();
+                            let status = (val.length === 1 || (d.class && d.class.includes('ครู'))) ? "ครู" : `ชั้น ${d.class || '-'}`;
+                            mText.innerText = `รหัส ${val}: ${d.name} (${status})`; mDisp.style.display = "flex";
+                            inId.disabled = true; lbId.innerText = "1. รหัสสมาชิก (รับข้อมูลสำเร็จ)";
+                            inAmt.disabled = false; lbAmt.innerText = "2. สแกนบาร์โค้ดสินค้า หรือ พิมพ์ราคา"; lbAmt.style.color = "var(--accent-red)"; inAmt.focus();
                         } else {
-                            Swal.fire({ icon: 'warning', title: 'ไม่พบข้อมูล', text: 'กรุณาตรวจสอบรหัสอีกครั้ง' });
+                            Swal.fire({ icon: 'warning', title: 'ไม่พบข้อมูล', text: 'กรุณาตรวจสอบรหัสสมาชิกอีกครั้ง' });
                             lbId.innerText = "1. พิมพ์ / สแกน รหัสนักเรียน (4 หลัก)";
+                            inId.value = ''; // เคลียร์ช่องให้อัตโนมัติถ้าสแกนผิด
                         }
                     } catch (err) { Swal.fire('Error', 'เชื่อมต่อไม่ได้', 'error'); }
                 }
@@ -622,31 +642,123 @@
             inAmt.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') {
                     let val = toArabic(inAmt.value.trim());
-                    if (val !== "") {
-                        const p = parseFloat(val); 
-                        if (!isNaN(p) && p > 0) {
-                            totalAmount = p;
-                            if(tBody) tBody.innerHTML = `<tr><td>ยอดซื้อรวมสุทธิ</td><td class="text-right">${p.toFixed(2)}</td></tr>`;
-                            if(tPrice) tPrice.innerText = totalAmount.toFixed(2);
+                    let mode = document.getElementById('pos-mode').value;
+                    
+                    if (mode === 'total') {
+                        // 📝 โหมดพิมพ์ยอดรวมด่วน: พิมพ์ตัวเลข -> Enter -> จบบิลทันที!
+                        if (val !== "") {
+                            const p = parseFloat(val);
+                            if (!isNaN(p) && p > 0) {
+                                totalAmount = p;
+                                checkout();
+                            } else {
+                                Swal.fire('Error', 'ยอดเงินไม่ถูกต้อง', 'error');
+                            }
+                        }
+                    } else {
+                        // 🛒 โหมดสแกนบาร์โค้ด: สแกน -> ลงตะกร้าทีละชิ้น
+                        if (val === "" && cartItems.length > 0) {
                             checkout(); 
-                        } else Swal.fire('Error', 'ยอดเงินไม่ถูกต้อง', 'error');
+                        } else if (val !== "") {
+                            const p = parseFloat(val); 
+                            if (!isNaN(p) && p > 0) {
+                                cartItems.push(p);
+                                inAmt.value = ''; 
+                                updateCartUI();
+                            } else {
+                                Swal.fire('Error', 'ราคาไม่ถูกต้อง', 'error');
+                                inAmt.value = '';
+                            }
+                        }
                     }
                 }
             });
         }
 
+        window.changePosMode = function() {
+            const mode = document.getElementById('pos-mode').value;
+            if (mode === 'total') {
+                inAmt.placeholder = "พิมพ์ยอดรวมแล้วกด Enter เพื่อจบบิลทันที...";
+                if(btnCheckout) btnCheckout.style.display = 'none';
+            } else {
+                inAmt.placeholder = "สแกนราคาทีละชิ้น... (กด Enter ว่างๆ เพื่อคิดเงิน)";
+                updateCartUI(); 
+            }
+            if (!inAmt.disabled) inAmt.focus();
+        }
+
+        function updateCartUI() {
+            let mode = document.getElementById('pos-mode').value;
+            totalAmount = cartItems.reduce((sum, price) => sum + price, 0);
+            let html = '';
+            cartItems.forEach((price, index) => {
+                html += `<tr>
+                    <td>รายการที่ ${index + 1}</td>
+                    <td class="text-right">${price.toFixed(2)}</td>
+                    <td style="text-align: center;"><button class="btn-red" style="padding: 4px 10px; font-size: 0.8rem;" onclick="removeCartItem(${index})">ลบ</button></td>
+                </tr>`;
+            });
+            if(tBody) tBody.innerHTML = html;
+            if(tPrice) tPrice.innerText = totalAmount.toFixed(2);
+            
+            if(btnCheckout) {
+                btnCheckout.style.display = (cartItems.length > 0 && mode === 'cart') ? 'block' : 'none';
+            }
+            inAmt.focus();
+        }
+
+        window.removeCartItem = async function(index) {
+            const { value: pwd } = await Swal.fire({
+                title: '🔒 ยืนยันการลบสินค้า',
+                text: 'กรุณาใส่รหัสผ่านเพื่อยืนยันการลบรายการ',
+                input: 'password',
+                showCancelButton: true,
+                confirmButtonText: 'ยืนยัน',
+                cancelButtonText: 'ยกเลิก',
+                confirmButtonColor: '#E53E3E'
+            });
+            if (pwd === 'Bhsp2026') {
+                cartItems.splice(index, 1);
+                updateCartUI();
+            } else if (pwd) {
+                Swal.fire('Error', 'รหัสผ่านไม่ถูกต้อง!', 'error').then(() => inAmt.focus());
+            } else {
+                inAmt.focus();
+            }
+        }
+
+        window.resetPOS = function() {
+            currentMemberId = null; currentDocId = null; currentMemberName = ''; totalAmount = 0; cartItems = [];
+            if(mDisp) mDisp.style.display = "none"; if(tBody) tBody.innerHTML = ""; if(tPrice) tPrice.innerText = "0.00";
+            if(inId) { inId.disabled = false; inId.value = ''; inId.focus(); }
+            if(lbId) lbId.innerText = "1. พิมพ์ / สแกน รหัสนักเรียน (4 หลัก)";
+            if(inAmt) { inAmt.disabled = true; inAmt.value = ''; }
+            if(lbAmt) { lbAmt.innerText = "2. รับชำระเงิน"; lbAmt.style.color = "var(--text-muted)"; }
+            if(btnCheckout) btnCheckout.style.display = 'none';
+            changePosMode(); 
+        }
+
         async function checkout() {
-            inAmt.disabled = true; lbAmt.innerText = "กำลังบันทึกข้อมูลเข้าระบบ...";
+            let mode = document.getElementById('pos-mode').value;
+            if (mode === 'cart' && cartItems.length === 0) return;
+            
+            inAmt.disabled = true; 
+            if(lbAmt) { lbAmt.innerText = "กำลังบันทึกข้อมูลเข้าระบบ..."; }
+            
             try {
                 const timeNow = new Date().toLocaleTimeString('th-TH');
                 await db.collection("members").doc(currentDocId).set({ total_buy_accumulated: firebase.firestore.FieldValue.increment(totalAmount) }, { merge: true });
                 await db.collection("transactions").add({ member_id: currentDocId, member_name: currentMemberName, amount: totalAmount, date: dateIn.value, timestamp: firebase.firestore.FieldValue.serverTimestamp(), recorded_by: "Staff" });
                 sendToGoogleSheets("Transactions", [dateIn.value, timeNow, currentDocId, currentMemberName, totalAmount, "Staff"]);
-                Swal.fire({ title: 'บันทึกสำเร็จ!', html: `ยอดบิล: <b>฿${totalAmount.toFixed(2)}</b>`, icon: 'success', timer: 1500, showConfirmButton: false });
-            } catch (err) { Swal.fire('Error', 'บันทึกไม่สำเร็จ', 'error'); }
-            window.resetPOS();
+                
+                let msg = mode === 'cart' ? `ยอดบิลรวม: <b>฿${totalAmount.toFixed(2)}</b><br><small>(${cartItems.length} ชิ้น)</small>` : `ยอดบิล: <b>฿${totalAmount.toFixed(2)}</b>`;
+                Swal.fire({ title: 'บันทึกสำเร็จ!', html: msg, icon: 'success', timer: 1500, showConfirmButton: false });
+            } catch (err) { 
+                Swal.fire('Error', 'บันทึกไม่สำเร็จ', 'error'); 
+            }
+            window.resetPOS(); 
         }
-
+        
         window.resetPOS = function() {
             currentMemberId = null; currentDocId = null; currentMemberName = ''; totalAmount = 0;
             if(mDisp) mDisp.style.display = "none"; if(tBody) tBody.innerHTML = ""; if(tPrice) tPrice.innerText = "0.00";
@@ -844,7 +956,7 @@
             let students = itemsArray.filter(i => i.type === 'student'); let products = itemsArray.filter(i => i.type === 'product');
             
             if (students.length > 0) {
-                contentHtml += `<h3 class="no-print" style="font-family:'Kanit'; text-align:center; background:#EDF2F7; padding:10px;">[หมวดที่ 1: บัตรบาร์โค้ดประจำตัวนักเรียน (จัดหน้า 6 บัตรต่อแผ่น A4 พอดี)]</h3>`;
+                contentHtml += `<h3 class="no-print" style="font-family:'Kanit'; text-align:center; background:#EDF2F7; padding:10px;">[หมวดที่ 1: บัตรบาร์โค้ดประจำตัวสมาชิก (จัดหน้า 6 บัตรต่อแผ่น A4 พอดี)]</h3>`;
                 let totalPages = Math.ceil(students.length / 6);
                 for (let p = 0; p < totalPages; p++) {
                     contentHtml += `<div class="print-page-a4">`;
@@ -852,7 +964,13 @@
                         let idx = p * 6 + i;
                         if (idx < students.length) {
                             let s = students[idx];
-                            contentHtml += `<div class="student-badge"><div class="badge-title">บัตรสมาชิกสหกรณ์โรงเรียนบ้านหาดส้มแป้น</div><div class="badge-content"><div class="badge-line"><b>ชื่อ-นามสกุล:</b> ${s.name}</div><div class="badge-line"><b>ระดับชั้นเรียน:</b> ชั้น ${s.class}</div><div class="badge-barcode-zone"><svg id="p-bc-s-${idx}"></svg></div><div class="badge-footer-id">เลขรหัส 4 หลัก: ${s.value}</div></div></div>`;
+                            
+                            // ระบบเช็คเงื่อนไขแยกสถานะ ครู / นักเรียน
+                            let isTeacher = (s.value.length === 1 || (s.class && s.class.includes('ครู')));
+                            let statusText = isTeacher ? "สถานะ: ครู" : `ระดับชั้น: ${s.class}`;
+                            let idText = isTeacher ? `รหัส: ${s.value}` : `รหัสนักเรียน: ${s.value}`;
+
+                            contentHtml += `<div class="student-badge"><div class="badge-title">บัตรสมาชิกสหกรณ์โรงเรียนบ้านหาดส้มแป้น</div><div class="badge-content"><div class="badge-line" style="font-size:16px; font-weight:bold; text-align:center; margin-bottom:5px; color:#1A365D;">${s.name}</div><div class="badge-line" style="text-align:center; color:#4A5568; font-size:13px; margin-bottom:5px;">${statusText}</div><div class="badge-barcode-zone"><svg id="p-bc-s-${idx}"></svg></div><div class="badge-footer-id" style="text-align:center; font-size:15px; margin-top:5px; color:#1A365D; font-weight:bold; letter-spacing: 1px;">${idText}</div></div></div>`;
                         }
                     }
                     contentHtml += `</div>`;
@@ -865,6 +983,13 @@
                 contentHtml += `</div>`;
             }
 
+            let scriptTagClose = '</' + 'script>';
+            let htmlDoc = `<html><head><title>พิมพ์บาร์โค้ดส่วนกลาง</title><link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;500;600&display=swap" rel="stylesheet"><script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js">${scriptTagClose}<style>body { margin: 0; padding: 0; font-family: 'Kanit', sans-serif; background: #fff; } .print-page-a4 { width: 210mm; height: 297mm; padding: 12mm 10mm; box-sizing: border-box; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: repeat(3, 1fr); gap: 12mm 10mm; page-break-after: always; background: #fff; } .student-badge { border: 2px dashed #1A365D; border-radius: 12px; padding: 15px; box-sizing: border-box; display: flex; flex-direction: column; background: #fff; height: 84mm; position: relative; justify-content: space-between; } .badge-title { background: #1A365D; color: white; text-align: center; font-size: 13px; font-weight: 600; padding: 6px; border-radius: 6px; margin-bottom: 8px; } .badge-content { flex: 1; display: flex; flex-direction: column; justify-content: center; } .badge-barcode-zone { text-align: center; margin: 6px 0; } .product-wrap-zone { padding: 20px; display: flex; flex-wrap: wrap; gap: 12px; } .product-sticker { border: 1px solid #4A5568; padding: 10px; text-align: center; background: white; border-radius: 6px; page-break-inside: avoid; } @media print { .no-print { display: none; } body { background: white; } }</style></head><body>${contentHtml}<script>let sData = ${JSON.stringify(students)}; let pData = ${JSON.stringify(products)}; sData.forEach((s, idx) => { JsBarcode("#p-bc-s-" + idx, s.value, { format: "CODE128", displayValue: false, height: 42, width: 2, margin: 0 }); }); pData.forEach((p, idx) => { JsBarcode("#p-bc-p-" + idx, p.value, { format: "CODE128", displayValue: true, text: "฿ " + p.value, height: 38, width: 1.4, fontSize: 13 }); }); window.focus(); setTimeout(() => { window.print(); window.close(); }, 800);${scriptTagClose}</body></html>`;
+            
+            win.document.write(htmlDoc);
+            win.document.close();
+        }
+        
             let scriptTagClose = '</' + 'script>';
             let htmlDoc = `<html><head><title>พิมพ์บาร์โค้ดส่วนกลาง</title><link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;500;600&display=swap" rel="stylesheet"><script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js">${scriptTagClose}<style>body { margin: 0; padding: 0; font-family: 'Kanit', sans-serif; background: #fff; } .print-page-a4 { width: 210mm; height: 297mm; padding: 12mm 10mm; box-sizing: border-box; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: repeat(3, 1fr); gap: 12mm 10mm; page-break-after: always; background: #fff; } .student-badge { border: 2px dashed #1A365D; border-radius: 12px; padding: 15px; box-sizing: border-box; display: flex; flex-direction: column; background: #fff; height: 84mm; position: relative; } .badge-title { background: #1A365D; color: white; text-align: center; font-size: 13px; font-weight: 600; padding: 6px; border-radius: 6px; margin-bottom: 8px; } .badge-content { flex: 1; display: flex; flex-direction: column; justify-content: center; } .badge-line { font-size: 14px; margin-bottom: 5px; text-align: left; color: #2D3748; } .badge-barcode-zone { text-align: center; margin: 6px 0; } .badge-footer-id { font-size: 14px; font-weight: 600; color: #1A365D; text-align: center; margin-top: 5px; letter-spacing: 1px;} .product-wrap-zone { padding: 20px; display: flex; flex-wrap: wrap; gap: 12px; } .product-sticker { border: 1px solid #4A5568; padding: 10px; text-align: center; background: white; border-radius: 6px; page-break-inside: avoid; } @media print { .no-print { display: none; } body { background: white; } }</style></head><body>${contentHtml}<script>let sData = ${JSON.stringify(students)}; let pData = ${JSON.stringify(products)}; sData.forEach((s, idx) => { JsBarcode("#p-bc-s-" + idx, s.value, { format: "CODE128", displayValue: false, height: 44, width: 1.8 }); }); pData.forEach((p, idx) => { JsBarcode("#p-bc-p-" + idx, p.value, { format: "CODE128", displayValue: true, text: "฿ " + p.value, height: 38, width: 1.4, fontSize: 13 }); }); window.focus(); setTimeout(() => { window.print(); window.close(); }, 800);${scriptTagClose}</body></html>`;
             
@@ -1157,7 +1282,59 @@ window.addCashbookRecord = async function() {
     } catch(e) {
         Swal.fire('Error', 'ไม่สามารถบันทึกรายการได้: ' + e.message, 'error');
     }
-}
+
+    window.loadFilteredMembersForBarcode = async function() {
+            const filterSelect = document.getElementById('barcode-class-filter');
+            if (!filterSelect) return Swal.fire('Error', 'ไม่พบกล่องตัวเลือกชั้นเรียน', 'error');
+
+            const selectedClass = filterSelect.value;
+            Swal.fire({ title: 'กำลังค้นหาข้อมูล...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); }});
+
+            try {
+                // วิ่งไปดึงข้อมูลสมาชิกทั้งหมดมาก่อน
+                const snapshot = await db.collection("members").get();
+                let count = 0;
+
+                snapshot.forEach(doc => {
+                    const d = doc.data();
+                    let match = false;
+
+                    // ตรวจสอบเงื่อนไขว่าตรงกับชั้นที่เลือกไหม
+                    if (selectedClass === 'all') {
+                        match = true;
+                    } else if (selectedClass === 'ครู') {
+                        // ถ้าเลือกระดับครู เช็คจากไอดีหลักเดียว หรือคำว่า 'ครู' ในช่อง class
+                        if (doc.id.length === 1 || (d.class && d.class.includes('ครู'))) match = true;
+                    } else if (d.class === selectedClass) {
+                        // ถ้าเลือกชั้นปกติ ป.1, ป.2 ฯลฯ
+                        match = true;
+                    }
+
+                    // ถ้าเงื่อนไขตรง และยังไม่มีรายชื่อนี้รอคิวอยู่บนหน้าจอ ให้ดันเข้าคิวเลย
+                    if (match && !activePrintItems.find(item => item.value === doc.id)) {
+                        activePrintItems.push({
+                            type: 'student',
+                            value: doc.id,
+                            name: d.name,
+                            class: d.class || '-'
+                        });
+                        count++;
+                    }
+                });
+
+                updateBarcodePreviewUI(); // อัปเดตหน้าจอให้โชว์บัตร
+
+                if (count > 0) {
+                    Swal.fire({ icon: 'success', title: 'ดึงข้อมูลสำเร็จ', text: `เพิ่มบัตรลงคิว ${count} รายการ`, timer: 1500, showConfirmButton: false });
+                } else {
+                    Swal.fire({ icon: 'info', title: 'ไม่มีข้อมูลเพิ่ม', text: 'ข้อมูลของชั้นนี้อาจจะถูกดึงมาหมดแล้ว หรือไม่มีรายชื่อในระบบค่ะ' });
+                }
+
+            } catch (err) {
+                console.error(err);
+                Swal.fire('ข้อผิดพลาด', 'ดึงข้อมูลไม่สำเร็จ: ' + err.message, 'error');
+            }
+        }
     </script>
 </body>
 </html>

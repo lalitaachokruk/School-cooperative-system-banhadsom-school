@@ -229,9 +229,8 @@
         </main>
     </div>
 
-    <!-- ป๊อปอัปเข้าสู่ระบบ POS (ดีไซน์ใหม่) -->
     <div id="pos-login-modal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(10, 25, 47, 0.85); backdrop-filter: blur(8px); display: flex; justify-content: center; align-items: center; z-index: 10000;">
-        <div class="modal-box" style="background: white; padding: 0; border-radius: 12px; width: 100%; max-width: 420px; text-align: center; box-shadow: 0 15px 35px rgba(0,0,0,0.25); overflow: hidden; border-top: 6px solid #7f0101;">
+        <div class="modal-box" style="background: white; padding: 0; border-radius: 12px; width: 100%; max-width: 420px; text-align: center; box-shadow: 0 15px 35px rgba(0,0,0,0.25); overflow: hidden; border-top: 6px solid var(--primary-blue);">
             
             <div style="padding: 30px 30px 15px;">
                 <h3 style="color: var(--primary-blue); font-size: 1.5rem; margin-bottom: 5px;">🧑‍💻 เข้าสู่ระบบ</h3>
@@ -254,6 +253,12 @@
                     </div>
                 </div>
             </div>
+            
+            <div style="padding: 0 30px 30px;">
+                <button class="btn-blue" style="width: 100%; padding: 14px; font-size: 1.1rem; background: var(--secondary-blue); border-radius: 8px; font-weight: 500; transition: 0.3s;" onclick="loginPOS()" onmouseover="this.style.background='var(--primary-blue)'" onmouseout="this.style.background='var(--secondary-blue)'">🚀 เริ่มใช้งานระบบ</button>
+            </div>
+        </div>
+    </div>
             
             <div style="padding: 0 30px 30px;">
                 <button class="btn-blue" style="width: 100%; padding: 14px; font-size: 1.1rem; background: #7f0101; border-radius: 8px; font-weight: 500; transition: 0.3s;" onclick="loginPOS()" onmouseover="this.style.background='#5a0101'" onmouseout="this.style.background='#7f0101'">🚀 เริ่มใช้งานระบบ</button>
@@ -523,6 +528,10 @@
                             
                             <div style="background: #F7FAFC; padding: 20px; border-radius: 10px; border: 1px solid var(--border-color);">
                                 <h4 style="color: var(--primary-blue);">🏫 ระดับชั้นเรียน</h4>
+                                <div class="form-row" style="margin-top: 10px;">
+                                    <input type="text" id="setting-class" placeholder="เช่น ป.1/1" style="flex:1;">
+                                    <button class="btn-blue" onclick="addSetting('classes', 'setting-class')">เพิ่ม</button>
+                                </div>
                                 <div style="background: #F7FAFC; padding: 20px; border-radius: 10px; border: 1px solid var(--border-color);">
                                 <h4 style="color: var(--primary-blue);">🔐 รหัสผ่านเข้าใช้งานหน้า POS</h4>
                                 <div class="form-row" style="margin-top: 10px;">
@@ -531,10 +540,6 @@
                                 </div>
                                 <ul id="list-pos-passwords" style="list-style:none; margin-top: 10px; max-height: 130px; overflow-y: auto;"></ul>
                             </div>
-                                <div class="form-row" style="margin-top: 10px;">
-                                    <input type="text" id="setting-class" placeholder="เช่น ป.1/1" style="flex:1;">
-                                    <button class="btn-blue" onclick="addSetting('classes', 'setting-class')">เพิ่ม</button>
-                                </div>
                                 <ul id="list-classes" style="list-style:none; margin-top: 10px;"></ul>
                             </div>
                         </div>

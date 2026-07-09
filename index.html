@@ -526,7 +526,10 @@
                                     <input type="text" id="setting-class" placeholder="เช่น ป.1/1" style="flex:1;">
                                     <button class="btn-blue" onclick="addSetting('classes', 'setting-class')">เพิ่ม</button>
                                 </div>
-                                <div style="background: #F7FAFC; padding: 20px; border-radius: 10px; border: 1px solid var(--border-color);">
+                                <ul id="list-classes" style="list-style:none; margin-top: 10px;"></ul>
+                            </div>
+
+                            <div style="background: #F7FAFC; padding: 20px; border-radius: 10px; border: 1px solid var(--border-color);">
                                 <h4 style="color: var(--primary-blue);">🔐 รหัสผ่านเข้าใช้งานหน้า POS</h4>
                                 <div class="form-row" style="margin-top: 10px;">
                                     <input type="text" id="setting-pos-pwd" placeholder="ตั้งรหัสผ่านใหม่..." style="flex:1;">

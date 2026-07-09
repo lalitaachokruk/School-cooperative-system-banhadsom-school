@@ -229,22 +229,35 @@
         </main>
     </div>
 
+    <!-- ป๊อปอัปเข้าสู่ระบบ POS (ดีไซน์ใหม่) -->
     <div id="pos-login-modal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(10, 25, 47, 0.85); backdrop-filter: blur(8px); display: flex; justify-content: center; align-items: center; z-index: 10000;">
-        <div class="modal-box" style="background: white; padding: 40px; border-radius: 12px; width: 100%; max-width: 400px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
-            <h3 style="color: var(--primary-blue); font-size: 1.4rem; margin-bottom: 5px;">🧑‍💻 เข้าสู่ระบบสหกรณ์โรงเรียนบ้านหาดส้มแป้น (POS)</h3>
-            <p style="color: var(--text-muted); margin-bottom: 25px; font-size: 0.9rem;">กรุณาระบุชื่อผู้ใช้งานและรหัสผ่านเพื่อเริ่มคิดเงิน</p>
+        <div class="modal-box" style="background: white; padding: 0; border-radius: 12px; width: 100%; max-width: 420px; text-align: center; box-shadow: 0 15px 35px rgba(0,0,0,0.25); overflow: hidden; border-top: 6px solid #7f0101;">
             
-            <div style="text-align: left; margin-bottom: 15px;">
-                <label style="display: block; font-size: 0.95rem; color: var(--primary-blue); margin-bottom: 5px; font-weight: 500;">ชื่อผู้ทำรายการ (Cashier Name):</label>
-                <input type="text" id="pos-cashier-name" placeholder="เช่น ครูสมศรี, พี่เอ..." style="width: 100%; padding: 12px; border: 2px solid var(--border-color); border-radius: 8px; outline: none; font-family: 'Kanit';">
+            <div style="padding: 30px 30px 15px;">
+                <h3 style="color: var(--primary-blue); font-size: 1.5rem; margin-bottom: 5px;">🧑‍💻 เข้าสู่ระบบ</h3>
+                <h4 style="color: var(--text-muted); font-size: 1.05rem; margin-bottom: 5px; font-weight: 500;">ระบบสหกรณ์โรงเรียนบ้านหาดส้มแป้น (POS)</h4>
+                <p style="color: #A0AEC0; margin-bottom: 25px; font-size: 0.85rem;">กรุณาระบุชื่อผู้ใช้งานและรหัสผ่านเพื่อเริ่มทำงาน</p>
+                
+                <div style="text-align: left; margin-bottom: 15px;">
+                    <label style="display: block; font-size: 0.95rem; color: var(--primary-blue); margin-bottom: 5px; font-weight: 500;">ชื่อผู้ทำรายการ (Cashier Name):</label>
+                    <input type="text" id="pos-cashier-name" placeholder="เช่น ครูลลิตา" style="width: 100%; padding: 12px; border: 2px solid var(--border-color); border-radius: 8px; outline: none; font-family: 'Kanit'; font-size: 1rem;">
+                </div>
+                
+                <div style="text-align: left; margin-bottom: 25px;">
+                    <label style="display: block; font-size: 0.95rem; color: var(--primary-blue); margin-bottom: 5px; font-weight: 500;">รหัสผ่าน (Password):</label>
+                    <div style="position: relative;">
+                        <input type="password" id="pos-cashier-pwd" placeholder="••••••••" style="width: 100%; padding: 12px; padding-right: 45px; border: 2px solid var(--border-color); border-radius: 8px; outline: none; font-family: 'Kanit'; font-size: 1rem;">
+                        <span class="eye-icon" onclick="togglePosPassword()" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; display: flex; align-items: center; justify-content: center; width: 24px; height: 24px;">
+                            <svg id="pos-eye-open" style="display:none;" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                            <svg id="pos-eye-closed" viewBox="0 0 24 24"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.45 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                        </span>
+                    </div>
+                </div>
             </div>
             
-            <div style="text-align: left; margin-bottom: 25px;">
-                <label style="display: block; font-size: 0.95rem; color: var(--primary-blue); margin-bottom: 5px; font-weight: 500;">รหัสผ่าน (Password):</label>
-                <input type="password" id="pos-cashier-pwd" placeholder="••••••••" style="width: 100%; padding: 12px; border: 2px solid var(--border-color); border-radius: 8px; outline: none; font-family: 'Kanit';">
+            <div style="padding: 0 30px 30px;">
+                <button class="btn-blue" style="width: 100%; padding: 14px; font-size: 1.1rem; background: #7f0101; border-radius: 8px; font-weight: 500; transition: 0.3s;" onclick="loginPOS()" onmouseover="this.style.background='#5a0101'" onmouseout="this.style.background='#7f0101'">🚀 เริ่มใช้งานระบบ</button>
             </div>
-            
-            <button class="btn-blue" style="width: 100%; padding: 14px; font-size: 1.1rem; background: #319795; border-radius: 8px;" onclick="loginPOS()">🚀 เริ่มใช้งานระบบ</button>
         </div>
     </div>
     
@@ -835,7 +848,29 @@
                 Swal.fire('ข้อผิดพลาด', 'รหัสผ่านไม่ถูกต้อง!', 'error');
             }
         };
+window.togglePosPassword = function() {
+            const pwdInput = document.getElementById('pos-cashier-pwd');
+            const iconOpen = document.getElementById('pos-eye-open'); 
+            const iconClosed = document.getElementById('pos-eye-closed');
+            
+            if (pwdInput.type === "password") { 
+                pwdInput.type = "text"; 
+                if(iconOpen) iconOpen.style.display = "inline"; 
+                if(iconClosed) iconClosed.style.display = "none"; 
+            } else { 
+                pwdInput.type = "password"; 
+                if(iconOpen) iconOpen.style.display = "none"; 
+                if(iconClosed) iconClosed.style.display = "inline"; 
+            }
+        };
 
+        // ตั้งค่าให้กดปุ่ม Enter ในช่องรหัสผ่าน แล้วล็อกอินได้ทันที
+        const posPwdInput = document.getElementById('pos-cashier-pwd');
+        if (posPwdInput) {
+            posPwdInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') loginPOS();
+            });
+        }
         window.addPosPassword = async function() {
             const val = document.getElementById('setting-pos-pwd').value.trim(); 
             if(!val) return;

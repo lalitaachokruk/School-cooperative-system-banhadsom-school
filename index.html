@@ -465,8 +465,9 @@
                                 <input type="number" id="barcode-custom-price" placeholder="ระบุราคา เช่น 5, 10" style="flex: 1;">
                                 <button class="btn-blue" style="background: #DD6B20;" onclick="addCustomProductBarcode()">🏷️ สร้างบาร์โค้ดสินค้า</button>
                             </div>
-                            <div style="text-align: right; margin-top: 10px;">
-                                <button class="btn-blue" style="background:#C05621; font-size:0.85rem;" onclick="printSectionBarcodes('product')">🖨️ พิมพ์เฉพาะป้ายราคา</button>
+                            <div style="text-align: right; margin-top: 10px; display: flex; justify-content: flex-end; gap: 10px;">
+                                <button class="btn-blue" style="background:#DD6B20; font-size:0.85rem;" onclick="printSectionBarcodes('product', 'small')">🖨️ พิมพ์แบบสติกเกอร์ (ดวงเล็ก)</button>
+                                <button class="btn-blue" style="background:#C05621; font-size:0.85rem;" onclick="printSectionBarcodes('product', 'large')">🖨️ พิมพ์ป้ายใหญ่ (2 ป้าย/A4)</button>
                             </div>
                         </div>
                     </div>
@@ -1108,22 +1109,23 @@ window.togglePosPassword = function() {
             activePrintItems.push({ type: 'product', value: val }); priceInput.value = ''; priceInput.focus(); updateBarcodePreviewUI();
         }
 
-        window.printSectionBarcodes = function(sectionType) {
+        window.printSectionBarcodes = function(sectionType, size = 'small') {
             let filteredItems = activePrintItems.filter(i => i.type === sectionType);
             if (filteredItems.length === 0) return Swal.fire('แจ้งเตือน', 'ไม่มีรายการในหมวดหมู่นี้ในคิวจัดพิมพ์', 'warning');
-            renderAndPrintWindow(filteredItems);
+            renderAndPrintWindow(filteredItems, size);
         }
 
         window.printAllActiveBarcodes = function() {
             if (activePrintItems.length === 0) return Swal.fire('แจ้งเตือน', 'ไม่มีรายการในคิวสำหรับจัดพิมพ์', 'warning');
-            renderAndPrintWindow(activePrintItems);
+            renderAndPrintWindow(activePrintItems, 'small');
         }
 
-        // ฟังก์ชันสั่งพิมพ์แบบสตริงแยกประกอบอย่างปลอดภัย (บังคับพิมพ์สีพื้นหลัง)
-        function renderAndPrintWindow(itemsArray) {
+        // ฟังก์ชันสั่งพิมพ์แบบสตริงแยกประกอบอย่างปลอดภัย (รองรับป้ายใหญ่ 2 ป้าย/A4 และบังคับพิมพ์สี)
+        function renderAndPrintWindow(itemsArray, productSize = 'small') {
             let win = window.open('', '', 'width=950,height=800'); let contentHtml = '';
             let students = itemsArray.filter(i => i.type === 'student'); let products = itemsArray.filter(i => i.type === 'product');
             
+            // หมวดที่ 1: บัตรนักเรียน
             if (students.length > 0) {
                 contentHtml += `<h3 class="no-print" style="font-family:'Kanit'; text-align:center; background:#EDF2F7; padding:10px;">[หมวดที่ 1: บัตรบาร์โค้ดประจำตัวสมาชิก (จัดหน้า 6 บัตรต่อแผ่น A4 พอดี)]</h3>`;
                 let totalPages = Math.ceil(students.length / 6);
@@ -1143,27 +1145,49 @@ window.togglePosPassword = function() {
                     contentHtml += `</div>`;
                 }
             }
+
+            // หมวดที่ 2: ป้ายราคาสินค้า (แยกตามขนาด)
             if (products.length > 0) {
-                contentHtml += `<h3 class="no-print" style="font-family:'Kanit'; text-align:center; background:#EDF2F7; padding:10px; margin-top:30px;">[หมวดที่ 2: ป้ายสติกเกอร์บาร์โค้ดราคาสินค้าหน้าร้าน]</h3>`;
-                contentHtml += `<div class="product-wrap-zone">`;
-                products.forEach((prod, pIdx) => { contentHtml += `<div class="product-sticker"><div style="font-size:11px; font-weight:bold; color:#718096; margin-bottom:2px;">สหกรณ์บ้านหาดส้มแป้น</div><svg id="p-bc-p-${pIdx}"></svg></div>`; });
-                contentHtml += `</div>`;
+                if (productSize === 'large') {
+                    // แบบป้ายใหญ่ 2 ป้าย ต่อ 1 แผ่น A4
+                    contentHtml += `<h3 class="no-print" style="font-family:'Kanit'; text-align:center; background:#EDF2F7; padding:10px; margin-top:30px;">[หมวดที่ 2: ป้ายราคาสินค้าขนาดใหญ่ (2 ป้ายต่อ A4)]</h3>`;
+                    let totalPages = Math.ceil(products.length / 2);
+                    for (let p = 0; p < totalPages; p++) {
+                        contentHtml += `<div class="print-page-a4-half">`;
+                        for (let i = 0; i < 2; i++) {
+                            let idx = p * 2 + i;
+                            if (idx < products.length) {
+                                contentHtml += `<div class="product-large-card"><div style="font-size:36px; font-weight:bold; color:#DD6B20; margin-bottom:15px;">ป้ายราคาบาร์โค้ดสินค้า</div><div style="font-size:20px; font-weight:500; color:#4A5568; margin-bottom:30px;">สหกรณ์โรงเรียนบ้านหาดส้มแป้น</div><svg id="p-bc-p-${idx}"></svg></div>`;
+                            }
+                        }
+                        contentHtml += `</div>`;
+                    }
+                } else {
+                    // แบบดวงเล็ก (สติกเกอร์)
+                    contentHtml += `<h3 class="no-print" style="font-family:'Kanit'; text-align:center; background:#EDF2F7; padding:10px; margin-top:30px;">[หมวดที่ 2: ป้ายสติกเกอร์บาร์โค้ดราคาสินค้าหน้าร้าน]</h3>`;
+                    contentHtml += `<div class="product-wrap-zone">`;
+                    products.forEach((prod, pIdx) => { 
+                        contentHtml += `<div class="product-sticker"><div style="font-size:12px; font-weight:bold; color:#DD6B20; margin-bottom:2px;">ป้ายราคาสินค้า</div><div style="font-size:10px; font-weight:500; color:#718096; margin-bottom:4px;">สหกรณ์บ้านหาดส้มแป้น</div><svg id="p-bc-p-${pIdx}"></svg></div>`; 
+                    });
+                    contentHtml += `</div>`;
+                }
             }
 
             let scriptTagClose = '</' + 'script>';
-            // เพิ่มคำสั่ง print-color-adjust: exact !important; บังคับแสดงสีพื้นหลัง
             let htmlDoc = `<html><head><title>พิมพ์บาร์โค้ดส่วนกลาง</title><link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;500;600&display=swap" rel="stylesheet"><script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js">${scriptTagClose}<style>
                 * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
                 body { margin: 0; padding: 0; font-family: 'Kanit', sans-serif; background: #fff; } 
                 .print-page-a4 { width: 210mm; height: 297mm; padding: 12mm 10mm; box-sizing: border-box; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: repeat(3, 1fr); gap: 12mm 10mm; page-break-after: always; background: #fff; } 
+                .print-page-a4-half { width: 210mm; height: 297mm; padding: 15mm; box-sizing: border-box; display: grid; grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; gap: 15mm; page-break-after: always; background: #fff; } 
                 .student-badge { border: 2px dashed #1A365D; border-radius: 12px; padding: 15px; box-sizing: border-box; display: flex; flex-direction: column; background: #fff; height: 84mm; position: relative; justify-content: space-between; } 
                 .badge-title { background-color: #1A365D; color: white; text-align: center; font-size: 13px; font-weight: 600; padding: 6px; border-radius: 6px; margin-bottom: 8px; } 
                 .badge-content { flex: 1; display: flex; flex-direction: column; justify-content: center; } 
                 .badge-barcode-zone { text-align: center; margin: 6px 0; } 
+                .product-large-card { border: 4px dashed #DD6B20; border-radius: 20px; display: flex; flex-direction: column; justify-content: center; align-items: center; background: #FFFAF0; box-sizing: border-box; }
                 .product-wrap-zone { padding: 20px; display: flex; flex-wrap: wrap; gap: 12px; } 
-                .product-sticker { border: 1px solid #4A5568; padding: 10px; text-align: center; background: white; border-radius: 6px; page-break-inside: avoid; } 
+                .product-sticker { border: 1.5px solid #DD6B20; padding: 10px; text-align: center; background: #FFFAF0; border-radius: 8px; page-break-inside: avoid; } 
                 @media print { .no-print { display: none; } body { background: white; } }
-            </style></head><body>${contentHtml}<script>let sData = ${JSON.stringify(students)}; let pData = ${JSON.stringify(products)}; sData.forEach((s, idx) => { JsBarcode("#p-bc-s-" + idx, s.value, { format: "CODE128", displayValue: false, height: 42, width: 2, margin: 0 }); }); pData.forEach((p, idx) => { JsBarcode("#p-bc-p-" + idx, p.value, { format: "CODE128", displayValue: true, text: "฿ " + p.value, height: 38, width: 1.4, fontSize: 13 }); }); window.focus(); setTimeout(() => { window.print(); window.close(); }, 800);${scriptTagClose}</body></html>`;
+            </style></head><body>${contentHtml}<script>let sData = ${JSON.stringify(students)}; let pData = ${JSON.stringify(products)}; let pSize = '${productSize}'; sData.forEach((s, idx) => { JsBarcode("#p-bc-s-" + idx, s.value, { format: "CODE128", displayValue: false, height: 42, width: 2, margin: 0 }); }); pData.forEach((p, idx) => { if(pSize === 'large') { JsBarcode("#p-bc-p-" + idx, p.value, { format: "CODE128", displayValue: true, text: "฿ " + p.value, height: 130, width: 4.5, fontSize: 45, margin: 15 }); } else { JsBarcode("#p-bc-p-" + idx, p.value, { format: "CODE128", displayValue: true, text: "฿ " + p.value, height: 38, width: 1.4, fontSize: 13 }); } }); window.focus(); setTimeout(() => { window.print(); window.close(); }, 800);${scriptTagClose}</body></html>`;
             
             win.document.write(htmlDoc);
             win.document.close();

@@ -504,7 +504,6 @@
         function toArabic(text) { const t=['๐','๑','๒','๓','๔','๕','๖','๗','๘','๙']; return text.replace(/[๐-๙]/g, m => t.indexOf(m)); }
         function toThai(text) { const t=['๐','๑','๒','๓','๔','๕','๖','๗','๘','๙']; return text.replace(/[0-9]/g, m => t[m]); }
 
-        // ฟังก์ชันแปลงวันที่ให้แสดงผลสวยงามและแก้บั๊กตัว T
         function formatDisplayDate(dateString) {
             if (!dateString || dateString === '-') return '-';
             try {
@@ -520,7 +519,6 @@
             return dateString;
         }
 
-        // ฟังก์ชันแปลงวันที่สำหรับป๊อปอัปแก้ไขให้กรอกง่ายขึ้น
         function formatDateForInput(dateString) {
             if (!dateString || dateString === '-') return '';
             if (typeof dateString === 'string' && dateString.includes('T')) {
@@ -539,9 +537,6 @@
         };
         firebase.initializeApp(firebaseConfig); const db = firebase.firestore();
 
-        // ==========================================
-        // UI & คู่มือการใช้งาน (Global Functions)
-        // ==========================================
         window.showUserManual = function() {
             Swal.fire({
                 title: '📖 คู่มือการใช้งานระบบสหกรณ์',
@@ -758,15 +753,6 @@
             }
             window.resetPOS(); 
         }
-        
-        window.resetPOS = function() {
-            currentMemberId = null; currentDocId = null; currentMemberName = ''; totalAmount = 0;
-            if(mDisp) mDisp.style.display = "none"; if(tBody) tBody.innerHTML = ""; if(tPrice) tPrice.innerText = "0.00";
-            if(inId) { inId.disabled = false; inId.value = ''; inId.focus(); }
-            if(lbId) lbId.innerText = "1. พิมพ์ / สแกน รหัสนักเรียน (4 หลัก)";
-            if(inAmt) { inAmt.disabled = true; inAmt.value = ''; }
-            if(lbAmt) { lbAmt.innerText = "2. พิมพ์ยอดเงินรวม (รอรับรหัสนักเรียนก่อน)"; lbAmt.style.color = "var(--text-muted)"; }
-        }
 
         // ==========================================
         // ระบบจัดการข้อมูล สมาชิก และ ซิงค์ (Clear and Sync)
@@ -793,7 +779,7 @@
             } catch (err) { Swal.fire('Error', 'ดึงข้อมูลไม่สำเร็จ', 'error'); }
         }
 
-       window.exportMembersToSheets = async function() {
+        window.exportMembersToSheets = async function() {
             Swal.fire({ title: 'กำลังส่งออกข้อมูลสำรอง...', didOpen: () => Swal.showLoading() });
             try {
                 const snapshot = await db.collection("members").get();
@@ -844,7 +830,6 @@
         }
 
         window.editMember = async function(docId, name, cls, shares, rawDate) {
-            // ป้องกันการโชว์ 1967 ดิบๆ 
             let cleanDate = formatDisplayDate(rawDate);
             
             const { value: v } = await Swal.fire({
@@ -920,17 +905,22 @@
 
         window.removePrintItem = function(index) { activePrintItems.splice(index, 1); updateBarcodePreviewUI(); }
 
-        window.generateStudentCards = async function() {
-            const classFilter = document.getElementById('barcode-student-class-filter').value;
-            Swal.fire({ title: 'กำลังดึงฐานข้อมูลสร้างบัตร...', didOpen: () => Swal.showLoading() });
-            try {
-                let snapshot = await db.collection("members").get(); let added = 0; let membersArr = [];
-                snapshot.forEach(doc => { let d = doc.data(); if (classFilter === 'all' || d.class === classFilter) { membersArr.push({ id: doc.id, name: d.name, class: d.class || '-' }); } });
-                membersArr.sort((a, b) => { let numA = parseInt(a.id); let numB = parseInt(b.id); return (!isNaN(numA) && !isNaN(numB)) ? numA - numB : a.id.localeCompare(b.id); });
-                membersArr.forEach(m => { if (!activePrintItems.some(item => item.type === 'student' && item.value === m.id)) { activePrintItems.push({ type: 'student', name: m.name, class: m.class, value: m.id }); added++; } });
-                Swal.fire({ icon: 'success', title: `ดึงเข้าคิวจัดพิมพ์สำเร็จ ${added} รายการ`, timer: 1500, showConfirmButton: false });
-                updateBarcodePreviewUI();
-            } catch (e) { Swal.fire('Error', 'ไม่สามารถเชื่อมต่อฐานข้อมูลได้', 'error'); }
+        window.clearAllPrintItems = function() {
+            if(activePrintItems.length === 0) return;
+            Swal.fire({
+                title: 'ยืนยันการล้างคิว?',
+                text: "ระบบจะเคลียร์บัตรบนหน้าจอออกทั้งหมด เพื่อเตรียมดึงข้อมูลชั้นใหม่",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#E53E3E',
+                confirmButtonText: 'ล้างหน้าจอ',
+                cancelButtonText: 'ยกเลิก'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    activePrintItems = [];
+                    updateBarcodePreviewUI();
+                }
+            });
         }
 
         window.addCustomProductBarcode = function() {
@@ -985,13 +975,6 @@
 
             let scriptTagClose = '</' + 'script>';
             let htmlDoc = `<html><head><title>พิมพ์บาร์โค้ดส่วนกลาง</title><link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;500;600&display=swap" rel="stylesheet"><script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js">${scriptTagClose}<style>body { margin: 0; padding: 0; font-family: 'Kanit', sans-serif; background: #fff; } .print-page-a4 { width: 210mm; height: 297mm; padding: 12mm 10mm; box-sizing: border-box; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: repeat(3, 1fr); gap: 12mm 10mm; page-break-after: always; background: #fff; } .student-badge { border: 2px dashed #1A365D; border-radius: 12px; padding: 15px; box-sizing: border-box; display: flex; flex-direction: column; background: #fff; height: 84mm; position: relative; justify-content: space-between; } .badge-title { background: #1A365D; color: white; text-align: center; font-size: 13px; font-weight: 600; padding: 6px; border-radius: 6px; margin-bottom: 8px; } .badge-content { flex: 1; display: flex; flex-direction: column; justify-content: center; } .badge-barcode-zone { text-align: center; margin: 6px 0; } .product-wrap-zone { padding: 20px; display: flex; flex-wrap: wrap; gap: 12px; } .product-sticker { border: 1px solid #4A5568; padding: 10px; text-align: center; background: white; border-radius: 6px; page-break-inside: avoid; } @media print { .no-print { display: none; } body { background: white; } }</style></head><body>${contentHtml}<script>let sData = ${JSON.stringify(students)}; let pData = ${JSON.stringify(products)}; sData.forEach((s, idx) => { JsBarcode("#p-bc-s-" + idx, s.value, { format: "CODE128", displayValue: false, height: 42, width: 2, margin: 0 }); }); pData.forEach((p, idx) => { JsBarcode("#p-bc-p-" + idx, p.value, { format: "CODE128", displayValue: true, text: "฿ " + p.value, height: 38, width: 1.4, fontSize: 13 }); }); window.focus(); setTimeout(() => { window.print(); window.close(); }, 800);${scriptTagClose}</body></html>`;
-            
-            win.document.write(htmlDoc);
-            win.document.close();
-        }
-        
-            let scriptTagClose = '</' + 'script>';
-            let htmlDoc = `<html><head><title>พิมพ์บาร์โค้ดส่วนกลาง</title><link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;500;600&display=swap" rel="stylesheet"><script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js">${scriptTagClose}<style>body { margin: 0; padding: 0; font-family: 'Kanit', sans-serif; background: #fff; } .print-page-a4 { width: 210mm; height: 297mm; padding: 12mm 10mm; box-sizing: border-box; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: repeat(3, 1fr); gap: 12mm 10mm; page-break-after: always; background: #fff; } .student-badge { border: 2px dashed #1A365D; border-radius: 12px; padding: 15px; box-sizing: border-box; display: flex; flex-direction: column; background: #fff; height: 84mm; position: relative; } .badge-title { background: #1A365D; color: white; text-align: center; font-size: 13px; font-weight: 600; padding: 6px; border-radius: 6px; margin-bottom: 8px; } .badge-content { flex: 1; display: flex; flex-direction: column; justify-content: center; } .badge-line { font-size: 14px; margin-bottom: 5px; text-align: left; color: #2D3748; } .badge-barcode-zone { text-align: center; margin: 6px 0; } .badge-footer-id { font-size: 14px; font-weight: 600; color: #1A365D; text-align: center; margin-top: 5px; letter-spacing: 1px;} .product-wrap-zone { padding: 20px; display: flex; flex-wrap: wrap; gap: 12px; } .product-sticker { border: 1px solid #4A5568; padding: 10px; text-align: center; background: white; border-radius: 6px; page-break-inside: avoid; } @media print { .no-print { display: none; } body { background: white; } }</style></head><body>${contentHtml}<script>let sData = ${JSON.stringify(students)}; let pData = ${JSON.stringify(products)}; sData.forEach((s, idx) => { JsBarcode("#p-bc-s-" + idx, s.value, { format: "CODE128", displayValue: false, height: 44, width: 1.8 }); }); pData.forEach((p, idx) => { JsBarcode("#p-bc-p-" + idx, p.value, { format: "CODE128", displayValue: true, text: "฿ " + p.value, height: 38, width: 1.4, fontSize: 13 }); }); window.focus(); setTimeout(() => { window.print(); window.close(); }, 800);${scriptTagClose}</body></html>`;
             
             win.document.write(htmlDoc);
             win.document.close();
@@ -1097,10 +1080,8 @@
                     membersArr.forEach(d => {
                         c++; tShares += d.shares; const sVal = d.shares * price;
                         
-                        // เรียกใช้ฟังก์ชันแปลงวันที่ตรงนี้!
                         let displayDate = formatDisplayDate(d.register_date); 
                         
-                        // เปลี่ยนจาก ${d.register_date} เป็น ${displayDate}
                         html += `<tr><td>${d.id}</td><td style="min-width: 150px;">${d.name}</td><td>${d.class}</td><td>${displayDate}</td><td style="color:#805AD5; font-weight:500; min-width: 100px;">${d.shares} <span style="font-size:0.8rem; color:#A0AEC0;">(฿${sVal.toFixed(2)})</span></td><td style="color:#38A169; min-width: 100px;">฿${d.total_buy_accumulated.toFixed(2)}</td>
                                  <td style="min-width: 150px;"><button class="btn-blue" style="padding:6px 12px; font-size:0.85rem;" onclick="editMember('${d.id}', '${d.name}', '${d.class}', ${d.shares}, '${d.register_date}')">✏️ แก้ไข</button> <button class="btn-red" onclick="confirmDelete('members', '${d.id}', 'สมาชิก ${d.name}')">🗑️</button></td></tr>`;
                     });
@@ -1162,7 +1143,7 @@
                     let filterSelect = document.getElementById('barcode-student-class-filter');
                     if(filterSelect) filterSelect.innerHTML = '<option value="all">-- นักเรียนทุกคนทั้งโรงเรียน --</option>' + (d.classes || []).map(c => `<option value="${c}">ชั้น ${c}</option>`).join('');
                 });
-        } catch(e) { console.error("Dropdowns settings error:", e); }
+            } catch(e) { console.error("Dropdowns settings error:", e); }
 
             // 5.7 ระบบดักจับและคำนวณบัญชีรายรับ-รายจ่ายภายนอกเด็ดขาด
             try {
@@ -1234,7 +1215,7 @@
                 });
             } catch(e) { console.error("Cashbook listener error:", e); }
 
-        } // <--- ต้องอยู่เหนือปีกกาปิดตัวนี้ (ซึ่งเป็นปีกกาปิดของฟังก์ชัน initRealtimeListeners)
+        }
 
         function updateNet() { 
             const dashNet = document.getElementById('dash-net');
@@ -1257,33 +1238,35 @@
             if(weeklyChartInstance) weeklyChartInstance.destroy();
             weeklyChartInstance = new Chart(ctxWeeklyEl.getContext('2d'), { type: 'bar', data: { labels: weekLabels, datasets: [{ label: 'ยอดรายสัปดาห์', data: weeklyData, backgroundColor: '#319795', borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } });
         }
+
         // ฟังก์ชันบันทึกรายรับรายจ่ายภายนอก
-window.addCashbookRecord = async function() {
-    const date = document.getElementById('cash-date').value;
-    const type = document.getElementById('cash-type').value;
-    const amount = parseFloat(document.getElementById('cash-amount').value);
-    const note = document.getElementById('cash-note').value.trim();
+        window.addCashbookRecord = async function() {
+            const date = document.getElementById('cash-date').value;
+            const type = document.getElementById('cash-type').value;
+            const amount = parseFloat(document.getElementById('cash-amount').value);
+            const note = document.getElementById('cash-note').value.trim();
 
-    if(!date || isNaN(amount) || amount <= 0 || !note) {
-        return Swal.fire('ข้อมูลไม่สมบูรณ์', 'กรุณากรอกข้อมูลให้ครบถ้วน และระบุจำนวนเงินที่มากกว่า 0 บาทครับ', 'warning');
-    }
+            if(!date || isNaN(amount) || amount <= 0 || !note) {
+                return Swal.fire('ข้อมูลไม่สมบูรณ์', 'กรุณากรอกข้อมูลให้ครบถ้วน และระบุจำนวนเงินที่มากกว่า 0 บาทครับ', 'warning');
+            }
 
-    try {
-        await db.collection("cashbook").add({
-            date: date,
-            type: type,
-            amount: amount,
-            note: note,
-            timestamp: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        Swal.fire({ icon: 'success', title: 'บันทึกรายการสำเร็จ', timer: 1000, showConfirmButton: false });
-        document.getElementById('cash-amount').value = '';
-        document.getElementById('cash-note').value = '';
-    } catch(e) {
-        Swal.fire('Error', 'ไม่สามารถบันทึกรายการได้: ' + e.message, 'error');
-    }
+            try {
+                await db.collection("cashbook").add({
+                    date: date,
+                    type: type,
+                    amount: amount,
+                    note: note,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                Swal.fire({ icon: 'success', title: 'บันทึกรายการสำเร็จ', timer: 1000, showConfirmButton: false });
+                document.getElementById('cash-amount').value = '';
+                document.getElementById('cash-note').value = '';
+            } catch(e) {
+                Swal.fire('Error', 'ไม่สามารถบันทึกรายการได้: ' + e.message, 'error');
+            }
+        } // <--- ตรงนี้คือจุดที่ปีกกาปิดหายไปค่ะ ฉันเติมให้แล้ว!
 
-    window.loadFilteredMembersForBarcode = async function() {
+        window.loadFilteredMembersForBarcode = async function() {
             const filterSelect = document.getElementById('barcode-class-filter');
             if (!filterSelect) return Swal.fire('Error', 'ไม่พบกล่องตัวเลือกชั้นเรียน', 'error');
 
@@ -1303,14 +1286,11 @@ window.addCashbookRecord = async function() {
                     if (selectedClass === 'all') {
                         match = true;
                     } else if (selectedClass === 'ครู') {
-                        // ถ้าเลือกระดับครู เช็คจากไอดีหลักเดียว หรือคำว่า 'ครู' ในช่อง class
                         if (doc.id.length === 1 || (d.class && d.class.includes('ครู'))) match = true;
                     } else if (d.class === selectedClass) {
-                        // ถ้าเลือกชั้นปกติ ป.1, ป.2 ฯลฯ
                         match = true;
                     }
 
-                    // ถ้าเงื่อนไขตรง และยังไม่มีรายชื่อนี้รอคิวอยู่บนหน้าจอ ให้ดันเข้าคิวเลย
                     if (match && !activePrintItems.find(item => item.value === doc.id)) {
                         activePrintItems.push({
                             type: 'student',
@@ -1322,7 +1302,7 @@ window.addCashbookRecord = async function() {
                     }
                 });
 
-                updateBarcodePreviewUI(); // อัปเดตหน้าจอให้โชว์บัตร
+                updateBarcodePreviewUI();
 
                 if (count > 0) {
                     Swal.fire({ icon: 'success', title: 'ดึงข้อมูลสำเร็จ', text: `เพิ่มบัตรลงคิว ${count} รายการ`, timer: 1500, showConfirmButton: false });

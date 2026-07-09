@@ -229,6 +229,25 @@
         </main>
     </div>
 
+    <div id="pos-login-modal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(10, 25, 47, 0.85); backdrop-filter: blur(8px); display: flex; justify-content: center; align-items: center; z-index: 10000;">
+        <div class="modal-box" style="background: white; padding: 40px; border-radius: 12px; width: 100%; max-width: 400px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
+            <h3 style="color: var(--primary-blue); font-size: 1.4rem; margin-bottom: 5px;">🧑‍💻 เข้าสู่ระบบสหกรณ์โรงเรียนบ้านหาดส้มแป้น (POS)</h3>
+            <p style="color: var(--text-muted); margin-bottom: 25px; font-size: 0.9rem;">กรุณาระบุชื่อผู้ใช้งานและรหัสผ่านเพื่อเริ่มคิดเงิน</p>
+            
+            <div style="text-align: left; margin-bottom: 15px;">
+                <label style="display: block; font-size: 0.95rem; color: var(--primary-blue); margin-bottom: 5px; font-weight: 500;">ชื่อผู้ทำรายการ (Cashier Name):</label>
+                <input type="text" id="pos-cashier-name" placeholder="เช่น ครูสมศรี, พี่เอ..." style="width: 100%; padding: 12px; border: 2px solid var(--border-color); border-radius: 8px; outline: none; font-family: 'Kanit';">
+            </div>
+            
+            <div style="text-align: left; margin-bottom: 25px;">
+                <label style="display: block; font-size: 0.95rem; color: var(--primary-blue); margin-bottom: 5px; font-weight: 500;">รหัสผ่าน (Password):</label>
+                <input type="password" id="pos-cashier-pwd" placeholder="••••••••" style="width: 100%; padding: 12px; border: 2px solid var(--border-color); border-radius: 8px; outline: none; font-family: 'Kanit';">
+            </div>
+            
+            <button class="btn-blue" style="width: 100%; padding: 14px; font-size: 1.1rem; background: #319795; border-radius: 8px;" onclick="loginPOS()">🚀 เริ่มใช้งานระบบ</button>
+        </div>
+    </div>
+    
     <div id="login-modal">
         <div class="modal-box">
             <span class="close-btn" onclick="closeLoginModal()">×</span>
@@ -491,6 +510,14 @@
                             
                             <div style="background: #F7FAFC; padding: 20px; border-radius: 10px; border: 1px solid var(--border-color);">
                                 <h4 style="color: var(--primary-blue);">🏫 ระดับชั้นเรียน</h4>
+                                <div style="background: #F7FAFC; padding: 20px; border-radius: 10px; border: 1px solid var(--border-color);">
+                                <h4 style="color: var(--primary-blue);">🔐 รหัสผ่านเข้าใช้งานหน้า POS</h4>
+                                <div class="form-row" style="margin-top: 10px;">
+                                    <input type="text" id="setting-pos-pwd" placeholder="ตั้งรหัสผ่านใหม่..." style="flex:1;">
+                                    <button class="btn-blue" style="background:#DD6B20;" onclick="addPosPassword()">เพิ่มรหัส</button>
+                                </div>
+                                <ul id="list-pos-passwords" style="list-style:none; margin-top: 10px; max-height: 130px; overflow-y: auto;"></ul>
+                            </div>
                                 <div class="form-row" style="margin-top: 10px;">
                                     <input type="text" id="setting-class" placeholder="เช่น ป.1/1" style="flex:1;">
                                     <button class="btn-blue" onclick="addSetting('classes', 'setting-class')">เพิ่ม</button>
@@ -758,6 +785,74 @@
             changePosMode(); 
         }
 
+        // ==========================================
+        // ระบบรักษาความปลอดภัยหน้า POS (Login)
+        // ==========================================
+        window.currentCashierName = "เจ้าหน้าที่"; // ชื่อเริ่มต้น
+        window.validPosPasswords = [];
+
+        // ดึงรหัสผ่าน POS จากฐานข้อมูลทันทีที่เปิดเว็บ
+        db.collection("settings").doc("passwords").onSnapshot((doc) => {
+            if (doc.exists) {
+                window.validPosPasswords = doc.data().list || [];
+                let listPwd = document.getElementById('list-pos-passwords');
+                if (listPwd) {
+                    listPwd.innerHTML = window.validPosPasswords.map(p => 
+                        `<li style="padding:10px; background:white; border:1px solid #E2E8F0; margin-bottom:5px; display:flex; justify-content:space-between; border-radius:6px; align-items:center;">
+                            <span style="font-weight:500; color:var(--primary-blue);">รหัส: ${p}</span> 
+                            <span style="color:#E53E3E; cursor:pointer; font-size:0.85rem;" onclick="removePosPassword('${p}')">🗑️ ลบออก</span>
+                        </li>`
+                    ).join('');
+                }
+            } else {
+                db.collection("settings").doc("passwords").set({ list: ['1234'] }); // สร้างรหัสผ่านเริ่มต้นคือ 1234
+            }
+        });
+
+        window.loginPOS = function() {
+            const nameInput = document.getElementById('pos-cashier-name').value.trim();
+            const pwdInput = document.getElementById('pos-cashier-pwd').value.trim();
+
+            if (!nameInput) return Swal.fire('แจ้งเตือน', 'กรุณาระบุชื่อผู้ทำรายการค่ะ', 'warning');
+            if (!pwdInput) return Swal.fire('แจ้งเตือน', 'กรุณาระบุรหัสผ่านค่ะ', 'warning');
+
+            // ถ้ารหัสผ่านตรงกับในคลาวด์ หรือใช้รหัสแอดมินฉุกเฉิน (Bhsp2026)
+            if (window.validPosPasswords.includes(pwdInput) || pwdInput === 'Bhsp2026') {
+                window.currentCashierName = nameInput;
+                document.getElementById('pos-login-modal').style.display = 'none'; // ซ่อนป๊อปอัป
+                document.getElementById('input-student-id').focus(); // พร้อมยิงบาร์โค้ด
+                
+                Swal.fire({
+                    title: `ยินดีต้อนรับคุณ ${window.currentCashierName}`,
+                    text: 'ระบบจุดขายพร้อมใช้งานแล้วค่ะ',
+                    icon: 'success',
+                    timer: 1500,
+                    showConfirmButton: false,
+                    toast: true,
+                    position: 'top-end'
+                });
+            } else {
+                Swal.fire('ข้อผิดพลาด', 'รหัสผ่านไม่ถูกต้อง!', 'error');
+            }
+        };
+
+        window.addPosPassword = async function() {
+            const val = document.getElementById('setting-pos-pwd').value.trim(); 
+            if(!val) return;
+            try { 
+                await db.collection("settings").doc("passwords").set({ list: firebase.firestore.FieldValue.arrayUnion(val) }, { merge: true }); 
+                document.getElementById('setting-pos-pwd').value = ''; 
+                Swal.fire({icon: 'success', title: 'เพิ่มรหัสผ่านสำเร็จ', timer: 1000, showConfirmButton: false});
+            } catch(e) { console.error(e); }
+        }
+
+        window.removePosPassword = async function(val) { 
+            try { 
+                await db.collection("settings").doc("passwords").set({ list: firebase.firestore.FieldValue.arrayRemove(val) }, { merge: true }); 
+            } catch(e) { console.error(e); } 
+        }
+
+        // --- อัปเดตฟังก์ชัน Checkout ให้บันทึกชื่อผู้ทำรายการแทนคำว่า Staff ---
         async function checkout() {
             let mode = document.getElementById('pos-mode').value;
             if (mode === 'cart' && cartItems.length === 0) return;
@@ -768,8 +863,12 @@
             try {
                 const timeNow = new Date().toLocaleTimeString('th-TH');
                 await db.collection("members").doc(currentDocId).set({ total_buy_accumulated: firebase.firestore.FieldValue.increment(totalAmount) }, { merge: true });
-                await db.collection("transactions").add({ member_id: currentDocId, member_name: currentMemberName, amount: totalAmount, date: dateIn.value, timestamp: firebase.firestore.FieldValue.serverTimestamp(), recorded_by: "Staff" });
-                sendToGoogleSheets("Transactions", [dateIn.value, timeNow, currentDocId, currentMemberName, totalAmount, "Staff"]);
+                
+                // บันทึกลง Firebase พร้อมชื่อผู้ทำรายการ (currentCashierName)
+                await db.collection("transactions").add({ member_id: currentDocId, member_name: currentMemberName, amount: totalAmount, date: dateIn.value, timestamp: firebase.firestore.FieldValue.serverTimestamp(), recorded_by: window.currentCashierName });
+                
+                // ส่งลง Google Sheets พร้อมชื่อผู้ทำรายการ
+                sendToGoogleSheets("Transactions", [dateIn.value, timeNow, currentDocId, currentMemberName, totalAmount, window.currentCashierName]);
                 
                 let msg = mode === 'cart' ? `ยอดบิลรวม: <b>฿${totalAmount.toFixed(2)}</b><br><small>(${cartItems.length} ชิ้น)</small>` : `ยอดบิล: <b>฿${totalAmount.toFixed(2)}</b>`;
                 Swal.fire({ title: 'บันทึกสำเร็จ!', html: msg, icon: 'success', timer: 1500, showConfirmButton: false });

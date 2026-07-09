@@ -544,19 +544,37 @@
         };
         firebase.initializeApp(firebaseConfig); const db = firebase.firestore();
 
+        // ==========================================
+        // UI & คู่มือการใช้งานฉบับอัปเดตระบบใหม่ 2026
+        // ==========================================
         window.showUserManual = function() {
             Swal.fire({
-                title: '📖 คู่มือการใช้งานระบบสหกรณ์',
-                html: `<div style="text-align: left; font-size: 0.95rem; max-height: 350px; overflow-y: auto; padding-right: 5px;">
-                        <h4 style="color:var(--primary-blue);">🛒 1. การคิดเงินหน้าร้าน</h4>
-                        <p style="margin-bottom:8px;">- พิมพ์หรือยิงบาร์โค้ดรหัส 4 หลักในช่องแรก แล้วกด <b>Enter</b></p>
-                        <p style="margin-bottom:12px;">- พิมพ์ราคาสินค้าหรือยอดรวม แล้วกด <b>Enter</b> ระบบจะบันทึกทันที</p>
-                        <h4 style="color:var(--primary-blue);">👥 2. จัดการข้อมูล (สำคัญ)</h4>
-                        <p style="margin-bottom:12px;">- การกด <b>ซิงค์ข้อมูล</b> จะทำการดึงข้อมูลปัจจุบันจากชีสมาทับข้อมูลในระบบทั้งหมด (ข้อมูลเก่าที่ลบในชีสไปแล้วจะหายไป เพื่อให้ตรงกัน 100%)</p>
-                        <h4 style="color:var(--primary-blue);">🏷️ 3. การพิมพ์บาร์โค้ด</h4>
-                        <p style="margin-bottom:12px;">- บัตรนักเรียนจะถูกจัดเรียงอัตโนมัติ 6 คนต่อ 1 แผ่น A4 (สามารถเลือกสั่งพิมพ์เฉพาะหมวดหมู่ได้)</p>
+                title: '📖 คู่มือการใช้งานระบบสหกรณ์ (ฉบับอัปเดตระบบใหม่)',
+                html: `<div style="text-align: left; font-size: 0.95rem; max-height: 400px; overflow-y: auto; padding-right: 8px; color: #2D3748;">
+                        
+                        <h4 style="color:var(--secondary-blue); border-left: 3px solid var(--secondary-blue); padding-left: 6px; margin-bottom: 6px;">🛒 1. การคิดเงินหน้าร้าน (มี 2 โหมดให้เลือก)</h4>
+                        <p style="margin-bottom:6px; padding-left: 10px;">- พิมพ์หรือยิงบาร์โค้ดรหัสสมาชิก แล้วกด <b>Enter</b> เพื่อดึงชื่อ</p>
+                        <p style="margin-bottom:6px; padding-left: 10px; font-weight: 500; color: #319795;">👉 โหมดสแกนบาร์โค้ด (ทีละชิ้น):</p>
+                        <p style="margin-bottom:6px; padding-left: 20px;">- สแกนราคาสินค้าปิ๊บๆ ทีละชิ้น ยอดเงินจะบวกเข้าตะกร้าด้านล่างอัตโนมัติ</p>
+                        <p style="margin-bottom:6px; padding-left: 20px;">- หากสแกนผิดชิ้น กดปุ่ม <b>"ลบ"</b> ท้ายแถว และต้องกรอกรหัสผ่านเพื่อยืนยันตัวตน</p>
+                        <p style="margin-bottom:6px; padding-left: 20px;">- คิดเงินเสร็จ ให้กด <b>Enter เปล่าๆ 1 ครั้ง</b> (หรือยิงบาร์โค้ดโต๊ะว่าง) ระบบจะบันทึกบิลและรีเฟรชหน้าจอรอคนถัดไปทันที</p>
+                        <p style="margin-bottom:6px; padding-left: 10px; font-weight: 500; color: #D69E2E;">👉 โหมดพิมพ์ยอดรวม (พิมพ์ด่วนสำหรับเวลาเร่งด่วน):</p>
+                        <p style="margin-bottom:12px; padding-left: 20px;">- พิมพ์ยอดเงินรวมทั้งหมด (เช่น 30) แล้วกด <b>Enter</b> ระบบจะจบบิลทันทีในปุ่มเดียว</p>
+                        
+                        <h4 style="color:var(--secondary-blue); border-left: 3px solid var(--secondary-blue); padding-left: 6px; margin-bottom: 6px;">💰 2. บัญชีรายรับ-รายจ่ายภายนอก</h4>
+                        <p style="margin-bottom:6px; padding-left: 10px;">- เพิ่มประเภท <b>"🟡 ยอดยกมา / ทุน"</b> สำหรับใส่เงินกองกลางตั้งต้น</p>
+                        <p style="margin-bottom:12px; padding-left: 10px;">- ระบบจะคำนวณสูตรสุทธิเรียลไทม์: <span style="color:#3182CE; font-weight:600;">(ยอดยกมา + รายรับ) - รายจ่าย = ยอดคงเหลือ</span></p>
+
+                        <h4 style="color:var(--secondary-blue); border-left: 3px solid var(--secondary-blue); padding-left: 6px; margin-bottom: 6px;">🪪 3. การสร้างบัตรประจำตัวและแยกชั้นเรียน</h4>
+                        <p style="margin-bottom:6px; padding-left: 10px;">- สามารถเลือกตัวกรอง <b>"ระดับชั้นเรียน"</b> (ป.1 - ป.6 หรือ ครู) เพื่อดึงข้อมูลเฉพาะกลุ่มได้</p>
+                        <p style="margin-bottom:6px; padding-left: 10px;">- เมื่อพิมพ์เสร็จ 1 ชั้นเรียน ให้กดปุ่ม <span style="color:var(--accent-red); font-weight:500;">"🗑️ ล้างรายการที่รอพิมพ์"</span> เพื่อเคลียร์หน้าจอ และสลับไปดึงชั้นเรียนถัดไป ช่วยให้เซฟไฟล์ PDF แยกห้องได้อย่างเป็นระเบียบ</p>
+                        <p style="margin-bottom:12px; padding-left: 10px;">- ระบบปรับปรุงหน้าพิมพ์ใหม่ บังคับพิมพ์พื้นหลังสีน้ำเงินเข้มเต็มร้อยแม้อยู่ในโหมด PDF</p>
+
+                        <h4 style="color:var(--secondary-blue); border-left: 3px solid var(--secondary-blue); padding-left: 6px; margin-bottom: 6px;">📑 4. ประวัติและการลบข้อมูลที่ปลอดภัย (Safety ล็อก)</h4>
+                        <p style="margin-bottom:6px; padding-left: 10px;">- ทุกครั้งที่กด <b>"ลบประวัติการซื้อ"</b> ในหน้าแอดมิน ระบบจะไป <b style="color:var(--accent-red);">หักยอดซื้อสะสม</b> ของนักเรียนคนนั้นออกคืนให้โดยอัตโนมัติ เพื่อให้ยอดเงินปันผลประจำปีถูกต้องแม่นยำ 100%</p>
+                        <p style="margin-bottom:6px; padding-left: 10px;">- การลบข้อมูลทุกประเภท ผู้ลบต้องพิมพ์ชื่อตัวเองเพื่อลงบันทึกในประวัติการแก้ไข (Audit Log) เสมอ</p>
                        </div>`,
-                confirmButtonText: 'รับทราบ', confirmButtonColor: '#319795'
+                confirmButtonText: 'รับทราบและเข้าสู่ระบบ', confirmButtonColor: '#319795'
             });
         };
 

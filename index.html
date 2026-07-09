@@ -201,24 +201,31 @@
                             <option value="total">📝 โหมดพิมพ์ยอดรวม (พิมพ์ด่วน)</option>
                         </select>
                     </div>
-                    <div style="display: flex; gap: 10px;">
-                        <input type="text" id="input-amount" class="pos-input" placeholder="สแกนราคาสินค้า... (กด Enter ว่างๆ เพื่อจบบิล)" disabled autocomplete="off">
-                        <button id="btn-checkout" class="btn-blue" style="font-size: 1.2rem; padding: 0 25px; display: none; background: #38A169;" onclick="checkout()">✅ ชำระเงิน</button>
+                    <div style="display: flex; gap: 10px; align-items: stretch;">
+                        <input type="text" id="input-amount" class="pos-input" placeholder="สแกนราคาสินค้า... (กด Enter ว่างๆ เพื่อจบบิล)" disabled autocomplete="off" style="flex: 1;">
+                        <button id="btn-checkout" class="btn-blue" style="font-size: 1.1rem; padding: 0 25px; display: none; background: #38A169; white-space: nowrap; flex-shrink: 0; border-radius: 10px;" onclick="checkout()">✅ ชำระเงิน</button>
                     </div>
                 </div>
 
-                <table class="pos-table">
-                    <thead><tr><th>รายการสินค้า</th><th class="text-right">ราคา (บาท)</th><th style="width: 80px; text-align: center;">จัดการ</th></tr></thead>
-                    <tbody id="cart-body"></tbody>
-                    <tfoot>
-                        <tr>
-                            <td style="padding-top: 20px; font-size: 1.2rem; font-weight: 500;">ยอดเงินสุทธิ</td>
-                            <td class="text-right highlight-price" id="total-price" style="padding-top: 20px;">0.00</td>
-                            <td></td>
-                        </tr>
-                    </tfoot>
-                </table>
-            </div>
+                <div style="max-height: 250px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 10px; background: white;">
+                    <table class="pos-table" style="margin-top: 0; width: 100%; border-collapse: collapse;">
+                        <thead style="position: sticky; top: 0; background: #F7FAFC; z-index: 2; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                            <tr>
+                                <th style="padding: 12px 15px; text-align: left; color: var(--text-muted);">รายการสินค้า</th>
+                                <th class="text-right" style="padding: 12px 15px; color: var(--text-muted);">ราคา (บาท)</th>
+                                <th style="width: 80px; text-align: center; padding: 12px 15px; color: var(--text-muted);">จัดการ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cart-body"></tbody>
+                        <tfoot style="position: sticky; bottom: 0; background: white; z-index: 2; box-shadow: 0 -2px 5px rgba(0,0,0,0.05);">
+                            <tr>
+                                <td style="padding: 15px; font-size: 1.2rem; font-weight: 500; border-top: 2px solid var(--border-color);">ยอดเงินสุทธิ</td>
+                                <td class="text-right highlight-price" id="total-price" style="padding: 15px; border-top: 2px solid var(--border-color);">0.00</td>
+                                <td style="border-top: 2px solid var(--border-color);"></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
         </main>
     </div>
 
@@ -869,12 +876,30 @@
                 input: 'text', icon: 'warning', showCancelButton: true, confirmButtonColor: '#E53E3E', confirmButtonText: 'ยืนยัน',
                 inputValidator: (val) => { if (!val) return 'กรุณาพิมพ์ชื่อผู้ลบ' }
             });
+            
             if (adminName) {
                 try {
+                    // [ส่วนที่อัปเกรด]: ถ้าลบบิลซื้อ ให้ไปหักยอดซื้อสะสมของสมาชิกคืนด้วย
+                    if (collection === 'transactions') {
+                        const txDoc = await db.collection(collection).doc(docId).get();
+                        if (txDoc.exists) {
+                            const txData = txDoc.data();
+                            if (txData.member_id && txData.amount) {
+                                // หักยอดเงินคืน โดยใช้ FieldValue.increment แบบค่าติดลบ
+                                await db.collection("members").doc(txData.member_id).set({ 
+                                    total_buy_accumulated: firebase.firestore.FieldValue.increment(-txData.amount) 
+                                }, { merge: true });
+                            }
+                        }
+                    }
+
+                    // ลบข้อมูลหลัก และลงบันทึกประวัติการลบ (Audit Log)
                     await db.collection(collection).doc(docId).delete();
                     await db.collection("audit_logs").add({ action: "ลบ", collection: collection, details: description, deleted_by: adminName, timestamp: firebase.firestore.FieldValue.serverTimestamp() });
                     Swal.fire({title: 'ลบสำเร็จ!', icon: 'success', timer: 1000, showConfirmButton: false});
-                } catch(e) { Swal.fire('Error', 'ไม่สามารถลบได้', 'error'); }
+                } catch(e) { 
+                    Swal.fire('Error', 'ไม่สามารถลบได้', 'error'); 
+                }
             }
         }
 

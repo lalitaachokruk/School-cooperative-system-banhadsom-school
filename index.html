@@ -207,9 +207,9 @@
                     </div>
                 </div>
 
-                <div style="max-height: 250px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 10px; background: white;">
-                    <table class="pos-table" style="margin-top: 0; width: 100%; border-collapse: collapse;">
-                        <thead style="position: sticky; top: 0; background: #F7FAFC; z-index: 2; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                <div style="max-height: 260px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 8px; background: white; position: relative;">
+                    <table class="pos-table" style="margin-top: 0; width: 100%; border-collapse: separate; border-spacing: 0;">
+                        <thead style="position: sticky; top: 0; background: #F7FAFC; z-index: 10; outline: 1px solid var(--border-color);">
                             <tr>
                                 <th style="padding: 12px 15px; text-align: left; color: var(--text-muted);">รายการสินค้า</th>
                                 <th class="text-right" style="padding: 12px 15px; color: var(--text-muted);">ราคา (บาท)</th>
@@ -217,11 +217,11 @@
                             </tr>
                         </thead>
                         <tbody id="cart-body"></tbody>
-                        <tfoot style="position: sticky; bottom: 0; background: white; z-index: 2; box-shadow: 0 -2px 5px rgba(0,0,0,0.05);">
+                        <tfoot style="position: sticky; bottom: 0; background: white; z-index: 10; outline: 1px solid var(--border-color); box-shadow: 0 -3px 6px rgba(0,0,0,0.02);">
                             <tr>
-                                <td style="padding: 15px; font-size: 1.2rem; font-weight: 500; border-top: 2px solid var(--border-color);">ยอดเงินสุทธิ</td>
-                                <td class="text-right highlight-price" id="total-price" style="padding: 15px; border-top: 2px solid var(--border-color);">0.00</td>
-                                <td style="border-top: 2px solid var(--border-color);"></td>
+                                <td style="padding: 15px; font-size: 1.2rem; font-weight: 500;">ยอดเงินสุทธิ</td>
+                                <td class="text-right highlight-price" id="total-price" style="padding: 15px;">0.00</td>
+                                <td></td>
                             </tr>
                         </tfoot>
                     </table>
@@ -965,7 +965,7 @@
             renderAndPrintWindow(activePrintItems);
         }
 
-        // ฟังก์ชันสั่งพิมพ์แบบสตริงแยกประกอบอย่างปลอดภัย
+        // ฟังก์ชันสั่งพิมพ์แบบสตริงแยกประกอบอย่างปลอดภัย (บังคับพิมพ์สีพื้นหลัง)
         function renderAndPrintWindow(itemsArray) {
             let win = window.open('', '', 'width=950,height=800'); let contentHtml = '';
             let students = itemsArray.filter(i => i.type === 'student'); let products = itemsArray.filter(i => i.type === 'product');
@@ -979,8 +979,6 @@
                         let idx = p * 6 + i;
                         if (idx < students.length) {
                             let s = students[idx];
-                            
-                            // ระบบเช็คเงื่อนไขแยกสถานะ ครู / นักเรียน
                             let isTeacher = (s.value.length === 1 || (s.class && s.class.includes('ครู')));
                             let statusText = isTeacher ? "สถานะ: ครู" : `ระดับชั้น: ${s.class}`;
                             let idText = isTeacher ? `รหัส: ${s.value}` : `รหัสนักเรียน: ${s.value}`;
@@ -999,7 +997,19 @@
             }
 
             let scriptTagClose = '</' + 'script>';
-            let htmlDoc = `<html><head><title>พิมพ์บาร์โค้ดส่วนกลาง</title><link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;500;600&display=swap" rel="stylesheet"><script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js">${scriptTagClose}<style>body { margin: 0; padding: 0; font-family: 'Kanit', sans-serif; background: #fff; } .print-page-a4 { width: 210mm; height: 297mm; padding: 12mm 10mm; box-sizing: border-box; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: repeat(3, 1fr); gap: 12mm 10mm; page-break-after: always; background: #fff; } .student-badge { border: 2px dashed #1A365D; border-radius: 12px; padding: 15px; box-sizing: border-box; display: flex; flex-direction: column; background: #fff; height: 84mm; position: relative; justify-content: space-between; } .badge-title { background: #1A365D; color: white; text-align: center; font-size: 13px; font-weight: 600; padding: 6px; border-radius: 6px; margin-bottom: 8px; } .badge-content { flex: 1; display: flex; flex-direction: column; justify-content: center; } .badge-barcode-zone { text-align: center; margin: 6px 0; } .product-wrap-zone { padding: 20px; display: flex; flex-wrap: wrap; gap: 12px; } .product-sticker { border: 1px solid #4A5568; padding: 10px; text-align: center; background: white; border-radius: 6px; page-break-inside: avoid; } @media print { .no-print { display: none; } body { background: white; } }</style></head><body>${contentHtml}<script>let sData = ${JSON.stringify(students)}; let pData = ${JSON.stringify(products)}; sData.forEach((s, idx) => { JsBarcode("#p-bc-s-" + idx, s.value, { format: "CODE128", displayValue: false, height: 42, width: 2, margin: 0 }); }); pData.forEach((p, idx) => { JsBarcode("#p-bc-p-" + idx, p.value, { format: "CODE128", displayValue: true, text: "฿ " + p.value, height: 38, width: 1.4, fontSize: 13 }); }); window.focus(); setTimeout(() => { window.print(); window.close(); }, 800);${scriptTagClose}</body></html>`;
+            // เพิ่มคำสั่ง print-color-adjust: exact !important; บังคับแสดงสีพื้นหลัง
+            let htmlDoc = `<html><head><title>พิมพ์บาร์โค้ดส่วนกลาง</title><link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;500;600&display=swap" rel="stylesheet"><script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js">${scriptTagClose}<style>
+                * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
+                body { margin: 0; padding: 0; font-family: 'Kanit', sans-serif; background: #fff; } 
+                .print-page-a4 { width: 210mm; height: 297mm; padding: 12mm 10mm; box-sizing: border-box; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: repeat(3, 1fr); gap: 12mm 10mm; page-break-after: always; background: #fff; } 
+                .student-badge { border: 2px dashed #1A365D; border-radius: 12px; padding: 15px; box-sizing: border-box; display: flex; flex-direction: column; background: #fff; height: 84mm; position: relative; justify-content: space-between; } 
+                .badge-title { background-color: #1A365D; color: white; text-align: center; font-size: 13px; font-weight: 600; padding: 6px; border-radius: 6px; margin-bottom: 8px; } 
+                .badge-content { flex: 1; display: flex; flex-direction: column; justify-content: center; } 
+                .badge-barcode-zone { text-align: center; margin: 6px 0; } 
+                .product-wrap-zone { padding: 20px; display: flex; flex-wrap: wrap; gap: 12px; } 
+                .product-sticker { border: 1px solid #4A5568; padding: 10px; text-align: center; background: white; border-radius: 6px; page-break-inside: avoid; } 
+                @media print { .no-print { display: none; } body { background: white; } }
+            </style></head><body>${contentHtml}<script>let sData = ${JSON.stringify(students)}; let pData = ${JSON.stringify(products)}; sData.forEach((s, idx) => { JsBarcode("#p-bc-s-" + idx, s.value, { format: "CODE128", displayValue: false, height: 42, width: 2, margin: 0 }); }); pData.forEach((p, idx) => { JsBarcode("#p-bc-p-" + idx, p.value, { format: "CODE128", displayValue: true, text: "฿ " + p.value, height: 38, width: 1.4, fontSize: 13 }); }); window.focus(); setTimeout(() => { window.print(); window.close(); }, 800);${scriptTagClose}</body></html>`;
             
             win.document.write(htmlDoc);
             win.document.close();

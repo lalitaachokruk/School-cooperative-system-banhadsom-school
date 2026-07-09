@@ -1350,6 +1350,33 @@
                 Swal.fire('ข้อผิดพลาด', 'ดึงข้อมูลไม่สำเร็จ: ' + err.message, 'error');
             }
         }
+        // ==========================================
+        // ระบบค้นหารหัสและชื่อสมาชิกในตาราง (Search Filter)
+        // ==========================================
+        const searchInputBox = document.getElementById('search-member-input');
+        if (searchInputBox) {
+            searchInputBox.addEventListener('keyup', function() {
+                // ดึงข้อความที่พิมพ์และแปลงเป็นตัวพิมพ์เล็ก (เผื่อพิมพ์ภาษาอังกฤษ)
+                const filterText = this.value.toLowerCase().trim();
+                const tableRows = document.querySelectorAll('#admin-member-list tr');
+
+                tableRows.forEach(row => {
+                    // ถ้าเป็นแถวข้อความ "กำลังดึงข้อมูล" ให้ข้ามไป
+                    if (row.cells.length <= 1) return; 
+
+                    // ดึงข้อมูลรหัส (คอลัมน์ 0) และ ชื่อ (คอลัมน์ 1)
+                    const studentId = row.cells[0].textContent.toLowerCase();
+                    const studentName = row.cells[1].textContent.toLowerCase();
+
+                    // เช็คว่าข้อความที่พิมพ์ ตรงกับรหัส หรือ ตรงกับชื่อ หรือไม่
+                    if (studentId.includes(filterText) || studentName.includes(filterText)) {
+                        row.style.display = ''; // ถ้าตรง ให้แสดงผลปกติ
+                    } else {
+                        row.style.display = 'none'; // ถ้าไม่ตรง ให้ซ่อนแถวนี้ทิ้งไป
+                    }
+                });
+            });
+        }
     </script>
 </body>
 </html>

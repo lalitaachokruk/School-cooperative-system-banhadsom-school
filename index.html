@@ -1152,16 +1152,21 @@ window.togglePosPassword = function() {
             
             if (adminName) {
                 try {
-                    // [ส่วนที่อัปเกรด]: ถ้าลบบิลซื้อ ให้ไปหักยอดซื้อสะสมของสมาชิกคืนด้วย
+                    // [ส่วนที่อัปเกรด]: ถ้าลบบิลซื้อ ให้ไปหักยอดซื้อสะสมคืน (ป้องกันยอดติดลบ และไม่หักบิลค้างชำระ)
                     if (collection === 'transactions') {
                         const txDoc = await db.collection(collection).doc(docId).get();
                         if (txDoc.exists) {
                             const txData = txDoc.data();
-                            if (txData.member_id && txData.amount) {
-                                // หักยอดเงินคืน โดยใช้ FieldValue.increment แบบค่าติดลบ
-                                await db.collection("members").doc(txData.member_id).set({ 
-                                    total_buy_accumulated: firebase.firestore.FieldValue.increment(-txData.amount) 
-                                }, { merge: true });
+                            // จะหักยอดคืน ก็ต่อเมื่อเป็นบิลที่จ่ายเงินแล้ว (paid) เท่านั้น
+                            if (txData.status === 'paid' && txData.member_id && txData.amount) {
+                                const memberRef = db.collection("members").doc(txData.member_id);
+                                const memberSnap = await memberRef.get();
+                                if (memberSnap.exists) {
+                                    let currentTotal = memberSnap.data().total_buy_accumulated || 0;
+                                    let newTotal = currentTotal - txData.amount;
+                                    if (newTotal < 0) newTotal = 0; // ล็อกไว้ไม่ให้ยอดทะลุลงไปติดลบ
+                                    await memberRef.set({ total_buy_accumulated: newTotal }, { merge: true });
+                                }
                             }
                         }
                     }

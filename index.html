@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="https://www.banhadsompan.ac.th/_files_school/86101511/data/86101511_0_20240629-000624.png" type="image/png">
     <title>ระบบสหกรณ์โรงเรียนบ้านหาดส้มแป้น</title>
+    <meta name="description" content="ระบบบริหารจัดการสหกรณ์โรงเรียนบ้านหาดส้มแป้น ใช้งานง่ายด้วยระบบจุดขาย (POS) จัดการสมาชิก หุ้น เงินปันผล และบันทึกบัญชีรายรับ-รายจ่าย ครบจบในเว็บเดียว">
+    <meta name="keywords" content="ระบบสหกรณ์โรงเรียน, POS สหกรณ์, สหกรณ์โรงเรียนบ้านหาดส้มแป้น, โปรแกรมจัดการสหกรณ์, ระบบบาร์โค้ดสหกรณ์">
+    <meta name="robots" content="index, follow">
     
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -422,45 +425,47 @@
                 </div>
 
                 <div id="tab-cashbook" class="tab-pane">
-    <div class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 25px;">
-        <div class="stat-box" style="border-left-color: #D69E2E;"><p>ยอดยกมา / ทรัพย์สิน</p><h3 id="cash-total-asset" style="color: #D69E2E;">0.00</h3></div>
-        <div class="stat-box" style="border-left-color: #38A169;"><p>รายรับสะสมภายนอก</p><h3 id="cash-total-income" style="color: #38A169;">0.00</h3></div>
-        <div class="stat-box" style="border-left-color: #E53E3E;"><p>รายจ่ายสะสมภายนอก</p><h3 id="cash-total-expense" style="color: #E53E3E;">0.00</h3></div>
-        <div class="stat-box" style="border-left-color: #3182CE;"><p>ยอดเงินคงเหลือสุทธิ</p><h3 id="cash-balance" style="color: #3182CE;">0.00</h3></div>
-    </div>
+                    <div class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 25px;">
+                        <div class="stat-box" style="border-left-color: #D69E2E;"><p>ทุน / ยอดยกมาตั้งต้น</p><h3 id="cash-total-asset" style="color: #D69E2E;">0.00</h3></div>
+                        <div class="stat-box" style="border-left-color: #38A169;"><p>รายรับสะสม</p><h3 id="cash-total-income" style="color: #38A169;">0.00</h3></div>
+                        <div class="stat-box" style="border-left-color: #E53E3E;"><p>รายจ่ายสะสม</p><h3 id="cash-total-expense" style="color: #E53E3E;">0.00</h3></div>
+                        <div class="stat-box" style="border-left-color: #3182CE;"><p>คงเหลือสุทธิปัจจุบัน</p><h3 id="cash-balance" style="color: #3182CE;">0.00</h3></div>
+                    </div>
 
-    <div class="admin-card">
-        <h3 style="color: var(--primary-blue); margin-bottom: 20px;">📝 บันทึกรายการ รายรับ - รายจ่าย (ระบบภายนอก)</h3>
-        <div class="form-row" style="display: flex; gap: 10px; flex-wrap: wrap;">
-            <input type="date" id="cash-date" style="width: 160px; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-family:'Kanit';">
-            <select id="cash-type" style="width: 160px; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-family: 'Kanit';">
-                <option value="asset">🟡 ยอดยกมา/ทุน</option>
-                <option value="income">🟢 รายรับ</option>
-                <option value="expense">🔴 รายจ่าย</option>
-            </select>
-            <input type="number" id="cash-amount" placeholder="จำนวนเงิน (บาท)" style="width: 160px; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-family:'Kanit';">
-            <input type="text" id="cash-note" placeholder="ระบุหมายเหตุ / รายละเอียดรายการ" style="flex: 1; min-width: 200px; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-family:'Kanit';">
-            <button class="btn-blue" onclick="window.addCashbookRecord()">💾 บันทึกรายการ</button>
-        </div>
+                    <div class="admin-card">
+                        <h3 style="color: var(--primary-blue); margin-bottom: 20px;">📝 บัญชีรายรับ-รายจ่าย (รายงานรับ-จ่ายภายนอก)</h3>
+                        <div class="form-row" style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            <input type="date" id="cash-date" style="width: 150px; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-family:'Kanit';">
+                            <select id="cash-type" style="width: 160px; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-family: 'Kanit';">
+                                <option value="expense">🔴 รายจ่าย</option>
+                                <option value="income">🟢 รายรับ</option>
+                                <option value="asset">🟡 เงินตั้งต้น (ยอดยกมาครั้งแรก)</option>
+                            </select>
+                            <input type="number" id="cash-amount" placeholder="จำนวนเงิน" style="width: 140px; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-family:'Kanit';">
+                            <input type="text" id="cash-note" placeholder="รายการ / หมายเหตุ" style="flex: 1; min-width: 200px; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-family:'Kanit';">
+                            <button class="btn-blue" onclick="window.addCashbookRecord()">💾 บันทึก</button>
+                        </div>
 
-        <div class="admin-table-container" style="margin-top: 20px;">
-            <table class="admin-table">
-                <thead>
-                    <tr>
-                        <th>วันที่บันทึก</th>
-                        <th>ประเภทรายการ</th>
-                        <th>จำนวนเงิน</th>
-                        <th>หมายเหตุ / รายละเอียด</th>
-                        <th>จัดการ</th>
-                    </tr>
-                </thead>
-                <tbody id="cashbook-list">
-                    <tr><td colspan="5" align="center">⏳ กำลังดึงข้อมูลบัญชีภายนอก...</td></tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
+                        <div class="admin-table-container" style="margin-top: 20px;">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 120px;">วัน เดือน ปี</th>
+                                        <th style="text-align: right;">ยอดยกมา</th>
+                                        <th style="text-align: right;">รายรับ</th>
+                                        <th style="text-align: right;">รายจ่าย</th>
+                                        <th style="text-align: right;">คงเหลือ</th>
+                                        <th style="padding-left: 20px;">หมายเหตุ (รายการ)</th>
+                                        <th style="text-align: center;">จัดการ</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="cashbook-list">
+                                    <tr><td colspan="7" align="center">⏳ กำลังดึงข้อมูลบัญชี...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
                 
                 <div id="tab-barcode" class="tab-pane">
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px;">
@@ -1480,14 +1485,11 @@ window.togglePosPassword = function() {
                 });
             } catch(e) { console.error("Dropdowns settings error:", e); }
 
-            // 5.7 ระบบดักจับและคำนวณบัญชีรายรับ-รายจ่ายภายนอกเด็ดขาด
+            // 5.7 ระบบคำนวณบัญชีรายรับ-รายจ่าย (Running Balance แบบสมุดจด)
             try {
                 db.collection("cashbook").onSnapshot((snapshot) => {
                     const tb = document.getElementById('cashbook-list');
-                    let html = '';
-                    let totalAsset = 0;
-                    let totalIncome = 0;
-                    let totalExpense = 0;
+                    let totalAsset = 0; let totalIncome = 0; let totalExpense = 0;
                     let items = [];
 
                     snapshot.forEach(doc => {
@@ -1496,43 +1498,55 @@ window.togglePosPassword = function() {
                         items.push({ id: doc.id, date: d.date, type: d.type, amount: d.amount, note: d.note, timestamp: timestamp });
                     });
 
-                    // จัดเรียงรายการจากใหม่ล่าสุดขึ้นก่อน
-                    items.sort((a, b) => b.timestamp - a.timestamp);
+                    // เรียงข้อมูลจาก "เก่าไปใหม่" เพื่อให้คำนวณยอดยกมาบรรทัดต่อบรรทัดได้ถูกต้องเป๊ะ
+                    items.sort((a, b) => a.timestamp - b.timestamp);
+
+                    let currentBalance = 0;
+                    let tableRowsHtml = [];
 
                     items.forEach(d => {
+                        let prevBalance = currentBalance;
+                        let incHtml = '-';
+                        let expHtml = '-';
+
                         if (d.type === 'asset') {
                             totalAsset += d.amount;
-                            html += `<tr>
-                                <td>${d.date}</td>
-                                <td style="color:#D69E2E; font-weight:600;">🟡 ยอดยกมา/ทรัพย์สิน</td>
-                                <td style="color:#D69E2E; font-weight:600;">+ ฿${d.amount.toFixed(2)}</td>
-                                <td>${d.note}</td>
-                                <td><button class="btn-red" onclick="confirmDelete('cashbook', '${d.id}', 'รายการ: ${d.note}')">🗑️ ลบ</button></td>
-                            </tr>`;
+                            currentBalance += d.amount;
+                            incHtml = `<span style="color:#D69E2E; font-weight:500;">${d.amount.toLocaleString(undefined, {minimumFractionDigits: 2})}</span>`;
+                            prevBalance = '-'; // เงินตั้งต้นก้อนแรก ไม่มียอดยกมาก่อนหน้า
                         } else if (d.type === 'income') {
                             totalIncome += d.amount;
-                            html += `<tr>
-                                <td>${d.date}</td>
-                                <td style="color:#38A169; font-weight:600;">🟢 รายรับ</td>
-                                <td style="color:#38A169; font-weight:600;">+ ฿${d.amount.toFixed(2)}</td>
-                                <td>${d.note}</td>
-                                <td><button class="btn-red" onclick="confirmDelete('cashbook', '${d.id}', 'รายการ: ${d.note}')">🗑️ ลบ</button></td>
-                            </tr>`;
+                            currentBalance += d.amount;
+                            incHtml = `<span style="color:#38A169; font-weight:500;">${d.amount.toLocaleString(undefined, {minimumFractionDigits: 2})}</span>`;
                         } else {
                             totalExpense += d.amount;
-                            html += `<tr>
-                                <td>${d.date}</td>
-                                <td style="color:#E53E3E; font-weight:600;">🔴 รายจ่าย</td>
-                                <td style="color:#E53E3E; font-weight:600;">- ฿${d.amount.toFixed(2)}</td>
-                                <td>${d.note}</td>
-                                <td><button class="btn-red" onclick="confirmDelete('cashbook', '${d.id}', 'รายการ: ${d.note}')">🗑️ ลบ</button></td>
-                            </tr>`;
+                            currentBalance -= d.amount;
+                            expHtml = `<span style="color:#E53E3E; font-weight:500;">${d.amount.toLocaleString(undefined, {minimumFractionDigits: 2})}</span>`;
                         }
+
+                        let prevBalText = prevBalance === '-' ? '-' : prevBalance.toLocaleString(undefined, {minimumFractionDigits: 2});
+
+                        // สร้างแถวตารางเก็บไว้
+                        let rowHtml = `<tr>
+                            <td>${d.date}</td>
+                            <td style="color:#4A5568; text-align: right;">${prevBalText}</td>
+                            <td style="text-align: right;">${incHtml}</td>
+                            <td style="text-align: right;">${expHtml}</td>
+                            <td style="font-weight:bold; color:#3182CE; text-align: right;">${currentBalance.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+                            <td style="padding-left: 20px;">${d.note}</td>
+                            <td style="text-align:center;"><button class="btn-red" style="padding:4px 10px; font-size:0.8rem;" onclick="confirmDelete('cashbook', '${d.id}', 'รายการ: ${d.note}')">ลบ</button></td>
+                        </tr>`;
+                        
+                        tableRowsHtml.push(rowHtml);
                     });
 
-                    if (tb) tb.innerHTML = items.length === 0 ? '<tr><td colspan="5" align="center">ยังไม่มีประวัติการบันทึกบัญชีภายนอก</td></tr>' : html;
+                    // นำแถวที่สร้างเสร็จแล้ว มาสลับเอาอันล่าสุดขึ้นข้างบน (จะได้ไม่ต้องเลื่อนลงไปล่างสุดบ่อยๆ)
+                    tableRowsHtml.reverse();
+                    let finalHtml = tableRowsHtml.join('');
+
+                    if (tb) tb.innerHTML = items.length === 0 ? '<tr><td colspan="7" align="center">ยังไม่มีประวัติการบันทึก</td></tr>' : finalHtml;
                     
-                    // ปรับยอดเงินสะสมและยอดคงเหลือบนหน้าแผงควบคุม
+                    // อัปเดตตัวเลข 4 กล่องด้านบน
                     let astEl = document.getElementById('cash-total-asset');
                     let incEl = document.getElementById('cash-total-income');
                     let expEl = document.getElementById('cash-total-expense');
@@ -1542,14 +1556,11 @@ window.togglePosPassword = function() {
                     if (incEl) incEl.innerText = totalIncome.toLocaleString(undefined, {minimumFractionDigits: 2});
                     if (expEl) expEl.innerText = totalExpense.toLocaleString(undefined, {minimumFractionDigits: 2});
                     if (balEl) {
-                        // คำนวณ: (ยอดยกมา + รายรับ) - รายจ่าย = ยอดคงเหลือ
-                        let balance = totalAsset + totalIncome - totalExpense;
-                        balEl.innerText = balance.toLocaleString(undefined, {minimumFractionDigits: 2});
-                        balEl.style.color = balance >= 0 ? '#3182CE' : '#E53E3E';
+                        balEl.innerText = currentBalance.toLocaleString(undefined, {minimumFractionDigits: 2});
+                        balEl.style.color = currentBalance >= 0 ? '#3182CE' : '#E53E3E';
                     }
                 });
             } catch(e) { console.error("Cashbook listener error:", e); }
-
         }
 
         function updateNet() { 

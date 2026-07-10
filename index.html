@@ -234,6 +234,31 @@
             .stat-box h3 { font-size: 1.2rem; }
             .stat-box p { font-size: 0.8rem; }
         }
+
+        /* ==========================================
+           แก้บั๊กมือถือ: บังคับการ์ดที่เป็น Inline Style ให้เหลือ 1 คอลัมน์
+        ========================================== */
+        @media (max-width: 767px) {
+            /* แก้บั๊ก: การ์ด 2 คอลัมน์ที่ใช้ inline style ไม่ยอมบีบลง 1 คอลัมน์บนมือถือ */
+            #tab-dashboard > div[style*="grid-template-columns"],
+            #tab-members > div[style*="grid-template-columns"],
+            #tab-barcode > div[style*="grid-template-columns"],
+            #tab-settings > div[style*="grid-template-columns"] {
+                grid-template-columns: 1fr !important;
+                gap: 15px !important;
+            }
+            
+            /* แก้บั๊ก: โลโก้ + ชื่อระบบหน้า POS ชนกันตอนจอแคบ */
+            .pos-navbar h1 {
+                flex-wrap: wrap;
+                justify-content: center;
+                font-size: 1.15rem;
+                gap: 10px;
+            }
+            .pos-navbar h1 img {
+                height: 34px;
+            }
+        }
     </style>
 </head>
 <body>

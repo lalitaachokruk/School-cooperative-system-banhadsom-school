@@ -967,32 +967,6 @@ window.togglePosPassword = function() {
             } catch(e) { console.error(e); } 
         }
 
-        // --- อัปเดตฟังก์ชัน Checkout ให้บันทึกชื่อผู้ทำรายการแทนคำว่า Staff ---
-        async function checkout() {
-            let mode = document.getElementById('pos-mode').value;
-            if (mode === 'cart' && cartItems.length === 0) return;
-            
-            inAmt.disabled = true; 
-            if(lbAmt) { lbAmt.innerText = "กำลังบันทึกข้อมูลเข้าระบบ..."; }
-            
-            try {
-                const timeNow = new Date().toLocaleTimeString('th-TH');
-                await db.collection("members").doc(currentDocId).set({ total_buy_accumulated: firebase.firestore.FieldValue.increment(totalAmount) }, { merge: true });
-                
-                // บันทึกลง Firebase พร้อมชื่อผู้ทำรายการ (currentCashierName)
-                await db.collection("transactions").add({ member_id: currentDocId, member_name: currentMemberName, amount: totalAmount, date: dateIn.value, timestamp: firebase.firestore.FieldValue.serverTimestamp(), recorded_by: window.currentCashierName });
-                
-                // ส่งลง Google Sheets พร้อมชื่อผู้ทำรายการ
-                sendToGoogleSheets("Transactions", [dateIn.value, timeNow, currentDocId, currentMemberName, totalAmount, window.currentCashierName]);
-                
-                let msg = mode === 'cart' ? `ยอดบิลรวม: <b>฿${totalAmount.toFixed(2)}</b><br><small>(${cartItems.length} ชิ้น)</small>` : `ยอดบิล: <b>฿${totalAmount.toFixed(2)}</b>`;
-                Swal.fire({ title: 'บันทึกสำเร็จ!', html: msg, icon: 'success', timer: 1500, showConfirmButton: false });
-            } catch (err) { 
-                Swal.fire('Error', 'บันทึกไม่สำเร็จ', 'error'); 
-            }
-            window.resetPOS(); 
-        }
-
         // ==========================================
         // ระบบจัดการข้อมูล สมาชิก และ ซิงค์ (Clear and Sync)
         // ==========================================

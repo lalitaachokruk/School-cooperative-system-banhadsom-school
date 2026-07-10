@@ -167,6 +167,73 @@
                 grid-template-columns: 1fr !important;
             }
         }
+
+        /* ==========================================
+           📱 โหมดมือถือ (Mobile Responsive)
+           เฉพาะหน้าจอเล็กกว่า 767px (มือถือ) / ส่วน iPad, Mac, PC จะคงเดิม 100%
+        ========================================== */
+        @media (max-width: 767px) {
+            /* --- 1. หน้า POS (หน้าร้าน) --- */
+            .pos-navbar { padding: 15px; flex-direction: column; gap: 10px; text-align: center; }
+            .pos-container { padding: 0 10px; margin-top: 10px; }
+            .pos-card { padding: 15px; }
+            .pos-input { font-size: 1.2rem; padding: 12px; }
+            .date-selector { flex-direction: column; align-items: stretch; gap: 10px; }
+            .date-selector input { width: 100%; box-sizing: border-box; }
+            
+            /* จัดเรียงปุ่มคิดเงินใหม่ไม่ให้บีบกัน */
+            .input-group > div:nth-child(2) { flex-direction: column; align-items: stretch !important; gap: 10px; }
+            #btn-credit, #btn-checkout { width: 100%; padding: 12px; margin: 0; }
+            #input-amount { width: 100%; }
+
+            /* --- 2. หน้า Admin (หลังบ้าน) --- */
+            #admin-section { flex-direction: column; } /* เปลี่ยนจากแบ่งซ้ายขวา เป็นบนล่าง */
+            
+            /* เปลี่ยนเมนูด้านซ้าย ให้เป็นเมนูบาร์ด้านบนแบบใช้นิ้วปัดได้ */
+            .admin-sidebar { 
+                width: 100%; 
+                padding: 0; 
+                flex-direction: row; 
+                overflow-x: auto; 
+                border-right: none; 
+                border-bottom: 2px solid var(--border-color); 
+                white-space: nowrap; /* ป้องกันเมนูตกบรรทัด */
+                scrollbar-width: none; /* ซ่อนหลอดสกอร์บาร์ให้ดูสะอาด */
+            }
+            .admin-sidebar::-webkit-scrollbar { display: none; }
+            .admin-brand { display: none; } /* ซ่อนโลโก้ในเมนูมือถือเพื่อประหยัดพื้นที่ */
+            .nav-item { 
+                display: inline-block; 
+                padding: 12px 20px; 
+                border-left: none !important; 
+                border-bottom: 3px solid transparent; 
+                font-size: 0.95rem;
+            }
+            .nav-item.active { 
+                border-bottom-color: var(--primary-blue) !important; 
+                background: #F8FAFC; 
+            }
+
+            .admin-topbar { padding: 15px; flex-direction: column; gap: 10px; height: auto; text-align: center; align-items: stretch; }
+            .admin-topbar div { justify-content: center; flex-wrap: wrap; }
+            .admin-content { padding: 10px; }
+            .admin-card { padding: 15px; margin-bottom: 15px; }
+
+            /* --- 3. ฟอร์มและตาราง --- */
+            /* บังคับช่องกรอกข้อมูลทุกช่องให้ยาวเต็มจอมือถือ */
+            .form-row { flex-direction: column !important; align-items: stretch !important; }
+            .form-row input, .form-row select, .form-row button { width: 100% !important; max-width: 100% !important; box-sizing: border-box; }
+            
+            /* ป้องกันตารางบีบตัวจนอ่านไม่ออก ให้ใช้นิ้วปัดซ้ายขวาแทน */
+            .admin-table th, .admin-table td { white-space: nowrap; padding: 10px; }
+            .pos-table th, .pos-table td { padding: 10px 5px; font-size: 0.9rem; }
+            
+            /* กล่องสถิติด้านบนเรียง 2 ช่อง */
+            .stats-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 10px; }
+            .stat-box { padding: 12px; }
+            .stat-box h3 { font-size: 1.2rem; }
+            .stat-box p { font-size: 0.8rem; }
+        }
     </style>
 </head>
 <body>

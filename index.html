@@ -570,7 +570,6 @@
                                 </div>
                                 <ul id="list-pos-passwords" style="list-style:none; margin-top: 10px; max-height: 130px; overflow-y: auto;"></ul>
                             </div>
-                                <ul id="list-classes" style="list-style:none; margin-top: 10px;"></ul>
                             </div>
                         </div>
                     </div>
@@ -583,6 +582,10 @@
     <script>
         const SHEET_API_URL = "https://script.google.com/macros/s/AKfycbwnXkLLhzRf38_c268mD5_aKN447wO87sJVRzJcntB-0zjgm_Y1vQHotgNQZXrq3T7few/exec";
 
+        function escapeForHtml(str) {
+    return (str || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+}
+        
         function toArabic(text) { const t=['๐','๑','๒','๓','๔','๕','๖','๗','๘','๙']; return text.replace(/[๐-๙]/g, m => t.indexOf(m)); }
         function toThai(text) { const t=['๐','๑','๒','๓','๔','๕','๖','๗','๘','๙']; return text.replace(/[0-9]/g, m => t[m]); }
 
@@ -721,7 +724,7 @@
 
                         if (doc.exists) {
                             const d = doc.data(); currentMemberId = val; currentMemberName = d.name;
-                            window.currentMemberClass = (val.length === 1 || (d.class && d.class.includes('ครู'))) ? "ครู" : (d.class || '-'); // จำชั้นเรียนไว้
+                            window.currentMemberClass = window.isTeacherInfo(val, d.class) ? "ครู" : (d.class || '-');
                             let status = window.currentMemberClass === "ครู" ? "ครู" : `ชั้น ${window.currentMemberClass}`;
                             
                             mText.innerText = `รหัส ${val}: ${d.name} (${status})`; mDisp.style.display = "flex";
@@ -817,7 +820,9 @@
                 cancelButtonText: 'ยกเลิก',
                 confirmButtonColor: '#E53E3E'
             });
-            if (pwd === 'Bhsp2026') {
+            
+           // ตรวจสอบว่ารหัสที่พิมพ์มา ตรงกับรหัสใดรหัสหนึ่งในฐานข้อมูลรหัส POS หรือไม่
+            if (window.validPosPasswords && window.validPosPasswords.includes(pwd)) {
                 cartItems.splice(index, 1);
                 updateCartUI();
             } else if (pwd) {
@@ -1191,9 +1196,13 @@ window.togglePosPassword = function() {
         }
 
         window.addCustomProductBarcode = function() {
-            let priceInput = document.getElementById('barcode-custom-price'); let val = priceInput.value.trim();
-            if(!val || parseFloat(val) <= 0) return Swal.fire('แจ้งเตือน', 'กรุณาระบุราคาที่ถูกต้อง', 'warning');
-            activePrintItems.push({ type: 'product', value: val }); priceInput.value = ''; priceInput.focus(); updateBarcodePreviewUI();
+            let priceInput = document.getElementById('barcode-custom-price'); 
+            let val = priceInput.value.trim();
+            // เช็คว่าว่างเปล่า, ไม่ใช่ตัวเลข (NaN), หรือน้อยกว่า/เท่ากับ 0
+            if(!val || isNaN(val) || parseFloat(val) <= 0) return Swal.fire('แจ้งเตือน', 'กรุณาระบุราคาเป็นตัวเลขที่ถูกต้อง', 'warning');
+            
+            activePrintItems.push({ type: 'product', value: val }); 
+            priceInput.value = ''; priceInput.focus(); updateBarcodePreviewUI();
         }
 
         window.printSectionBarcodes = function(sectionType, size = 'small') {
@@ -1222,7 +1231,7 @@ window.togglePosPassword = function() {
                         let idx = p * 6 + i;
                         if (idx < students.length) {
                             let s = students[idx];
-                            let isTeacher = (s.value.length === 1 || (s.class && s.class.includes('ครู')));
+                            let isTeacher = window.isTeacherInfo(s.value, s.class);
                             let statusText = isTeacher ? "สถานะ: ครู" : `ระดับชั้น: ${s.class}`;
                             let idText = isTeacher ? `รหัส: ${s.value}` : `รหัสนักเรียน: ${s.value}`;
 
@@ -1480,8 +1489,8 @@ window.togglePosPassword = function() {
                     let yearSelect = document.getElementById('setting-current-year'); if (yearSelect) yearSelect.innerHTML = '<option value="">-- เลือกปีการศึกษาที่มีในระบบ --</option>' + (d.years || []).map(y => `<option value="${y}">${y}</option>`).join('');
                     let listClasses = document.getElementById('list-classes'); if (listClasses) listClasses.innerHTML = (d.classes || []).map(c => `<li style="padding:10px; background:#F7FAFC; border:1px solid #E2E8F0; margin-bottom:5px; display:flex; justify-content:space-between; border-radius:6px;">${c} <span style="color:#E53E3E; cursor:pointer;" onclick="removeSetting('classes', '${c}')">🗑️ ลบ</span></li>`).join('');
                     
-                    let filterSelect = document.getElementById('barcode-student-class-filter');
-                    if(filterSelect) filterSelect.innerHTML = '<option value="all">-- นักเรียนทุกคนทั้งโรงเรียน --</option>' + (d.classes || []).map(c => `<option value="${c}">ชั้น ${c}</option>`).join('');
+                    let filterSelect = document.getElementById('barcode-class-filter');
+if(filterSelect) filterSelect.innerHTML = '<option value="all">-- ดึงนักเรียนทุกคนทั้งโรงเรียน --</option><option value="ครู">👤 เฉพาะ ครู / บุคลากร</option>' + (d.classes || []).map(c => `<option value="${c}">ชั้น ${c}</option>`).join('');
                 });
             } catch(e) { console.error("Dropdowns settings error:", e); }
 

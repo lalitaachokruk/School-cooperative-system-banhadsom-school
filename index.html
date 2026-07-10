@@ -585,6 +585,11 @@
         function escapeForHtml(str) {
     return (str || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
 }
+        // ฟังก์ชันกลางสำหรับเช็คสถานะครู/บุคลากร
+        window.isTeacherInfo = function(id, className) {
+            if (!id) return false;
+            return id.toString().length === 1 || (className && className.includes('ครู'));
+        }
         
         function toArabic(text) { const t=['๐','๑','๒','๓','๔','๕','๖','๗','๘','๙']; return text.replace(/[๐-๙]/g, m => t.indexOf(m)); }
         function toThai(text) { const t=['๐','๑','๒','๓','๔','๕','๖','๗','๘','๙']; return text.replace(/[0-9]/g, m => t[m]); }

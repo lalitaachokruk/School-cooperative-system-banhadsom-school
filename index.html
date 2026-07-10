@@ -201,9 +201,10 @@
                             <option value="total">📝 โหมดพิมพ์ยอดรวม (พิมพ์ด่วน)</option>
                         </select>
                     </div>
-                    <div style="display: flex; gap: 10px; align-items: stretch;">
+                    <div style="display: flex; gap: 8px; align-items: stretch;">
                         <input type="text" id="input-amount" class="pos-input" placeholder="สแกนราคาสินค้า... (กด Enter ว่างๆ เพื่อจบบิล)" disabled autocomplete="off" style="flex: 1;">
-                        <button id="btn-checkout" class="btn-blue" style="font-size: 1.1rem; padding: 0 25px; display: none; background: #38A169; white-space: nowrap; flex-shrink: 0; border-radius: 10px;" onclick="checkout()">✅ ชำระเงิน</button>
+                        <button id="btn-credit" class="btn-blue" style="font-size: 1.1rem; padding: 0 15px; display: none; background: #DD6B20; white-space: nowrap; flex-shrink: 0; border-radius: 10px;" onclick="checkout(true)">📝 ค้างไว้ก่อน</button>
+                        <button id="btn-checkout" class="btn-blue" style="font-size: 1.1rem; padding: 0 15px; display: none; background: #38A169; white-space: nowrap; flex-shrink: 0; border-radius: 10px;" onclick="checkout(false)">✅ ชำระเงิน</button>
                     </div>
                 </div>
 
@@ -229,34 +230,42 @@
         </main>
     </div>
 
-    <div id="pos-login-modal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(10, 25, 47, 0.85); backdrop-filter: blur(8px); display: flex; justify-content: center; align-items: center; z-index: 1000;">
-        <div class="modal-box" style="background: white; padding: 0; border-radius: 12px; width: 100%; max-width: 420px; text-align: center; box-shadow: 0 15px 35px rgba(0,0,0,0.25); overflow: hidden; border-top: 6px solid var(--primary-blue);">
+    <div id="pos-login-modal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(235, 240, 245, 0.85); backdrop-filter: blur(10px); display: flex; justify-content: center; align-items: center; z-index: 1000;">
+        <div class="modal-box" style="background: white; padding: 45px 35px; border-radius: 20px; width: 100%; max-width: 400px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.08); border: 1px solid rgba(255,255,255,0.5);">
             
-            <div style="padding: 30px 30px 15px;">
-                <h3 style="color: var(--primary-blue); font-size: 1.5rem; margin-bottom: 5px;">🧑‍💻 เข้าสู่ระบบ</h3>
-                <h4 style="color: var(--text-muted); font-size: 1.05rem; margin-bottom: 5px; font-weight: 500;">ระบบสหกรณ์โรงเรียนบ้านหาดส้มแป้น (POS)</h4>
-                <p style="color: #A0AEC0; margin-bottom: 25px; font-size: 0.85rem;">กรุณาระบุชื่อผู้ใช้งานและรหัสผ่านเพื่อเริ่มทำงาน</p>
-                
-                <div style="text-align: left; margin-bottom: 15px;">
-                    <label style="display: block; font-size: 0.95rem; color: var(--primary-blue); margin-bottom: 5px; font-weight: 500;">ชื่อผู้ทำรายการ (Cashier Name):</label>
-                    <input type="text" id="pos-cashier-name" placeholder="เช่น ครูลลิตา" style="width: 100%; padding: 12px; border: 2px solid var(--border-color); border-radius: 8px; outline: none; font-family: 'Kanit'; font-size: 1rem;">
-                </div>
-                
-                <div style="text-align: left; margin-bottom: 25px;">
-                    <label style="display: block; font-size: 0.95rem; color: var(--primary-blue); margin-bottom: 5px; font-weight: 500;">รหัสผ่าน (Password):</label>
-                    <div style="position: relative;">
-                        <input type="password" id="pos-cashier-pwd" placeholder="••••••••" style="width: 100%; padding: 12px; padding-right: 45px; border: 2px solid var(--border-color); border-radius: 8px; outline: none; font-family: 'Kanit'; font-size: 1rem;">
-                        <span class="eye-icon" onclick="togglePosPassword()" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; display: flex; align-items: center; justify-content: center; width: 24px; height: 24px;">
-                            <svg id="pos-eye-open" style="display:none;" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                            <svg id="pos-eye-closed" viewBox="0 0 24 24"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.45 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
-                        </span>
-                    </div>
+            <img src="https://www.banhadsompan.ac.th/_files_school/86101511/data/86101511_0_20240629-000624.png" alt="โลโก้" style="height: 75px; margin-bottom: 15px;">
+            <h2 style="color: #2D3748; font-size: 1.5rem; font-weight: 600; margin-bottom: 4px;">สหกรณ์โรงเรียน</h2>
+            <p style="color: #718096; font-size: 0.9rem; margin-bottom: 30px;">School Cooperative Administration</p>
+            
+            <div style="text-align: left; margin-bottom: 20px;">
+                <label style="display: block; font-size: 0.85rem; color: #4A5568; margin-bottom: 8px; font-weight: 500;">ชื่อผู้ทำรายการ (Cashier Name)</label>
+                <div style="position: relative;">
+                    <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #A0AEC0; display: flex;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                    </span>
+                    <input type="text" id="pos-cashier-name" placeholder="ใส่ชื่อผู้ทำรายการ เช่น ครูลลิตา" autocomplete="off" style="width: 100%; padding: 12px 12px 12px 42px; border: 1px solid #E2E8F0; border-radius: 10px; outline: none; font-family: 'Kanit'; font-size: 0.95rem; color: #2D3748; box-sizing: border-box; transition: 0.2s;" onfocus="this.style.borderColor='var(--secondary-blue)'; this.style.boxShadow='0 0 0 3px rgba(49, 130, 206, 0.1)'" onblur="this.style.borderColor='#E2E8F0'; this.style.boxShadow='none'">
                 </div>
             </div>
             
-            <div style="padding: 0 30px 30px;">
-                <button class="btn-blue" style="width: 100%; padding: 14px; font-size: 1.1rem; background: var(--secondary-blue); border-radius: 8px; font-weight: 500; transition: 0.3s;" onclick="loginPOS()" onmouseover="this.style.background='var(--primary-blue)'" onmouseout="this.style.background='var(--secondary-blue)'">🚀 เริ่มใช้งานระบบ</button>
+            <div style="text-align: left; margin-bottom: 30px;">
+                <label style="display: block; font-size: 0.85rem; color: #4A5568; margin-bottom: 8px; font-weight: 500;">รหัสผ่าน (Password)</label>
+                <div style="position: relative;">
+                    <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #A0AEC0; display: flex;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                    </span>
+                    <input type="password" id="pos-cashier-pwd" placeholder="ใส่รหัสผ่าน" style="width: 100%; padding: 12px 45px 12px 42px; border: 1px solid #E2E8F0; border-radius: 10px; outline: none; font-family: 'Kanit'; font-size: 0.95rem; color: #2D3748; box-sizing: border-box; transition: 0.2s;" onfocus="this.style.borderColor='var(--secondary-blue)'; this.style.boxShadow='0 0 0 3px rgba(49, 130, 206, 0.1)'" onblur="this.style.borderColor='#E2E8F0'; this.style.boxShadow='none'">
+                    <span class="eye-icon" onclick="togglePosPassword()" style="position: absolute; right: 14px; top: 50%; transform: translateY(-50%); cursor: pointer; display: flex; color: #A0AEC0; transition: 0.2s;" onmouseover="this.style.color='#4A5568'" onmouseout="this.style.color='#A0AEC0'">
+                        <svg id="pos-eye-open" style="display:none; width:18px; height:18px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                        <svg id="pos-eye-closed" style="width:18px; height:18px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.45 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                    </span>
+                </div>
             </div>
+            
+            <button style="width: 100%; padding: 14px; font-size: 1.05rem; background: var(--secondary-blue); color: white; border: none; border-radius: 10px; font-weight: 500; font-family: 'Kanit'; cursor: pointer; transition: 0.3s; display: flex; justify-content: center; align-items: center; gap: 8px;" onclick="loginPOS()" onmouseover="this.style.background='var(--primary-blue)'" onmouseout="this.style.background='var(--secondary-blue)'">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>
+                เข้าสู่ระบบ
+            </button>
+            
         </div>
     </div>
     
@@ -290,6 +299,7 @@
             <a class="nav-item active" onclick="switchAdminTab('dashboard', this)">📊 ภาพรวมบัญชี</a>
             <a class="nav-item" onclick="switchAdminTab('members', this)">👥 จัดการสมาชิก & หุ้น</a>
             <a class="nav-item" onclick="switchAdminTab('history', this)">📜 ประวัติการซื้อ</a>
+            <a class="nav-item" onclick="switchAdminTab('debts', this)">📝 ยอดค้างชำระ</a>
             <a class="nav-item" onclick="switchAdminTab('expenses', this)">💸 บันทึกรายจ่าย</a>
             <a class="nav-item" onclick="switchAdminTab('cashbook', this)">💰 บัญชีรายรับ-รายจ่ายภายนอก</a>
             <a class="nav-item" onclick="switchAdminTab('barcode', this)">🏷️ สร้างบาร์โค้ดสลาก</a>
@@ -371,6 +381,23 @@
                             <table class="admin-table">
                                 <thead><tr><th>วันที่-เวลา</th><th>รหัส</th><th>ชื่อ-สกุล</th><th>ยอดเงิน (บาท)</th><th>ผู้บันทึก</th><th>จัดการ</th></tr></thead>
                                 <tbody id="admin-history-list"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="tab-debts" class="tab-pane">
+                    <div class="admin-card" style="border-top: 4px solid #DD6B20;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+                            <h3 style="color: #DD6B20; margin: 0;">📝 จัดการยอดค้างชำระ (ติดหนี้)</h3>
+                            <div style="background: #FFF5F5; color: #E53E3E; padding: 10px 20px; border-radius: 8px; font-weight: 600; font-size: 1.1rem; border: 1px solid #FEB2B2;">
+                                ยอดค้างชำระรวม: ฿<span id="total-debt-amount">0.00</span>
+                            </div>
+                        </div>
+                        <div class="admin-table-container">
+                            <table class="admin-table">
+                                <thead><tr><th>วันที่ค้าง</th><th>รหัส</th><th>ชื่อ-สกุล</th><th>ชั้นเรียน / สถานะ</th><th>ยอดค้าง (บาท)</th><th>จัดการ</th></tr></thead>
+                                <tbody id="admin-debts-list"></tbody>
                             </table>
                         </div>
                     </div>
@@ -661,15 +688,17 @@
         }
 
         // ==========================================
-        // ระบบ POS (คิดเงิน)
+        // ระบบ POS (คิดเงิน) + อัปเกรดระบบค้างชำระ
         // ==========================================
         let currentMemberId = null; let currentMemberName = ''; let currentDocId = null; let totalAmount = 0; let cartItems = [];
+        window.currentMemberClass = '-'; // เพิ่มตัวแปรเก็บชั้นเรียน
         const inId = document.getElementById('input-student-id'); const inAmt = document.getElementById('input-amount');
         const lbId = document.getElementById('label-student-id'); const lbAmt = document.getElementById('label-amount');
         const mDisp = document.getElementById('member-display'); const mText = document.getElementById('member-name-text');
         const tBody = document.getElementById('cart-body'); const tPrice = document.getElementById('total-price');
         const dateIn = document.getElementById('transaction-date');
         const btnCheckout = document.getElementById('btn-checkout');
+        const btnCredit = document.getElementById('btn-credit'); // ปุ่มค้างชำระ
 
         if(dateIn) { dateIn.value = new Date().toLocaleDateString('en-CA'); }
         const expDate = document.getElementById('exp-date');
@@ -687,14 +716,16 @@
 
                         if (doc.exists) {
                             const d = doc.data(); currentMemberId = val; currentMemberName = d.name;
-                            let status = (val.length === 1 || (d.class && d.class.includes('ครู'))) ? "ครู" : `ชั้น ${d.class || '-'}`;
+                            window.currentMemberClass = (val.length === 1 || (d.class && d.class.includes('ครู'))) ? "ครู" : (d.class || '-'); // จำชั้นเรียนไว้
+                            let status = window.currentMemberClass === "ครู" ? "ครู" : `ชั้น ${window.currentMemberClass}`;
+                            
                             mText.innerText = `รหัส ${val}: ${d.name} (${status})`; mDisp.style.display = "flex";
                             inId.disabled = true; lbId.innerText = "1. รหัสสมาชิก (รับข้อมูลสำเร็จ)";
                             inAmt.disabled = false; lbAmt.innerText = "2. สแกนบาร์โค้ดสินค้า หรือ พิมพ์ราคา"; lbAmt.style.color = "var(--accent-red)"; inAmt.focus();
                         } else {
                             Swal.fire({ icon: 'warning', title: 'ไม่พบข้อมูล', text: 'กรุณาตรวจสอบรหัสสมาชิกอีกครั้ง' });
                             lbId.innerText = "1. พิมพ์ / สแกน รหัสนักเรียน (4 หลัก)";
-                            inId.value = ''; // เคลียร์ช่องให้อัตโนมัติถ้าสแกนผิด
+                            inId.value = ''; 
                         }
                     } catch (err) { Swal.fire('Error', 'เชื่อมต่อไม่ได้', 'error'); }
                 }
@@ -708,20 +739,18 @@
                     let mode = document.getElementById('pos-mode').value;
                     
                     if (mode === 'total') {
-                        // 📝 โหมดพิมพ์ยอดรวมด่วน: พิมพ์ตัวเลข -> Enter -> จบบิลทันที!
                         if (val !== "") {
                             const p = parseFloat(val);
                             if (!isNaN(p) && p > 0) {
                                 totalAmount = p;
-                                checkout();
+                                checkout(false); // กด Enter คือจ่ายเงินสด
                             } else {
                                 Swal.fire('Error', 'ยอดเงินไม่ถูกต้อง', 'error');
                             }
                         }
                     } else {
-                        // 🛒 โหมดสแกนบาร์โค้ด: สแกน -> ลงตะกร้าทีละชิ้น
                         if (val === "" && cartItems.length > 0) {
-                            checkout(); 
+                            checkout(false); // กด Enter คือจ่ายเงินสด
                         } else if (val !== "") {
                             const p = parseFloat(val); 
                             if (!isNaN(p) && p > 0) {
@@ -743,6 +772,7 @@
             if (mode === 'total') {
                 inAmt.placeholder = "พิมพ์ยอดรวมแล้วกด Enter เพื่อจบบิลทันที...";
                 if(btnCheckout) btnCheckout.style.display = 'none';
+                if(btnCredit) btnCredit.style.display = 'none';
             } else {
                 inAmt.placeholder = "สแกนราคาทีละชิ้น... (กด Enter ว่างๆ เพื่อคิดเงิน)";
                 updateCartUI(); 
@@ -764,8 +794,10 @@
             if(tBody) tBody.innerHTML = html;
             if(tPrice) tPrice.innerText = totalAmount.toFixed(2);
             
-            if(btnCheckout) {
-                btnCheckout.style.display = (cartItems.length > 0 && mode === 'cart') ? 'block' : 'none';
+            if(btnCheckout && btnCredit) {
+                let showBtn = (cartItems.length > 0 && mode === 'cart');
+                btnCheckout.style.display = showBtn ? 'block' : 'none';
+                btnCredit.style.display = showBtn ? 'block' : 'none';
             }
             inAmt.focus();
         }
@@ -791,14 +823,59 @@
         }
 
         window.resetPOS = function() {
-            currentMemberId = null; currentDocId = null; currentMemberName = ''; totalAmount = 0; cartItems = [];
+            currentMemberId = null; currentDocId = null; currentMemberName = ''; totalAmount = 0; cartItems = []; window.currentMemberClass = '-';
             if(mDisp) mDisp.style.display = "none"; if(tBody) tBody.innerHTML = ""; if(tPrice) tPrice.innerText = "0.00";
             if(inId) { inId.disabled = false; inId.value = ''; inId.focus(); }
             if(lbId) lbId.innerText = "1. พิมพ์ / สแกน รหัสนักเรียน (4 หลัก)";
             if(inAmt) { inAmt.disabled = true; inAmt.value = ''; }
             if(lbAmt) { lbAmt.innerText = "2. รับชำระเงิน"; lbAmt.style.color = "var(--text-muted)"; }
             if(btnCheckout) btnCheckout.style.display = 'none';
+            if(btnCredit) btnCredit.style.display = 'none';
             changePosMode(); 
+        }
+
+        // --- ฟังก์ชัน Checkout (อัปเกรดแยกบิลเงินสด กับ บิลค้างชำระ) ---
+        async function checkout(isCredit = false) {
+            let mode = document.getElementById('pos-mode').value;
+            if (mode === 'cart' && cartItems.length === 0) return;
+            if (mode === 'total' && totalAmount <= 0) return;
+            
+            inAmt.disabled = true; 
+            if(lbAmt) { lbAmt.innerText = "กำลังบันทึกข้อมูลเข้าระบบ..."; }
+            
+            try {
+                const timeNow = new Date().toLocaleTimeString('th-TH');
+                const billStatus = isCredit ? "unpaid" : "paid";
+                
+                // ถ้ายืนยันว่ารับเงินสดแล้ว (ไม่ค้าง) ให้บวกยอดเงินปันผลให้นักเรียนทันที
+                if (!isCredit) {
+                    await db.collection("members").doc(currentDocId).set({ total_buy_accumulated: firebase.firestore.FieldValue.increment(totalAmount) }, { merge: true });
+                }
+                
+                // บันทึกลง Firebase พร้อมระบุสถานะ (paid/unpaid)
+                await db.collection("transactions").add({ 
+                    member_id: currentDocId, 
+                    member_name: currentMemberName, 
+                    member_class: window.currentMemberClass,
+                    amount: totalAmount, 
+                    date: dateIn.value, 
+                    status: billStatus, // 🌟 ป้ายกำกับหนี้
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp(), 
+                    recorded_by: window.currentCashierName 
+                });
+                
+                // ส่งลง Google Sheets 
+                let sheetStatusText = isCredit ? window.currentCashierName + " (ติดค้างชำระ)" : window.currentCashierName;
+                sendToGoogleSheets("Transactions", [dateIn.value, timeNow, currentDocId, currentMemberName, totalAmount, sheetStatusText]);
+                
+                let msg = mode === 'cart' ? `ยอดบิลรวม: <b>฿${totalAmount.toFixed(2)}</b><br><small>(${cartItems.length} ชิ้น)</small>` : `ยอดบิล: <b>฿${totalAmount.toFixed(2)}</b>`;
+                if (isCredit) { msg += `<br><br><span style="color:#DD6B20; font-weight:bold;">📝 บันทึกเป็น "ยอดค้างชำระ" เรียบร้อยแล้ว</span>`; }
+
+                Swal.fire({ title: 'บันทึกสำเร็จ!', html: msg, icon: 'success', timer: 1800, showConfirmButton: false });
+            } catch (err) { 
+                Swal.fire('Error', 'บันทึกไม่สำเร็จ', 'error'); 
+            }
+            window.resetPOS(); 
         }
 
         // ==========================================
@@ -1022,6 +1099,37 @@ window.togglePosPassword = function() {
             }
         }
 
+        window.payDebt = async function(docId, memberId, amount, memberName) {
+            const { value: isConfirm } = await Swal.fire({
+                title: 'ยืนยันการชำระเงิน?',
+                html: `คุณกำลังรับชำระเงินจาก <b>${memberName}</b><br>ยอดค้าง: <b style="color:#E53E3E; font-size:1.2rem;">฿${amount.toFixed(2)}</b>`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#38A169',
+                confirmButtonText: '✅ รับเงินเรียบร้อย',
+                cancelButtonText: 'ยกเลิก'
+            });
+
+            if (isConfirm) {
+                Swal.fire({ title: 'กำลังประมวลผล...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                try {
+                    // 1. เปลี่ยนสถานะบิลในฐานข้อมูลให้กลายเป็นจ่ายแล้ว (paid)
+                    await db.collection("transactions").doc(docId).set({ status: 'paid' }, { merge: true });
+                    
+                    // 2. วิ่งไปบวก "ยอดซื้อสะสม" คืนให้นักเรียน เพื่อนำไปคิดปันผล
+                    if (memberId) {
+                        await db.collection("members").doc(memberId).set({ 
+                            total_buy_accumulated: firebase.firestore.FieldValue.increment(amount) 
+                        }, { merge: true });
+                    }
+                    
+                    Swal.fire({icon: 'success', title: 'เคลียร์ยอดค้างสำเร็จ!', text: 'ระบบนำเงินไปรวมในกำไรและยอดปันผลแล้วค่ะ', timer: 2000, showConfirmButton: false});
+                } catch(e) {
+                    Swal.fire('Error', 'ไม่สามารถอัปเดตข้อมูลได้', 'error');
+                }
+            }
+        }
+        
         window.confirmDelete = async function(collection, docId, description) {
             const { value: adminName } = await Swal.fire({
                 title: '⚠️ ยืนยันการลบ', 
@@ -1308,16 +1416,56 @@ window.togglePosPassword = function() {
 
             try {
                 db.collection("transactions").onSnapshot((snapshot) => {
-                    const tb = document.getElementById('admin-history-list'); let html = ''; gSales = 0; let dateGroups = {}; let items = [];
-                    snapshot.forEach(doc => { const d = doc.data(); let timestamp = d.timestamp ? d.timestamp.toDate() : new Date(); items.push({ id: doc.id, date: d.date, timestamp: timestamp, member_id: d.member_id, member_name: d.member_name, amount: d.amount, recorded_by: d.recorded_by }); });
-                    items.sort((a, b) => b.timestamp - a.timestamp);
-                    items.forEach(d => {
-                        gSales += (d.amount || 0); let timeStr = d.timestamp.toLocaleTimeString('th-TH');
-                        html += `<tr><td>${d.date} ${timeStr}</td><td>${d.member_id}</td><td>${d.member_name||'-'}</td><td style="color:#38A169; font-weight:500;">+ ฿${(d.amount||0).toFixed(2)}</td><td>${d.recorded_by}</td><td><button class="btn-red" onclick="confirmDelete('transactions', '${d.id}', 'บิลซื้อ ${d.member_name} ยอด ${d.amount}')">ลบ</button></td></tr>`;
-                        if(d.date) { dateGroups[d.date] = (dateGroups[d.date] || 0) + (d.amount || 0); }
+                    const tbHistory = document.getElementById('admin-history-list');
+                    const tbDebts = document.getElementById('admin-debts-list');
+                    let htmlHistory = ''; let htmlDebts = '';
+                    gSales = 0; let totalDebt = 0; 
+                    let dateGroups = {}; let items = [];
+
+                    snapshot.forEach(doc => { 
+                        const d = doc.data(); 
+                        let timestamp = d.timestamp ? d.timestamp.toDate() : new Date(); 
+                        items.push({ id: doc.id, ...d, timestamp: timestamp }); 
                     });
-                    if (tb) tb.innerHTML = items.length === 0 ? '<tr><td colspan="6" align="center">ไม่มีประวัติ</td></tr>' : html;
+                    items.sort((a, b) => b.timestamp - a.timestamp);
+
+                    items.forEach(d => {
+                        let timeStr = d.timestamp.toLocaleTimeString('th-TH');
+                        
+                        // ถ้าระบุสถานะว่าเป็น unpaid (ค้างชำระ) ให้ไปโชว์ในตารางหนี้
+                        if (d.status === 'unpaid') {
+                            totalDebt += (d.amount || 0);
+                            let mClass = d.member_class || '-';
+                            htmlDebts += `<tr>
+                                <td>${d.date} ${timeStr}</td>
+                                <td>${d.member_id}</td>
+                                <td>${d.member_name||'-'}</td>
+                                <td>${mClass}</td>
+                                <td style="color:#E53E3E; font-weight:600;">฿${(d.amount||0).toFixed(2)}</td>
+                                <td><button class="btn-blue" style="background:#38A169; padding: 6px 12px; font-size: 0.85rem;" onclick="payDebt('${d.id}', '${d.member_id}', ${d.amount}, '${d.member_name}')">💵 ชำระเงินแล้ว</button></td>
+                            </tr>`;
+                        } else {
+                            // ถ้าเป็นบิลปกติ (จ่ายแล้ว) ให้บวกยอดขายรวม (gSales) และลงตารางประวัติ
+                            gSales += (d.amount || 0); 
+                            htmlHistory += `<tr>
+                                <td>${d.date} ${timeStr}</td>
+                                <td>${d.member_id}</td>
+                                <td>${d.member_name||'-'}</td>
+                                <td style="color:#38A169; font-weight:500;">+ ฿${(d.amount||0).toFixed(2)}</td>
+                                <td>${d.recorded_by||'-'}</td>
+                                <td><button class="btn-red" onclick="confirmDelete('transactions', '${d.id}', 'บิลซื้อ ${d.member_name} ยอด ${d.amount}')">ลบ</button></td>
+                            </tr>`;
+                            if(d.date) { dateGroups[d.date] = (dateGroups[d.date] || 0) + (d.amount || 0); }
+                        }
+                    });
+
+                    // อัปเดตหน้าจอ
+                    if (tbHistory) tbHistory.innerHTML = items.length === 0 ? '<tr><td colspan="6" align="center">ไม่มีประวัติ</td></tr>' : htmlHistory;
+                    if (tbDebts) tbDebts.innerHTML = htmlDebts === '' ? '<tr><td colspan="6" align="center" style="color:#38A169;">ไม่มีรายการค้างชำระ 🎉</td></tr>' : htmlDebts;
+                    
                     let dashSalesEl = document.getElementById('dash-sales'); if (dashSalesEl) dashSalesEl.innerText = gSales.toLocaleString(undefined, {minimumFractionDigits: 2}); 
+                    let totalDebtEl = document.getElementById('total-debt-amount'); if (totalDebtEl) totalDebtEl.innerText = totalDebt.toLocaleString(undefined, {minimumFractionDigits: 2});
+                    
                     updateNet(); updateChart(dateGroups);
                 });
             } catch(e) { console.error("Transactions error:", e); }

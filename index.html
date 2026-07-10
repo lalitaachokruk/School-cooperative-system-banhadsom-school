@@ -699,14 +699,14 @@
         // ระบบ POS (คิดเงิน) + อัปเกรดระบบค้างชำระ
         // ==========================================
         let currentMemberId = null; let currentMemberName = ''; let currentDocId = null; let totalAmount = 0; let cartItems = [];
-        window.currentMemberClass = '-'; // เพิ่มตัวแปรเก็บชั้นเรียน
+        window.currentMemberClass = '-'; 
         const inId = document.getElementById('input-student-id'); const inAmt = document.getElementById('input-amount');
         const lbId = document.getElementById('label-student-id'); const lbAmt = document.getElementById('label-amount');
         const mDisp = document.getElementById('member-display'); const mText = document.getElementById('member-name-text');
         const tBody = document.getElementById('cart-body'); const tPrice = document.getElementById('total-price');
         const dateIn = document.getElementById('transaction-date');
         const btnCheckout = document.getElementById('btn-checkout');
-        const btnCredit = document.getElementById('btn-credit'); // ปุ่มค้างชำระ
+        const btnCredit = document.getElementById('btn-credit'); 
 
         if(dateIn) { dateIn.value = new Date().toLocaleDateString('en-CA'); }
         const expDate = document.getElementById('exp-date');
@@ -724,12 +724,13 @@
 
                         if (doc.exists) {
                             const d = doc.data(); currentMemberId = val; currentMemberName = d.name;
-                            window.currentMemberClass = window.isTeacherInfo(val, d.class) ? "ครู" : (d.class || '-');
+                            window.currentMemberClass = window.isTeacherInfo(val, d.class) ? "ครู" : (d.class || '-'); 
                             let status = window.currentMemberClass === "ครู" ? "ครู" : `ชั้น ${window.currentMemberClass}`;
                             
                             mText.innerText = `รหัส ${val}: ${d.name} (${status})`; mDisp.style.display = "flex";
                             inId.disabled = true; lbId.innerText = "1. รหัสสมาชิก (รับข้อมูลสำเร็จ)";
-                            inAmt.disabled = false; lbAmt.innerText = "2. สแกนบาร์โค้ดสินค้า หรือ พิมพ์ราคา"; lbAmt.style.color = "var(--accent-red)"; inAmt.focus();
+                            inAmt.disabled = false; lbAmt.innerText = "2. สแกนบาร์โค้ดสินค้า หรือ พิมพ์ราคา"; lbAmt.style.color = "var(--accent-red)"; 
+                            inAmt.focus();
                         } else {
                             Swal.fire({ icon: 'warning', title: 'ไม่พบข้อมูล', text: 'กรุณาตรวจสอบรหัสสมาชิกอีกครั้ง' });
                             lbId.innerText = "1. พิมพ์ / สแกน รหัสนักเรียน (4 หลัก)";
@@ -741,24 +742,17 @@
         }
 
         if(inAmt) {
+            // ดักจับการกด Enter
             inAmt.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') {
                     let val = toArabic(inAmt.value.trim());
                     let mode = document.getElementById('pos-mode').value;
                     
                     if (mode === 'total') {
-                        if (val !== "") {
-                            const p = parseFloat(val);
-                            if (!isNaN(p) && p > 0) {
-                                totalAmount = p;
-                                checkout(false); // กด Enter คือจ่ายเงินสด
-                            } else {
-                                Swal.fire('Error', 'ยอดเงินไม่ถูกต้อง', 'error');
-                            }
-                        }
+                        if (val !== "") checkout(false); // โหมดพิมพ์ด่วน: กด Enter คือจ่ายเงินสด
                     } else {
                         if (val === "" && cartItems.length > 0) {
-                            checkout(false); // กด Enter คือจ่ายเงินสด
+                            checkout(false); // โหมดตะกร้า: กด Enter ว่างๆ คือจ่ายเงินสด
                         } else if (val !== "") {
                             const p = parseFloat(val); 
                             if (!isNaN(p) && p > 0) {
@@ -773,14 +767,24 @@
                     }
                 }
             });
+            // 🌟 ใช้งานฟังก์ชันใหม่: เมื่อเริ่มพิมพ์ตัวเลข ให้ปุ่มเด้งขึ้นมาในโหมดพิมพ์ด่วน
+            inAmt.addEventListener('input', () => {
+                let mode = document.getElementById('pos-mode').value;
+                if (mode === 'total') {
+                    let hasVal = inAmt.value.trim() !== "";
+                    if(btnCheckout) btnCheckout.style.display = hasVal ? 'block' : 'none';
+                    if(btnCredit) btnCredit.style.display = hasVal ? 'block' : 'none';
+                }
+            });
         }
 
         window.changePosMode = function() {
             const mode = document.getElementById('pos-mode').value;
             if (mode === 'total') {
-                inAmt.placeholder = "พิมพ์ยอดรวมแล้วกด Enter เพื่อจบบิลทันที...";
-                if(btnCheckout) btnCheckout.style.display = 'none';
-                if(btnCredit) btnCredit.style.display = 'none';
+                inAmt.placeholder = "พิมพ์ยอดรวม... กด Enter (สด) หรือคลิกปุ่ม";
+                let hasVal = inAmt.value.trim() !== "";
+                if(btnCheckout) btnCheckout.style.display = (!inAmt.disabled && hasVal) ? 'block' : 'none';
+                if(btnCredit) btnCredit.style.display = (!inAmt.disabled && hasVal) ? 'block' : 'none';
             } else {
                 inAmt.placeholder = "สแกนราคาทีละชิ้น... (กด Enter ว่างๆ เพื่อคิดเงิน)";
                 updateCartUI(); 
@@ -820,8 +824,6 @@
                 cancelButtonText: 'ยกเลิก',
                 confirmButtonColor: '#E53E3E'
             });
-            
-           // ตรวจสอบว่ารหัสที่พิมพ์มา ตรงกับรหัสใดรหัสหนึ่งในฐานข้อมูลรหัส POS หรือไม่
             if (window.validPosPasswords && window.validPosPasswords.includes(pwd)) {
                 cartItems.splice(index, 1);
                 updateCartUI();
@@ -844,11 +846,19 @@
             changePosMode(); 
         }
 
-        // --- ฟังก์ชัน Checkout (อัปเกรดแยกบิลเงินสด กับ บิลค้างชำระ) ---
+        // --- ฟังก์ชัน Checkout (อัปเกรดแยกบิลเงินสด กับ บิลค้างชำระ รองรับโหมดพิมพ์ด่วน) ---
         async function checkout(isCredit = false) {
             let mode = document.getElementById('pos-mode').value;
-            if (mode === 'cart' && cartItems.length === 0) return;
-            if (mode === 'total' && totalAmount <= 0) return;
+            
+            // 🌟 ดึงยอดเงินถ้าเป็นโหมดพิมพ์ด่วน
+            if (mode === 'total') {
+                let val = toArabic(inAmt.value.trim());
+                let p = parseFloat(val);
+                if (isNaN(p) || p <= 0) return Swal.fire('แจ้งเตือน', 'กรุณาใส่ยอดเงินที่ถูกต้อง', 'warning').then(()=>inAmt.focus());
+                totalAmount = p;
+            } else {
+                if (cartItems.length === 0) return;
+            }
             
             inAmt.disabled = true; 
             if(lbAmt) { lbAmt.innerText = "กำลังบันทึกข้อมูลเข้าระบบ..."; }
@@ -857,26 +867,25 @@
                 const timeNow = new Date().toLocaleTimeString('th-TH');
                 const billStatus = isCredit ? "unpaid" : "paid";
                 
-                // ถ้ายืนยันว่ารับเงินสดแล้ว (ไม่ค้าง) ให้บวกยอดเงินปันผลให้นักเรียนทันที
                 if (!isCredit) {
                     await db.collection("members").doc(currentDocId).set({ total_buy_accumulated: firebase.firestore.FieldValue.increment(totalAmount) }, { merge: true });
                 }
                 
-                // บันทึกลง Firebase พร้อมระบุสถานะ (paid/unpaid)
                 await db.collection("transactions").add({ 
                     member_id: currentDocId, 
                     member_name: currentMemberName, 
                     member_class: window.currentMemberClass,
                     amount: totalAmount, 
                     date: dateIn.value, 
-                    status: billStatus, // 🌟 ป้ายกำกับหนี้
+                    status: billStatus, 
                     timestamp: firebase.firestore.FieldValue.serverTimestamp(), 
                     recorded_by: window.currentCashierName 
                 });
                 
-                // ส่งลง Google Sheets 
                 let sheetStatusText = isCredit ? window.currentCashierName + " (ติดค้างชำระ)" : window.currentCashierName;
-                sendToGoogleSheets("Transactions", [dateIn.value, timeNow, currentDocId, currentMemberName, totalAmount, sheetStatusText]);
+                if (typeof sendToGoogleSheets === "function") {
+                    sendToGoogleSheets("Transactions", [dateIn.value, timeNow, currentDocId, currentMemberName, totalAmount, sheetStatusText]);
+                }
                 
                 let msg = mode === 'cart' ? `ยอดบิลรวม: <b>฿${totalAmount.toFixed(2)}</b><br><small>(${cartItems.length} ชิ้น)</small>` : `ยอดบิล: <b>฿${totalAmount.toFixed(2)}</b>`;
                 if (isCredit) { msg += `<br><br><span style="color:#DD6B20; font-weight:bold;">📝 บันทึกเป็น "ยอดค้างชำระ" เรียบร้อยแล้ว</span>`; }

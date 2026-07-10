@@ -772,13 +772,20 @@
                     }
                 }
             });
-            // 🌟 ใช้งานฟังก์ชันใหม่: เมื่อเริ่มพิมพ์ตัวเลข ให้ปุ่มเด้งขึ้นมาในโหมดพิมพ์ด่วน
+            // 🌟 อัปเดตให้ปุ่มเด้ง และตัวเลขยอดสุทธิสีแดงเปลี่ยนตามเวลาพิมพ์
             inAmt.addEventListener('input', () => {
                 let mode = document.getElementById('pos-mode').value;
                 if (mode === 'total') {
-                    let hasVal = inAmt.value.trim() !== "";
+                    let val = inAmt.value.trim();
+                    let hasVal = val !== "";
                     if(btnCheckout) btnCheckout.style.display = hasVal ? 'block' : 'none';
                     if(btnCredit) btnCredit.style.display = hasVal ? 'block' : 'none';
+                    
+                    // ให้ตัวเลขสีแดงเปลี่ยนตามที่พิมพ์เลย
+                    let p = parseFloat(val);
+                    if(tPrice) {
+                        tPrice.innerText = (!isNaN(p) && p > 0) ? p.toFixed(2) : "0.00";
+                    }
                 }
             });
         }
@@ -787,9 +794,14 @@
             const mode = document.getElementById('pos-mode').value;
             if (mode === 'total') {
                 inAmt.placeholder = "พิมพ์ยอดรวม... กด Enter (สด) หรือคลิกปุ่ม";
-                let hasVal = inAmt.value.trim() !== "";
+                let val = inAmt.value.trim();
+                let hasVal = val !== "";
                 if(btnCheckout) btnCheckout.style.display = (!inAmt.disabled && hasVal) ? 'block' : 'none';
                 if(btnCredit) btnCredit.style.display = (!inAmt.disabled && hasVal) ? 'block' : 'none';
+                
+                // ถ้าย้ายมาโหมดพิมพ์ด่วน ให้ดึงตัวเลขในช่องไปโชว์ยอดสุทธิเลย
+                let p = parseFloat(val);
+                if(tPrice) tPrice.innerText = (!isNaN(p) && p > 0) ? p.toFixed(2) : "0.00";
             } else {
                 inAmt.placeholder = "สแกนราคาทีละชิ้น... (กด Enter ว่างๆ เพื่อคิดเงิน)";
                 updateCartUI(); 

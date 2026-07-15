@@ -1325,15 +1325,64 @@ window.togglePosPassword = function() {
         }
 
         window.payDebt = async function(docId, memberId, amount, memberName) {
-            const { value: isConfirm } = await Swal.fire({
-                title: 'ยืนยันการชำระเงิน?',
-                html: `คุณกำลังรับชำระเงินจาก <b>${memberName}</b><br>ยอดค้าง: <b style="color:#E53E3E; font-size:1.2rem;">฿${amount.toFixed(2)}</b>`,
-                icon: 'question',
+            const { value: formValues } = await Swal.fire({
+                title: '💵 รับชำระเงินค้าง',
+                html: `
+                <div style="text-align: left; margin-bottom: 15px;">
+                    <p style="color: #4A5568; font-size: 0.95rem; margin-bottom: 10px;">กำลังรับชำระเงินจาก: <b>${memberName}</b></p>
+                    <p style="color: #E53E3E; font-size: 1.1rem; font-weight: bold; margin-bottom: 15px;">ยอดหนี้บิลนี้: ฿${amount.toFixed(2)}</p>
+                    <label style="display: block; font-size: 0.9rem; color: #1A365D; font-weight: 500; margin-bottom: 5px;">ระบุยอดเงินที่จ่ายจริง (จ่ายบางส่วนได้):</label>
+                    <input id="pay-amount" type="number" value="${amount}" max="${amount}" style="width: 100%; padding: 12px; border: 2px solid #38A169; border-radius: 8px; font-family: 'Kanit'; font-size: 1.2rem; outline: none; box-sizing: border-box;">
+                </div>`,
+                icon: 'info',
                 showCancelButton: true,
                 confirmButtonColor: '#38A169',
-                confirmButtonText: '✅ รับเงินเรียบร้อย',
-                cancelButtonText: 'ยกเลิก'
+                confirmButtonText: '✅ ยืนยันรับเงิน',
+                cancelButtonText: 'ยกเลิก',
+                preConfirm: () => {
+                    const val = parseFloat(document.getElementById('pay-amount').value);
+                    if (isNaN(val) || val <= 0) { Swal.showValidationMessage('กรุณาระบุยอดเงินให้ถูกต้อง'); return false; }
+                    if (val > amount) { Swal.showValidationMessage('ยอดจ่ายต้องไม่เกินยอดหนี้'); return false; }
+                    return val;
+                }
             });
+
+            if (formValues) {
+                const payAmount = formValues;
+                Swal.fire({ title: 'กำลังประมวลผล...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                
+                try {
+                    const todayDate = new Date().toLocaleDateString('en-CA');
+                    
+                    if (payAmount === amount) {
+                        // กรณีจ่ายเต็มจำนวน (เคลียร์บิล)
+                        await db.collection("transactions").doc(docId).set({ status: 'paid' }, { merge: true });
+                    } else {
+                        // กรณีจ่ายบางส่วน (ลดหนี้บิลเดิม และสร้างบิลจ่ายใหม่)
+                        let remainingDebt = amount - payAmount;
+                        await db.collection("transactions").doc(docId).set({ amount: remainingDebt }, { merge: true }); // อัปเดตหนี้ที่เหลือ
+                        
+                        // สร้างประวัติการจ่ายเข้าสู่ระบบเรียลไทม์
+                        await db.collection("transactions").add({ 
+                            member_id: memberId, member_name: memberName, member_class: window.currentMemberClass || '-',
+                            amount: payAmount, date: todayDate, status: 'paid', note: 'ชำระหนี้บางส่วน',
+                            timestamp: firebase.firestore.FieldValue.serverTimestamp(), recorded_by: window.currentCashierName 
+                        });
+                    }
+                    
+                    // วิ่งไปบวก "ยอดซื้อสะสม" คืนให้นักเรียน เพื่อนำไปคิดปันผล
+                    if (memberId) {
+                        await db.collection("members").doc(memberId).set({ 
+                            total_buy_accumulated: firebase.firestore.FieldValue.increment(payAmount) 
+                        }, { merge: true });
+                    }
+                    
+                    Swal.fire({icon: 'success', title: 'บันทึกสำเร็จ!', text: `รับชำระ ฿${payAmount.toFixed(2)} เรียบร้อย ยอดคงเหลือถูกอัปเดตแล้ว`, timer: 2000, showConfirmButton: false});
+                } catch(e) {
+                    Swal.fire('Error', 'ไม่สามารถอัปเดตข้อมูลได้', 'error');
+                }
+            }
+        }
 
             if (isConfirm) {
                 Swal.fire({ title: 'กำลังประมวลผล...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });

@@ -920,16 +920,30 @@
             inId.addEventListener('keypress', async (e) => {
                 if (e.key === 'Enter' && inId.value.trim() !== "") {
                     if(!dateIn.value) return Swal.fire('Error', 'กรุณาระบุวันที่ทำรายการ', 'warning');
-                    let val = toArabic(inId.value.trim());
                     
-                    // 🌟 เวทมนตร์ที่ 1: ตัดเลข 0 ข้างหน้าออกเวลาสแกน (เช่น 0001 จะกลายเป็น 1 เพื่อไปค้นในฐานข้อมูล)
-                    val = val.replace(/^0+/, '');
-                    if (val === '') val = '0'; // เผื่อกรณีรหัสคือเลข 0 ตัวเดียว
-
+                    let val = toArabic(inId.value.trim()); 
                     lbId.innerText = "กำลังค้นหา...";
+                    
                     try {
-                        let doc = await db.collection("members").doc(val).get(); currentDocId = val;
-                        if (!doc.exists) { doc = await db.collection("members").doc(toThai(val)).get(); currentDocId = toThai(val); }
+                        // 1. ค้นหาแบบตรงๆ ก่อน (เช่น สแกนมา 0004 ก็หา 0004)
+                        let doc = await db.collection("members").doc(val).get(); 
+                        
+                        // 2. ถ้าหาไม่เจอ ลองตัดเลข 0 ข้างหน้าออก (เช่น 0004 กลายเป็น 4) แล้วหาใหม่
+                        if (!doc.exists) {
+                            let strippedVal = val.replace(/^0+/, '');
+                            if (strippedVal === '') strippedVal = '0';
+                            let strippedDoc = await db.collection("members").doc(strippedVal).get();
+                            if (strippedDoc.exists) { doc = strippedDoc; val = strippedVal; }
+                        }
+                        
+                        // 3. เผื่อสแกนติดแป้นพิมพ์ภาษาไทยมา
+                        if (!doc.exists) { 
+                            let thaiVal = toThai(val);
+                            let thaiDoc = await db.collection("members").doc(thaiVal).get(); 
+                            if(thaiDoc.exists) { doc = thaiDoc; val = thaiVal; } 
+                        }
+
+                        currentDocId = val;
 
                         if (doc.exists) {
                             const d = doc.data(); currentMemberId = val; currentMemberName = d.name;

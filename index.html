@@ -1384,25 +1384,54 @@ window.togglePosPassword = function() {
             }
         }
 
-            if (isConfirm) {
+            window.payDebt = async function(docId, memberId, amount, memberName) {
+            const { value: formValues } = await Swal.fire({
+                title: '💵 รับชำระเงินค้าง',
+                // ... (โค้ดส่วนแสดงผลหน้าจอ Popup) ...
+                preConfirm: () => {
+                    const val = parseFloat(document.getElementById('pay-amount').value);
+                    if (isNaN(val) || val <= 0) { Swal.showValidationMessage('กรุณาระบุยอดเงินให้ถูกต้อง'); return false; }
+                    if (val > amount) { Swal.showValidationMessage('ยอดจ่ายต้องไม่เกินยอดหนี้'); return false; }
+                    return val;
+                }
+            });
+
+            if (formValues) {
+                const payAmount = formValues;
                 Swal.fire({ title: 'กำลังประมวลผล...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                
                 try {
-                    // 1. เปลี่ยนสถานะบิลในฐานข้อมูลให้กลายเป็นจ่ายแล้ว (paid)
-                    await db.collection("transactions").doc(docId).set({ status: 'paid' }, { merge: true });
+                    const todayDate = new Date().toLocaleDateString('en-CA');
                     
-                    // 2. วิ่งไปบวก "ยอดซื้อสะสม" คืนให้นักเรียน เพื่อนำไปคิดปันผล
+                    if (payAmount === amount) {
+                        // กรณีจ่ายเต็มจำนวน (เคลียร์บิล)
+                        await db.collection("transactions").doc(docId).set({ status: 'paid' }, { merge: true });
+                    } else {
+                        // กรณีจ่ายบางส่วน (ลดหนี้บิลเดิม และสร้างบิลจ่ายใหม่)
+                        let remainingDebt = amount - payAmount;
+                        await db.collection("transactions").doc(docId).set({ amount: remainingDebt }, { merge: true }); // อัปเดตหนี้ที่เหลือ
+                        
+                        // สร้างประวัติการจ่ายเข้าสู่ระบบเรียลไทม์
+                        await db.collection("transactions").add({ 
+                            member_id: memberId, member_name: memberName, member_class: window.currentMemberClass || '-',
+                            amount: payAmount, date: todayDate, status: 'paid', note: 'ชำระหนี้บางส่วน',
+                            timestamp: firebase.firestore.FieldValue.serverTimestamp(), recorded_by: window.currentCashierName 
+                        });
+                    }
+                    
+                    // วิ่งไปบวก "ยอดซื้อสะสม" คืนให้นักเรียน เพื่อนำไปคิดปันผล
                     if (memberId) {
                         await db.collection("members").doc(memberId).set({ 
-                            total_buy_accumulated: firebase.firestore.FieldValue.increment(amount) 
+                            total_buy_accumulated: firebase.firestore.FieldValue.increment(payAmount) 
                         }, { merge: true });
                     }
                     
-                    Swal.fire({icon: 'success', title: 'เคลียร์ยอดค้างสำเร็จ!', text: 'ระบบนำเงินไปรวมในกำไรและยอดปันผลแล้วค่ะ', timer: 2000, showConfirmButton: false});
+                    Swal.fire({icon: 'success', title: 'บันทึกสำเร็จ!', text: `รับชำระ ฿${payAmount.toFixed(2)} เรียบร้อย ยอดคงเหลือถูกอัปเดตแล้ว`, timer: 2000, showConfirmButton: false});
                 } catch(e) {
                     Swal.fire('Error', 'ไม่สามารถอัปเดตข้อมูลได้', 'error');
                 }
             }
-        }
+        } // <--- จบฟังก์ชันแค่นี้เลยค่ะ ไม่มีโค้ดต่อท้ายแล้ว
         
         window.confirmDelete = async function(collection, docId, description) {
             const { value: adminName } = await Swal.fire({

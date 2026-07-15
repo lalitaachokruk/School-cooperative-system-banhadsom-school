@@ -1389,7 +1389,17 @@ window.togglePosPassword = function() {
                 }
             }
         }
-        
+
+        window.confirmDelete = async function(collection, docId, description) {
+            const { value: adminName } = await Swal.fire({
+                title: '⚠️ ยืนยันการลบ', 
+                html: `
+                <div style="margin-bottom: 20px; font-size: 1.1rem;">กำลังลบ: <b style="color: #E53E3E;">${description}</b></div>
+                <div style="font-size: 0.95rem; color: #4A5568; margin-bottom: 10px;">โปรดพิมพ์ชื่อผู้ทำรายการ เพื่อบันทึกลง Audit Log</div>`, 
+                input: 'text', icon: 'warning', showCancelButton: true, confirmButtonColor: '#E53E3E', confirmButtonText: 'ยืนยัน',
+                inputValidator: (val) => { if (!val) return 'กรุณาพิมพ์ชื่อผู้ลบ' }
+            });
+            
             if (adminName) {
                 try {
                     // [ส่วนที่อัปเกรด]: ลบบิลและหักยอดคืนด้วย Transaction ป้องกันการชนกันของข้อมูล
@@ -1423,7 +1433,7 @@ window.togglePosPassword = function() {
                 }
             }
         }
-
+        
         // ==========================================
         // ระบบพิมพ์บาร์โค้ด
         // ==========================================

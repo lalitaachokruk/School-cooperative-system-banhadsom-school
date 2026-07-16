@@ -965,17 +965,34 @@
         }
 
         if(inAmt) {
-            // ดักจับการกด Enter
+            // ดักจับการกด Enter (หรือเครื่องสแกนยิงเสร็จแล้วมันจะ Enter อัตโนมัติ)
             inAmt.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') {
                     let val = toArabic(inAmt.value.trim());
                     let mode = document.getElementById('pos-mode').value;
-                    
+
+                    // 🌟 เวทมนตร์ใหม่: ดักจับ "บาร์โค้ดคำสั่ง" 🌟
+                    if (val === '9999') { // ถ้ายิงบาร์โค้ด 9999
+                        inAmt.value = ''; // เคลียร์ช่อง
+                        if (cartItems.length > 0 || (mode === 'total' && totalAmount > 0)) {
+                            checkout(false); // ✅ สั่ง "ชำระเงิน" ทันที
+                        }
+                        return; // หยุดการทำงานส่วนอื่น
+                    }
+                    if (val === '8888') { // ถ้ายิงบาร์โค้ด 8888
+                        inAmt.value = ''; // เคลียร์ช่อง
+                        if (cartItems.length > 0 || (mode === 'total' && totalAmount > 0)) {
+                            checkout(true);  // 📝 สั่ง "ค้างไว้ก่อน" ทันที
+                        }
+                        return; // หยุดการทำงานส่วนอื่น
+                    }
+                    // ===================================
+
                     if (mode === 'total') {
-                        if (val !== "") checkout(false); // โหมดพิมพ์ด่วน: กด Enter คือจ่ายเงินสด
+                        if (val !== "") checkout(false); 
                     } else {
                         if (val === "" && cartItems.length > 0) {
-                            checkout(false); // โหมดตะกร้า: กด Enter ว่างๆ คือจ่ายเงินสด
+                            checkout(false); 
                         } else if (val !== "") {
                             const p = parseFloat(val); 
                             if (!isNaN(p) && p > 0) {
@@ -990,7 +1007,8 @@
                     }
                 }
             });
-            // 🌟 อัปเดตให้ปุ่มเด้ง และตัวเลขยอดสุทธิสีแดงเปลี่ยนตามเวลาพิมพ์
+
+            // อัปเดตให้ปุ่มเด้ง และตัวเลขยอดสุทธิสีแดงเปลี่ยนตามเวลาพิมพ์
             inAmt.addEventListener('input', () => {
                 let mode = document.getElementById('pos-mode').value;
                 if (mode === 'total') {
@@ -999,7 +1017,6 @@
                     if(btnCheckout) btnCheckout.style.display = hasVal ? 'block' : 'none';
                     if(btnCredit) btnCredit.style.display = hasVal ? 'block' : 'none';
                     
-                    // ให้ตัวเลขสีแดงเปลี่ยนตามที่พิมพ์เลย
                     let p = parseFloat(val);
                     if(tPrice) {
                         tPrice.innerText = (!isNaN(p) && p > 0) ? p.toFixed(2) : "0.00";

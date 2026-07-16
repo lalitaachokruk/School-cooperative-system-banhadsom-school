@@ -1345,13 +1345,13 @@ window.togglePosPassword = function() {
         // อัปเกรดระบบรับชำระหนี้ของแอดมิน (ให้ Real-time และจ่ายบางส่วนได้เหมือนมือถือ)
         // ==========================================
         window.payDebt = async function(docId, memberId, amount, memberName) {
-            const { value: formValues } = await Swal.fire({
-                title: '💵 รับชำระเงินค้าง (ฝั่งแอดมิน)',
+            const { value: payAmount } = await Swal.fire({
+                title: '💵 รับชำระเงินค้าง (แอดมิน)',
                 html: `
                 <div style="text-align: left; margin-bottom: 15px;">
                     <p style="color: #4A5568; font-size: 0.95rem; margin-bottom: 10px;">กำลังรับชำระเงินจาก: <b>${memberName}</b></p>
                     <p style="color: #E53E3E; font-size: 1.1rem; font-weight: bold; margin-bottom: 15px;">ยอดหนี้บิลนี้: ฿${amount.toFixed(2)}</p>
-                    <label style="display: block; font-size: 0.9rem; color: #1A365D; font-weight: 500; margin-bottom: 5px;">ระบุยอดเงินที่รับจริง (จ่ายบางส่วนได้):</label>
+                    <label style="display: block; font-size: 0.9rem; color: #1A365D; font-weight: 500; margin-bottom: 5px;">ระบุยอดเงินที่รับจริง (แก้ไขเพื่อจ่ายบางส่วนได้):</label>
                     <input id="pay-amount" type="number" value="${amount}" max="${amount}" style="width: 100%; padding: 12px; border: 2px solid #38A169; border-radius: 8px; font-family: 'Kanit'; font-size: 1.2rem; outline: none; box-sizing: border-box;">
                 </div>`,
                 icon: 'info',
@@ -1367,49 +1367,47 @@ window.togglePosPassword = function() {
                 }
             });
 
-            if (formValues) {
-                const payAmount = formValues;
+            if (payAmount) {
                 Swal.fire({ title: 'กำลังประมวลผล...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-                
                 try {
                     const todayDate = new Date().toLocaleDateString('en-CA');
                     const docRef = await db.collection("transactions").doc(docId).get();
                     const txData = docRef.exists ? docRef.data() : {};
                     const mClass = txData.member_class || '-';
                     
-                    let batch = db.batch();
+                    let batch = db.batch(); // 👈 สร้างกล่องพัสดุสำหรับส่งข้อมูลพร้อมกัน
 
                     if (payAmount === amount) {
-                        // 🟢 จ่ายเต็มจำนวน
+                        // 🟢 กรณีจ่ายเต็มจำนวน
                         batch.update(docRef.ref, { 
                             status: 'paid', 
-                            note: txData.note + ' (แอดมินรับชำระ)', 
+                            note: (txData.note || '') + ' (แอดมินรับชำระ)', 
                             pay_date: todayDate 
                         });
                     } else {
-                        // 🟡 จ่ายบางส่วน (หักหนี้บิลเดิม แล้วแตกบิลใหม่เป็นสถานะจ่ายแล้ว)
+                        // 🟡 กรณีจ่ายบางส่วน
                         let remainingDebt = amount - payAmount;
                         batch.update(docRef.ref, { amount: remainingDebt }); 
                         
                         let newRef = db.collection("transactions").doc();
                         batch.set(newRef, { 
                             member_id: memberId, member_name: memberName, member_class: mClass,
-                            amount: payAmount, date: txData.date, status: 'paid', 
+                            amount: payAmount, date: txData.date || todayDate, status: 'paid', 
                             note: 'จ่ายชำระหนี้ (บางส่วนผ่านแอดมิน)',
                             timestamp: firebase.firestore.FieldValue.serverTimestamp(), 
                             recorded_by: window.currentCashierName 
                         });
                     }
                     
-                    // บวดยอดซื้อสะสมคืนให้นักเรียน สำหรับนำไปคิดปันผล
+                    // 🌟 วิ่งไปบวก "ยอดซื้อสะสม" ของนักเรียน ทันทีแบบ 100% ชัวร์
                     if (memberId) {
-                        const memberRef = db.collection("members").doc(memberId);
-                        batch.update(memberRef, { 
+                        const memberRef = db.collection("members").doc(memberId.toString());
+                        batch.set(memberRef, { 
                             total_buy_accumulated: firebase.firestore.FieldValue.increment(payAmount) 
-                        });
+                        }, { merge: true });
                     }
                     
-                    await batch.commit(); // สั่งรันการเปลี่ยนแปลงทั้งหมดลงฐานข้อมูล
+                    await batch.commit(); // 👈 สั่งส่งพัสดุ (ยอดขายรวม และ ยอดสะสม วิ่งเข้าฐานข้อมูลพร้อมกันเป๊ะ!)
                     
                     Swal.fire({icon: 'success', title: 'บันทึกสำเร็จ!', text: `รับชำระ ฿${payAmount.toFixed(2)} เรียบร้อยแล้ว`, timer: 2000, showConfirmButton: false});
                 } catch(e) {

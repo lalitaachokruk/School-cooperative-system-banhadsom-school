@@ -964,27 +964,41 @@
             });
         }
 
-        if(inAmt) {
-            // ดักจับการกด Enter (หรือเครื่องสแกนยิงเสร็จแล้วมันจะ Enter อัตโนมัติ)
+        // ดักจับการกด Enter (หรือเครื่องสแกนยิงเสร็จแล้วมันจะ Enter อัตโนมัติ)
             inAmt.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') {
                     let val = toArabic(inAmt.value.trim());
                     let mode = document.getElementById('pos-mode').value;
+                    let p = parseFloat(val); // แปลงค่าที่สแกนให้เป็นตัวเลขก่อน
 
-                    // 🌟 เวทมนตร์ใหม่: ดักจับ "บาร์โค้ดคำสั่ง" 🌟
-                    if (val === '9999') { // ถ้ายิงบาร์โค้ด 9999
-                        inAmt.value = ''; // เคลียร์ช่อง
+                    // 🌟 1. ดักจับ "บาร์โค้ดคำสั่ง" 🌟 (ต้องเอาไว้เช็คเป็นด่านแรกสุด)
+                    if (val === '9999') { // สั่ง "ชำระเงิน"
+                        inAmt.value = ''; 
                         if (cartItems.length > 0 || (mode === 'total' && totalAmount > 0)) {
-                            checkout(false); // ✅ สั่ง "ชำระเงิน" ทันที
+                            checkout(false); 
                         }
-                        return; // หยุดการทำงานส่วนอื่น
+                        return; 
                     }
-                    if (val === '8888') { // ถ้ายิงบาร์โค้ด 8888
-                        inAmt.value = ''; // เคลียร์ช่อง
+                    if (val === '8888') { // สั่ง "ค้างไว้ก่อน"
+                        inAmt.value = ''; 
                         if (cartItems.length > 0 || (mode === 'total' && totalAmount > 0)) {
-                            checkout(true);  // 📝 สั่ง "ค้างไว้ก่อน" ทันที
+                            checkout(true);  
                         }
-                        return; // หยุดการทำงานส่วนอื่น
+                        return; 
+                    }
+
+                    // 🛡️ 2. ระบบป้องกันการสแกนผิดพลาด (Safety Lock ตามลอจิกจำกัดเพดานราคา)
+                    if (val === currentDocId) {
+                        Swal.fire('⚠️ สแกนผิดพลาด!', 'เผลอยิง "บาร์โค้ดรหัสนักเรียน" ซ้ำลงในช่องราคาค่ะ กรุณายิงป้ายราคาใหม่นะคะ', 'warning');
+                        inAmt.value = '';
+                        return;
+                    }
+                    
+                    // 🛑 ล็อกเพดานราคา: ถ้ายอดเกิน 999 บาท ให้บล็อกทันที!
+                    if (!isNaN(p) && p > 999) {
+                        Swal.fire('⚠️ ยอดเงินสูงเกินจริง!', 'เป็นไปไม่ได้ที่นักเรียนจะซื้อของเกิน 1,000 บาท! (อาจเผลอยิงโดนบาร์โค้ดซองขนม) กรุณาตรวจสอบอีกครั้งค่ะ', 'error');
+                        inAmt.value = '';
+                        return;
                     }
                     // ===================================
 
@@ -994,7 +1008,6 @@
                         if (val === "" && cartItems.length > 0) {
                             checkout(false); 
                         } else if (val !== "") {
-                            const p = parseFloat(val); 
                             if (!isNaN(p) && p > 0) {
                                 cartItems.push(p);
                                 inAmt.value = ''; 
@@ -1239,25 +1252,40 @@ window.togglePosPassword = function() {
         // ระบบจัดการข้อมูล สมาชิก และ ซิงค์ (Clear and Sync)
         // ==========================================
         window.syncFromSheets = async function() {
-            Swal.fire({ title: 'กำลังซิงค์ข้อมูล...', text: 'ระบบจะล้างข้อมูลเก่าและดึงข้อมูลใหม่จาก Sheets ทั้งหมด', didOpen: () => Swal.showLoading() });
-            try {
-                const res = await fetch(SHEET_API_URL); const members = await res.json(); 
-                
-                // ล้างข้อมูลสมาชิกเก่าทิ้งทั้งหมด เพื่อให้ตรงกับ Sheets ปัจจุบัน 100%
-                const snapshot = await db.collection("members").get();
-                const batch = db.batch();
-                snapshot.docs.forEach(doc => { batch.delete(doc.ref); });
-                await batch.commit();
+            // 🔔 เพิ่มป๊อบอัพถามย้ำเพื่อความปลอดภัย
+            const { isConfirmed } = await Swal.fire({
+                title: '🔄 ยืนยันการดึงข้อมูลจาก Sheets?',
+                text: 'ระบบจะทำการ "ล้างรายชื่อสมาชิกเก่าในเว็บทั้งหมด" แล้วดึงข้อมูลชุดใหม่ล่าสุดจาก Google Sheets มาใส่แทน คุณต้องการดำเนินการใช่หรือไม่?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3182CE',
+                cancelButtonColor: '#718096',
+                confirmButtonText: 'ใช่, ดึงข้อมูลใหม่เลย',
+                cancelButtonText: 'ยกเลิก'
+            });
 
-                let count = 0;
-                for (const m of members) {
-                    if (m.member_id) {
-                        await db.collection("members").doc(m.member_id.toString()).set({ name: m.name||'', class: m.class||'', shares: parseInt(m.shares)||0, register_date: m.register_date||'', total_buy_accumulated: 0 }); 
-                        count++;
+            // ถ้ากดยืนยัน ถึงจะเริ่มทำงาน
+            if (isConfirmed) {
+                Swal.fire({ title: 'กำลังซิงค์ข้อมูล...', text: 'ระบบกำลังดึงข้อมูลใหม่จาก Sheets กรุณารอสักครู่ค่ะ', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                try {
+                    const res = await fetch(SHEET_API_URL); const members = await res.json(); 
+                    
+                    // ล้างข้อมูลสมาชิกเก่าทิ้งทั้งหมด เพื่อให้ตรงกับ Sheets ปัจจุบัน 100%
+                    const snapshot = await db.collection("members").get();
+                    const batch = db.batch();
+                    snapshot.docs.forEach(doc => { batch.delete(doc.ref); });
+                    await batch.commit();
+
+                    let count = 0;
+                    for (const m of members) {
+                        if (m.member_id) {
+                            await db.collection("members").doc(m.member_id.toString()).set({ name: m.name||'', class: m.class||'', shares: parseInt(m.shares)||0, register_date: m.register_date||'', total_buy_accumulated: 0 }); 
+                            count++;
+                        }
                     }
-                }
-                Swal.fire('ซิงค์ข้อมูลสำเร็จ!', `อัปเดตฐานข้อมูลใหม่ทั้งหมด ${count} คน เรียบร้อยแล้ว`, 'success');
-            } catch (err) { Swal.fire('Error', 'ดึงข้อมูลไม่สำเร็จ', 'error'); }
+                    Swal.fire('ซิงค์ข้อมูลสำเร็จ!', `อัปเดตฐานข้อมูลใหม่ทั้งหมด ${count} คน เรียบร้อยแล้ว`, 'success');
+                } catch (err) { Swal.fire('Error', 'ดึงข้อมูลไม่สำเร็จ', 'error'); }
+            }
         }
 
         window.exportMembersToSheets = async function() {
@@ -1420,43 +1448,42 @@ window.togglePosPassword = function() {
         window.confirmDelete = async function(collection, docId, description) {
             const { value: adminName } = await Swal.fire({
                 title: '⚠️ ยืนยันการลบ', 
-                html: `
-                <div style="margin-bottom: 20px; font-size: 1.1rem;">กำลังลบ: <b style="color: #E53E3E;">${description}</b></div>
-                <div style="font-size: 0.95rem; color: #4A5568; margin-bottom: 10px;">โปรดพิมพ์ชื่อผู้ทำรายการ เพื่อบันทึกลง Audit Log</div>`, 
+                html: `<div style="margin-bottom: 20px; font-size: 1.1rem;">กำลังลบ: <b style="color: #E53E3E;">${description}</b></div>
+                       <div style="font-size: 0.95rem; color: #4A5568; margin-bottom: 10px;">โปรดพิมพ์ชื่อผู้ทำรายการ เพื่อบันทึกลง Audit Log</div>`, 
                 input: 'text', icon: 'warning', showCancelButton: true, confirmButtonColor: '#E53E3E', confirmButtonText: 'ยืนยัน',
                 inputValidator: (val) => { if (!val) return 'กรุณาพิมพ์ชื่อผู้ลบ' }
             });
             
             if (adminName) {
                 try {
-                    // [ส่วนที่อัปเกรด]: ลบบิลและหักยอดคืนด้วย Transaction ป้องกันการชนกันของข้อมูล
+                    // 🌟 1. ดำเนินการคืนยอดเงินสะสมให้สมาชิก (เฉพาะบิลที่จ่ายแล้ว)
                     if (collection === 'transactions') {
                         const txDoc = await db.collection(collection).doc(docId).get();
                         if (txDoc.exists) {
                             const txData = txDoc.data();
-                            // จะหักยอดคืน ก็ต่อเมื่อเป็นบิลที่จ่ายเงินแล้ว (paid) เท่านั้น
+                            // ตรวจสอบว่าเป็นบิลที่จ่ายเงินแล้ว และมีรหัสนักเรียน
                             if (txData.status === 'paid' && txData.member_id && txData.amount) {
-                                const memberRef = db.collection("members").doc(txData.member_id);
+                                const memberRef = db.collection("members").doc(txData.member_id.toString());
                                 
-                                // ใช้ runTransaction รับประกันว่ายอดเงินจะคำนวณถูกต้องแม่นยำ 100% แม้ถูกสั่งลบพร้อมกัน
-                                await db.runTransaction(async (transaction) => {
-                                    const memberDoc = await transaction.get(memberRef);
-                                    if (!memberDoc.exists) return;
-                                    let currentTotal = memberDoc.data().total_buy_accumulated || 0;
-                                    let newTotal = currentTotal - txData.amount;
-                                    if (newTotal < 0) newTotal = 0; // ล็อกไม่ให้ติดลบ
-                                    transaction.update(memberRef, { total_buy_accumulated: newTotal });
-                                });
+                                // 🛡️ ใช้วิธี Increment ติดลบ (ปลอดภัยที่สุด!) ระบบจะเข้าไปลดแค่ตัวเลขยอดซื้อสะสม
+                                // โดยไม่มีทางไปแตะต้องหรือลบชื่อ ชั้น หรือหุ้นของเด็กได้เลย 100%
+                                await memberRef.set({ 
+                                    total_buy_accumulated: firebase.firestore.FieldValue.increment(-txData.amount) 
+                                }, { merge: true });
                             }
                         }
                     }
 
-                    // ลบข้อมูลหลัก และลงบันทึกประวัติการลบ (Audit Log)
+                    // 🌟 2. ลบประวัติบิลออกจากฐานข้อมูล Transactions
                     await db.collection(collection).doc(docId).delete();
+                    
+                    // 🌟 3. บันทึกประวัติคนลบ (กันเหนียว)
                     await db.collection("audit_logs").add({ action: "ลบ", collection: collection, details: description, deleted_by: adminName, timestamp: firebase.firestore.FieldValue.serverTimestamp() });
+                    
                     Swal.fire({title: 'ลบสำเร็จ!', icon: 'success', timer: 1000, showConfirmButton: false});
                 } catch(e) { 
-                    Swal.fire('Error', 'ไม่สามารถลบได้', 'error'); 
+                    console.error("Delete Error:", e);
+                    Swal.fire('Error', 'ระบบขัดข้อง ไม่สามารถลบได้', 'error'); 
                 }
             }
         }
@@ -1641,6 +1668,11 @@ window.togglePosPassword = function() {
         }
         window.removeSetting = async function(field, val) { try { await db.collection("settings").doc("dropdowns").set({ [field]: firebase.firestore.FieldValue.arrayRemove(val) }, { merge: true }); } catch(e) { console.error(e); } }
 
+        // ==========================================
+        // 💰 ระบบคำนวณเงินปันผล และ พิมพ์เอกสารปันผล
+        // ==========================================
+        window.currentDividendResults = []; // ตัวแปรเก็บข้อมูลรอพิมพ์
+
         window.calculateDividend = async function() {
             const netProfit = gSales - gExp;
             const { value: formValues } = await Swal.fire({
@@ -1665,20 +1697,161 @@ window.togglePosPassword = function() {
                 focusConfirm: false, showCancelButton: true, confirmButtonText: 'ประมวลผล', confirmButtonColor: '#805AD5',
                 preConfirm: () => { return { net: parseFloat(document.getElementById('div-net').value)||0, reserve: parseFloat(document.getElementById('div-reserve').value)||0, sharePct: parseFloat(document.getElementById('div-share-pct').value)||0, buyPct: parseFloat(document.getElementById('div-buy-pct').value)||0 } }
             });
+            
             if (formValues) {
                 let totalPct = formValues.reserve + formValues.sharePct + formValues.buyPct;
                 if (totalPct !== 100) return Swal.fire('ผลรวมไม่ถูกต้อง', 'เปอร์เซ็นต์รวมทั้งหมดต้องเท่ากับ 100%', 'error');
                 Swal.fire({ title: 'กำลังคำนวณยอด...', didOpen: () => Swal.showLoading() });
+                
                 try {
-                    let shareDivAmt = formValues.net * (formValues.sharePct / 100); let buyDivAmt = formValues.net * (formValues.buyPct / 100);
-                    const snapshot = await db.collection("members").get(); let totalShares = 0; let totalBuys = 0; let membersList = [];
-                    snapshot.forEach(doc => { let d = doc.data(); totalShares += (d.shares || 0); totalBuys += (d.total_buy_accumulated || 0); membersList.push({ id: doc.id, name: d.name, shares: d.shares||0, buy: d.total_buy_accumulated||0 }); });
-                    let divPerShare = totalShares > 0 ? shareDivAmt / totalShares : 0; let divPerBuy = totalBuys > 0 ? buyDivAmt / totalBuys : 0;
-                    let resultHtml = `<div style="text-align:left; font-size:0.95rem; max-height:300px; overflow-y:auto;"><p style="color:#805AD5;"><b>ปันผลต่อ 1 หุ้น:</b> ฿${divPerShare.toFixed(2)}</p><p style="color:#38A169;"><b>ปันผลต่อยอดซื้อ 1 บาท:</b> ฿${divPerBuy.toFixed(2)}</p><hr style="margin:15px 0;"><table style="width:100%; border-collapse: collapse;"><tr><th style="border-bottom:1px solid #ccc; text-align:left; padding-bottom:8px;">รหัส-ชื่อ</th><th style="border-bottom:1px solid #ccc; text-align:right; padding-bottom:8px;">รวมปันผล (บาท)</th></tr>`;
-                    membersList.forEach(m => { let myTotalDiv = (m.shares * divPerShare) + (m.buy * divPerBuy); if(myTotalDiv > 0) { resultHtml += `<tr><td style="border-bottom:1px solid #eee; padding:8px 0;">${m.id} ${m.name}</td><td style="border-bottom:1px solid #eee; padding:8px 0; text-align:right; color:#E53E3E; font-weight:500;">฿${myTotalDiv.toFixed(2)}</td></tr>`; } });
-                    resultHtml += `</table></div>`; Swal.fire({ title: 'สรุปยอดเงินปันผลประจำปี', html: resultHtml, width: '600px', confirmButtonText: 'ปิด' });
+                    let shareDivAmt = formValues.net * (formValues.sharePct / 100); 
+                    let buyDivAmt = formValues.net * (formValues.buyPct / 100);
+                    const snapshot = await db.collection("members").get(); 
+                    
+                    let totalShares = 0; let totalBuys = 0; let membersList = [];
+                    snapshot.forEach(doc => { 
+                        let d = doc.data(); 
+                        totalShares += (d.shares || 0); 
+                        totalBuys += (d.total_buy_accumulated || 0); 
+                        membersList.push({ id: doc.id, name: d.name, class: d.class || '-', shares: d.shares||0, buy: d.total_buy_accumulated||0 }); 
+                    });
+                    
+                    let divPerShare = totalShares > 0 ? shareDivAmt / totalShares : 0; 
+                    let divPerBuy = totalBuys > 0 ? buyDivAmt / totalBuys : 0;
+                    
+                    window.currentDividendResults = []; // เคลียร์ข้อมูลเก่ารอรับข้อมูลใหม่
+                    
+                    let resultHtml = `<div style="text-align:left; font-size:0.95rem; max-height:220px; overflow-y:auto; border-bottom: 1px solid #ccc; padding-bottom: 10px;">
+                        <p style="color:#805AD5;"><b>ปันผลต่อ 1 หุ้น:</b> ฿${divPerShare.toFixed(2)}</p>
+                        <p style="color:#38A169;"><b>ปันผลต่อยอดซื้อ 1 บาท:</b> ฿${divPerBuy.toFixed(2)}</p>
+                        <hr style="margin:10px 0;">
+                        <table style="width:100%; border-collapse: collapse;"><tr><th style="border-bottom:1px solid #ccc; text-align:left; padding-bottom:8px;">รหัส-ชื่อ</th><th style="border-bottom:1px solid #ccc; text-align:right; padding-bottom:8px;">รวมปันผล (บาท)</th></tr>`;
+                    
+                    membersList.forEach(m => { 
+                        let shareDiv = m.shares * divPerShare;
+                        let buyDiv = m.buy * divPerBuy;
+                        let myTotalDiv = shareDiv + buyDiv; 
+                        
+                        if(myTotalDiv > 0) { 
+                            // เก็บข้อมูลใส่ตัวแปรไว้สำหรับกดพิมพ์
+                            window.currentDividendResults.push({
+                                id: m.id, name: m.name, class: m.class, 
+                                shares: m.shares, shareDiv: shareDiv, buyDiv: buyDiv, totalDiv: myTotalDiv
+                            });
+                            resultHtml += `<tr><td style="border-bottom:1px solid #eee; padding:8px 0;">${m.id} ${m.name}</td><td style="border-bottom:1px solid #eee; padding:8px 0; text-align:right; color:#E53E3E; font-weight:500;">฿${myTotalDiv.toFixed(2)}</td></tr>`; 
+                        } 
+                    });
+                    resultHtml += `</table></div>`; 
+                    
+                    // จัดเรียงข้อมูลตามห้องเรียน แล้วตามด้วยรหัส
+                    window.currentDividendResults.sort((a, b) => {
+                        if (a.class === b.class) return a.id.localeCompare(b.id);
+                        return a.class.localeCompare(b.class);
+                    });
+
+                    // ใส่ปุ่มกดพิมพ์ 2 ระบบ
+                    resultHtml += `
+                        <div style="margin-top: 15px; display: flex; flex-direction: column; gap: 10px;">
+                            <button class="btn-blue" style="background:#2B6CB0; padding: 10px; font-size:1rem;" onclick="printDividendSummary()">🖨️ 1. พิมพ์ตารางรายชื่อรวม (ใบเซ็นรับเงิน)</button>
+                            <button class="btn-blue" style="background:#DD6B20; padding: 10px; font-size:1rem;" onclick="printDividendSlips()">🖨️ 2. พิมพ์สลิปตัดฉีกแจกรายคน</button>
+                        </div>
+                    `;
+
+                    Swal.fire({ title: 'สรุปยอดเงินปันผลประจำปี', html: resultHtml, width: '550px', showConfirmButton: false, showCloseButton: true });
                 } catch(e) { Swal.fire('Error', 'คำนวณปันผลผิดพลาด', 'error'); }
             }
+        }
+
+        // --- ระบบพิมพ์ใบที่ 1: ตารางรวม ---
+        window.printDividendSummary = function() {
+            if (!window.currentDividendResults || window.currentDividendResults.length === 0) return Swal.fire('แจ้งเตือน', 'ไม่มีข้อมูลปันผลให้พิมพ์', 'warning');
+            let win = window.open('', '', 'width=950,height=800');
+            let contentHtml = `
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <h2 style="margin: 0; color: #1A365D;">ตารางจ่ายเงินปันผล สหกรณ์โรงเรียนบ้านหาดส้มแป้น</h2>
+                </div>
+                <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                    <thead>
+                        <tr style="background:#F7FAFC;">
+                            <th style="border: 1px solid #CBD5E0; padding: 8px;">ลำดับ</th>
+                            <th style="border: 1px solid #CBD5E0; padding: 8px;">รหัส</th>
+                            <th style="border: 1px solid #CBD5E0; padding: 8px;">ชื่อ-นามสกุล</th>
+                            <th style="border: 1px solid #CBD5E0; padding: 8px;">ชั้น</th>
+                            <th style="border: 1px solid #CBD5E0; padding: 8px; text-align: right;">ปันผลหุ้น</th>
+                            <th style="border: 1px solid #CBD5E0; padding: 8px; text-align: right;">ปันผลซื้อ</th>
+                            <th style="border: 1px solid #CBD5E0; padding: 8px; text-align: right;">รับสุทธิ</th>
+                            <th style="border: 1px solid #CBD5E0; padding: 8px; width: 150px;">ลายมือชื่อผู้รับเงิน</th>
+                        </tr>
+                    </thead><tbody>`;
+            
+            window.currentDividendResults.forEach((m, idx) => {
+                contentHtml += `<tr>
+                        <td style="border: 1px solid #CBD5E0; padding: 8px; text-align: center;">${idx + 1}</td>
+                        <td style="border: 1px solid #CBD5E0; padding: 8px; text-align: center;">${m.id}</td>
+                        <td style="border: 1px solid #CBD5E0; padding: 8px;">${m.name}</td>
+                        <td style="border: 1px solid #CBD5E0; padding: 8px; text-align: center;">${m.class}</td>
+                        <td style="border: 1px solid #CBD5E0; padding: 8px; text-align: right;">${m.shareDiv.toFixed(2)}</td>
+                        <td style="border: 1px solid #CBD5E0; padding: 8px; text-align: right;">${m.buyDiv.toFixed(2)}</td>
+                        <td style="border: 1px solid #CBD5E0; padding: 8px; text-align: right; font-weight: bold;">${m.totalDiv.toFixed(2)}</td>
+                        <td style="border: 1px solid #CBD5E0; padding: 8px;"></td>
+                    </tr>`;
+            });
+            contentHtml += `</tbody></table>`;
+            let scriptTagClose = '</' + 'script>';
+            let htmlDoc = `<html><head><title>พิมพ์ตารางรายชื่อรวม</title><link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;500;600&display=swap" rel="stylesheet"><style> body { font-family: 'Kanit', sans-serif; background: #fff; color: #000; } @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } } </style></head><body>${contentHtml}<script>window.onload = function() { setTimeout(() => { window.print(); window.close(); }, 500); }${scriptTagClose}</body></html>`;
+            win.document.write(htmlDoc); win.document.close();
+        }
+
+        // --- ระบบพิมพ์ใบที่ 2: สลิปตัดฉีก ---
+        window.printDividendSlips = function() {
+            if (!window.currentDividendResults || window.currentDividendResults.length === 0) return Swal.fire('แจ้งเตือน', 'ไม่มีข้อมูลปันผลให้พิมพ์', 'warning');
+            let win = window.open('', '', 'width=950,height=800');
+            let contentHtml = '<div class="slip-container">';
+            
+            window.currentDividendResults.forEach((m) => {
+                contentHtml += `
+                    <div class="slip-box">
+                        <div class="slip-inner">
+                            <div class="slip-header">💰 สลิปเงินปันผล สหกรณ์โรงเรียนบ้านหาดส้มแป้น</div>
+                            <div style="font-size: 13px; margin-bottom: 10px;">
+                                <b>รหัส:</b> ${m.id} &nbsp;&nbsp;&nbsp; <b>ชั้น:</b> ${m.class}<br>
+                                <b>ชื่อ-สกุล:</b> ${m.name}
+                            </div>
+                            <table style="width: 100%; font-size: 12px; margin-bottom: 5px;">
+                                <tr>
+                                    <td>เงินปันผลจากหุ้น (${m.shares} หุ้น)</td>
+                                    <td style="text-align: right;">${m.shareDiv.toFixed(2)} ฿</td>
+                                </tr>
+                                <tr>
+                                    <td>เงินปันผลจากยอดซื้อสะสม</td>
+                                    <td style="text-align: right;">${m.buyDiv.toFixed(2)} ฿</td>
+                                </tr>
+                                <tr>
+                                    <td style="font-weight: bold; font-size: 14px; padding-top: 5px;">รวมรับเงินสุทธิ</td>
+                                    <td style="text-align: right; font-weight: bold; font-size: 14px; padding-top: 5px; color:#E53E3E;"><u>${m.totalDiv.toFixed(2)} ฿</u></td>
+                                </tr>
+                            </table>
+                            <div style="text-align: right; font-size: 11px; margin-top: 15px;">
+                                ลงชื่อ .................................................. ผู้รับเงิน<br>
+                                (......./......./.......)
+                            </div>
+                        </div>
+                    </div>`;
+            });
+            contentHtml += '</div>';
+            let scriptTagClose = '</' + 'script>';
+            let htmlDoc = `<html><head><title>พิมพ์สลิปตัดฉีก</title><link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;500;600&display=swap" rel="stylesheet"><style>
+                body { font-family: 'Kanit', sans-serif; background: #fff; color: #000; margin: 0; padding: 10px; } 
+                .slip-container { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+                .slip-box { padding: 15px; border: 1px dashed #A0AEC0; page-break-inside: avoid; }
+                .slip-inner { border: 2px solid #1A365D; padding: 15px; border-radius: 8px; }
+                .slip-header { text-align: center; color: #1A365D; font-weight: bold; font-size: 14px; margin-bottom: 10px; }
+                @media print { 
+                    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; margin: 0; padding: 0;} 
+                    .slip-container { gap: 15mm; padding: 10mm; display: grid; grid-template-columns: 1fr 1fr;}
+                }
+            </style></head><body>${contentHtml}<script>window.onload = function() { setTimeout(() => { window.print(); window.close(); }, 500); }${scriptTagClose}</body></html>`;
+            win.document.write(htmlDoc); win.document.close();
         }
 
         // ==========================================

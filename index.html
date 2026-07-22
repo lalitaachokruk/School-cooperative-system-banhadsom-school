@@ -777,7 +777,18 @@
             messagingSenderId: "383328934393",
             appId: "1:383328934393:web:0a326b1e0098b7d6cf4528"
         };
-        firebase.initializeApp(firebaseConfig); const db = firebase.firestore();
+        
+        const db = firebase.firestore();
+
+        // 🌟 เปิดระบบทำงานออฟไลน์ (Offline Persistence)
+        db.enablePersistence()
+          .catch(function(err) {
+              if (err.code == 'failed-precondition') {
+                  console.warn("เปิดแท็บซ้อนกันหลายอัน โหมดออฟไลน์ทำงานได้แท็บเดียวนะคะ");
+              } else if (err.code == 'unimplemented') {
+                  console.warn("เบราว์เซอร์นี้ไม่รองรับโหมดออฟไลน์ค่ะ");
+              }
+          });
 
         // ==========================================
         // UI & คู่มือการใช้งานฉบับสมบูรณ์ (อัปเดตล่าสุด)

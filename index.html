@@ -13,6 +13,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://www.gstatic.com/firebasejs/10.1.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.1.0/firebase-firestore-compat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
 
@@ -866,28 +867,29 @@
             if(!pwd) return;
             try {
                 // [Security]: ดึงรหัสผ่านจาก Firestore
-                const doc = await db.collection("settings").doc("admin_auth").get();
+                try {
+                // 🌟 1. เปลี่ยนมาให้ Firebase Auth เป็นคนตรวจรหัสผ่านแทน
+                const adminEmail = "admin@banhadsompan.ac.th";
+                await firebase.auth().signInWithEmailAndPassword(adminEmail, pwd);
                 
-                // 🔒 ปิดช่องโหว่: ถ้าไม่มีไฟล์รหัสผ่านในระบบ ให้บล็อกการเข้าใช้งานทันที
-                if (!doc.exists) {
-                    Swal.fire('ระบบขัดข้อง', 'ไม่พบข้อมูลรหัสผ่านในระบบ ฐานข้อมูลอาจมีปัญหา', 'error');
-                    return;
-                }
+                // 🌟 2. ถ้ารหัสผ่านถูกต้อง ระบบจะลงมาทำงานตรงนี้ (ถ้าผิด จะกระโดดไป catch ทันที)
+                loginModal.style.display = 'none'; 
+                posSection.style.display = 'none'; 
+                adminSection.style.display = 'flex';
                 
-                // ดึงรหัสจากฐานข้อมูลล้วนๆ (ไม่มี Fallback Password ฝังในโค้ดอีกต่อไป)
-                const realPwd = doc.data().password; 
+                if(!adminInitialized) { initRealtimeListeners(); adminInitialized = true; }
+                Swal.fire({ title: 'เข้าสู่ระบบสำเร็จ', icon: 'success', timer: 1000, showConfirmButton: false });
                 
-                if (pwd === realPwd) {
-                    loginModal.style.display = 'none'; posSection.style.display = 'none'; adminSection.style.display = 'flex';
-                    if(!adminInitialized) { initRealtimeListeners(); adminInitialized = true; }
-                    Swal.fire({ title: 'เข้าสู่ระบบสำเร็จ', icon: 'success', timer: 1000, showConfirmButton: false });
-                } else { 
-                    document.getElementById('pwd-error').style.display = 'block'; pwdInput.value = ''; pwdInput.focus(); 
-                }
             } catch(e) { 
-                Swal.fire('Error', 'ตรวจสอบสิทธิ์ไม่สำเร็จ', 'error'); 
+                // 🌟 3. ถ้ารหัสผ่านผิด ยาม(Firebase) จะเตะส่งมาที่นี่
+                if (e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential' || e.code === 'auth/user-not-found') {
+                    document.getElementById('pwd-error').style.display = 'block'; 
+                    pwdInput.value = ''; 
+                    pwdInput.focus(); 
+                } else {
+                    Swal.fire('Error', 'ไม่สามารถเข้าสู่ระบบได้', 'error'); 
+                }
             }
-        }
         
         window.exitAdmin = function() { adminSection.style.display = 'none'; posSection.style.display = 'flex'; resetPOS(); }
 
@@ -1211,16 +1213,32 @@
             if (!pwdInput) return Swal.fire('แจ้งเตือน', 'กรุณาระบุรหัสผ่านค่ะ', 'warning');
 
             // [Security]: ลบรหัสผ่านฉุกเฉิน (Bhsp2026) ออก บังคับใช้เฉพาะรหัสจากฐานข้อมูลเท่านั้น
-            if (window.validPosPasswords.includes(pwdInput)) {
-                window.currentCashierName = nameInput;
+            // 🔒 [Security]: เปลี่ยนไปใช้ Firebase Auth ป้องกันการดักจับรหัสผ่าน 100%
+            try {
+                const posEmail = "pos@banhadsompan.ac.th";
+                
+                // ส่งรหัสไปให้ยาม Firebase ตรวจ
+                await firebase.auth().signInWithEmailAndPassword(posEmail, pwdInput);
+
+                // 🌟 ถ้ารหัสผ่านถูกต้อง ระบบจะลงมาทำงานตรงนี้
+                window.currentCashierName = nameInput || "เจ้าหน้าที่";
                 document.getElementById('pos-login-modal').style.display = 'none'; 
                 document.getElementById('input-student-id').focus(); 
                 
-                Swal.fire({ title: `ยินดีต้อนรับคุณ ${window.currentCashierName}`, text: 'ระบบจุดขายพร้อมใช้งานแล้วค่ะ', icon: 'success', timer: 1500, showConfirmButton: false, toast: true, position: 'top-end' });
-            } else {
+                Swal.fire({ 
+                    title: `ยินดีต้อนรับคุณ ${window.currentCashierName}`, 
+                    text: 'ระบบจุดขายพร้อมใช้งานแล้วค่ะ', 
+                    icon: 'success', 
+                    timer: 1500, 
+                    showConfirmButton: false, 
+                    toast: true, 
+                    position: 'top-end' 
+                });
+
+            } catch (error) {
+                // 🌟 ถ้ารหัสผ่านผิด ยามจะเตะมาเข้าตรงนี้
                 Swal.fire('ข้อผิดพลาด', 'รหัสผ่านไม่ถูกต้อง!', 'error');
             }
-        };
         
 window.togglePosPassword = function() {
             const pwdInput = document.getElementById('pos-cashier-pwd');

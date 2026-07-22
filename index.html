@@ -865,14 +865,13 @@
         window.verifyAdmin = async function() {
             const pwd = pwdInput.value.trim();
             if(!pwd) return;
+            
             try {
-                // [Security]: ดึงรหัสผ่านจาก Firestore
-                try {
                 // 🌟 1. เปลี่ยนมาให้ Firebase Auth เป็นคนตรวจรหัสผ่านแทน
                 const adminEmail = "admin@banhadsompan.ac.th";
                 await firebase.auth().signInWithEmailAndPassword(adminEmail, pwd);
                 
-                // 🌟 2. ถ้ารหัสผ่านถูกต้อง ระบบจะลงมาทำงานตรงนี้ (ถ้าผิด จะกระโดดไป catch ทันที)
+                // 🌟 2. ถ้ารหัสผ่านถูกต้อง
                 loginModal.style.display = 'none'; 
                 posSection.style.display = 'none'; 
                 adminSection.style.display = 'flex';
@@ -890,6 +889,9 @@
                     Swal.fire('Error', 'ไม่สามารถเข้าสู่ระบบได้', 'error'); 
                 }
             }
+        }; // <--- 🌟 แก้ไขจุดที่หายไปคือปีกกาตัวนี้ค่ะ!
+
+        window.exitAdmin = function() { adminSection.style.display = 'none'; posSection.style.display = 'flex'; resetPOS(); }
         
         window.exitAdmin = function() { adminSection.style.display = 'none'; posSection.style.display = 'flex'; resetPOS(); }
 

@@ -779,9 +779,13 @@
             appId: "1:383328934393:web:0a326b1e0098b7d6cf4528"
         };
         
+        // 🌟 1. สั่งเริ่มเปิดระบบ Firebase
+        firebase.initializeApp(firebaseConfig); 
+        
+        // 🌟 2. เชื่อมต่อฐานข้อมูล
         const db = firebase.firestore();
 
-        // 🌟 เปิดระบบทำงานออฟไลน์ (Offline Persistence)
+        // 🌟 3. เปิดระบบทำงานออฟไลน์ (Offline Persistence)
         db.enablePersistence()
           .catch(function(err) {
               if (err.code == 'failed-precondition') {

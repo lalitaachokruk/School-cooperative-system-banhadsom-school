@@ -732,12 +732,13 @@
         const SHEET_API_URL = "https://script.google.com/macros/s/AKfycbwnXkLLhzRf38_c268mD5_aKN447wO87sJVRzJcntB-0zjgm_Y1vQHotgNQZXrq3T7few/exec";
 
         function escapeForHtml(str) {
-            return String(str || '')
+            if (!str) return '';
+            return String(str)
                 .replace(/&/g, '&amp;')
                 .replace(/</g, '&lt;')
                 .replace(/>/g, '&gt;')
-                .replace(/'/g, "\\'")
-                .replace(/"/g, '&quot;');
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;'); // 🌟 แก้เป็น &#39; ตามหลัก HTML Entity ที่ถูกต้อง
         }
         
         // ฟังก์ชันกลางสำหรับเช็คสถานะครู/บุคลากร
@@ -1321,7 +1322,22 @@ window.togglePosPassword = function() {
             } catch (error) { Swal.fire('Error', 'ส่งข้อมูลไม่สำเร็จ', 'error'); }
         }
 
-        window.addNewMember = async function() {
+        window.addNewMember = async function(event) {
+            
+            // 🌟 1. ดักจับและล็อกปุ่มทันทีที่กด ป้องกันการกดเบิ้ล
+            let btn = null;
+            let oldText = "➕ เพิ่มสมาชิก"; // ข้อความเดิมเผื่อไว้
+            if (event && event.target) {
+                // หาตัวปุ่มให้เจอ (เผื่อผู้ใช้คลิกโดนไอคอนข้างในปุ่ม)
+                btn = event.target.tagName === 'BUTTON' ? event.target : event.target.closest('button');
+                if (btn) {
+                    oldText = btn.innerHTML; // เก็บข้อความหรือไอคอนเดิมไว้
+                    btn.disabled = true;
+                    btn.innerText = "กำลังทำงาน...";
+                }
+            }
+
+            // 🌟 โค้ดเดิมของคุณครู เริ่มตรงนี้ค่ะ
             const dt = dateIn ? dateIn.value : new Date().toISOString().split('T')[0];
             const { value: v } = await Swal.fire({
                 title: '➕ เพิ่มสมาชิกใหม่',
@@ -1349,11 +1365,17 @@ window.togglePosPassword = function() {
                 focusConfirm: false, showCancelButton: true, confirmButtonText: 'บันทึก',
                 preConfirm: () => { return { id: document.getElementById('s-id').value, name: document.getElementById('s-name').value, class: document.getElementById('s-class').value, date: document.getElementById('s-date').value, shares: parseInt(document.getElementById('s-shares').value)||0 } }
             });
+            // ... (ด้านล่างนี้คือโค้ดบันทึกฐานข้อมูลเดิมของคุณครู ปล่อยไว้เหมือนเดิมค่ะ) ...
             if (v && v.id && v.name) {
                 await db.collection("members").doc(v.id).set({ name: v.name, class: v.class, register_date: v.date, shares: v.shares, total_buy_accumulated: 0 }, { merge: true });
                 Swal.fire({title: 'เพิ่มสมาชิกสำเร็จ!', icon: 'success', timer: 1500, showConfirmButton: false});
             }
-        }
+            // 🌟 ตรงนี้คือส่วนที่ต้องเติมเข้าไปค่ะ (ปลดล็อกปุ่ม)
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = oldText; 
+            }
+        }; 
 
         window.editMember = async function(docId, name, cls, shares, rawDate) {
             let cleanDate = formatDisplayDate(rawDate);
@@ -2022,7 +2044,12 @@ window.togglePosPassword = function() {
                     const tb = document.getElementById('admin-audit-list'); let html = ''; let items = [];
                     snapshot.forEach(doc => { const d = doc.data(); const time = d.timestamp ? d.timestamp.toDate() : new Date(); items.push({ action: d.action, collection: d.collection, details: d.details, deleted_by: d.deleted_by, time: time }); });
                     items.sort((a, b) => b.time - a.time);
-                    items.forEach(d => { html += `<tr><td>${d.time.toLocaleString('th-TH')}</td><td>${d.action}</td><td>${d.details}</td><td style="color:var(--accent-red); font-weight:500;">${d.deleted_by}</td></tr>`; });
+                    items.forEach(d => { 
+                        let safeAction = escapeForHtml(d.action || '');
+                        let safeDetails = escapeForHtml(d.details || '');
+                        let safeDeletedBy = escapeForHtml(d.deleted_by || '');
+                        html += `<tr><td>${d.time.toLocaleString('th-TH')}</td><td>${safeAction}</td><td>${safeDetails}</td><td style="color:var(--accent-red); font-weight:500;">${safeDeletedBy}</td></tr>`; 
+                    });
                     if (tb) tb.innerHTML = items.length === 0 ? '<tr><td colspan="4" align="center">ไม่มีประวัติ</td></tr>' : html;
                 });
             } catch(e) { console.error("Audit Logs error:", e); }

@@ -521,7 +521,7 @@
                             <input type="date" id="exp-date" style="width: 150px;">
                             <input type="text" id="exp-name" placeholder="ชื่อรายการ (เช่น ค่าอุปกรณ์)" style="flex: 1;">
                             <input type="number" id="exp-amount" placeholder="จำนวนเงิน" style="width: 150px;">
-                            <button class="btn-blue" onclick="addExpense()">บันทึกรายจ่าย</button>
+                            <button class="btn-blue" onclick="addExpense(event)">บันทึกรายจ่าย</button>
                         </div>
                         <div class="admin-table-container">
                             <table class="admin-table">
@@ -984,13 +984,13 @@
                     let mode = document.getElementById('pos-mode').value;
                     let p = parseFloat(val);
 
-                    // 🌟 1. ดักจับ "บาร์โค้ดคำสั่ง" (ใช้ PAY / CREDIT แทนตัวเลขเพื่อไม่ให้ชนกับราคา)
-                    if (val === 'PAY' || val === '9999') { 
+                    // 🌟 ดักจับบาร์โค้ดคำสั่ง (ใช้ String เพียวๆ)
+                    if (val === 'PAY') { 
                         inAmt.value = ''; 
                         if (cartItems.length > 0 || (mode === 'total' && totalAmount > 0)) checkout(false); 
                         return; 
                     }
-                    if (val === 'CREDIT' || val === '8888') { 
+                    if (val === 'CREDIT') { 
                         inAmt.value = ''; 
                         if (cartItems.length > 0 || (mode === 'total' && totalAmount > 0)) checkout(true);  
                         return; 
@@ -1168,10 +1168,14 @@
                 if (isCredit) { msg += `<br><br><span style="color:#DD6B20; font-weight:bold;">📝 บันทึกเป็น "ยอดค้างชำระ" เรียบร้อยแล้ว</span>`; }
 
                 Swal.fire({ title: 'บันทึกสำเร็จ!', html: msg, icon: 'success', timer: 1800, showConfirmButton: false });
+                
+                // 🌟 ย้ายขยับขึ้นมาไว้ตรงนี้แทนค่ะ! (ข้างใต้ Swal.fire สำเร็จ)
+                window.resetPOS(); 
+
             } catch (err) { 
-                Swal.fire('Error', 'บันทึกไม่สำเร็จ', 'error'); 
+                Swal.fire('Error', 'บันทึกไม่สำเร็จ ข้อมูลในตะกร้ายังอยู่นะคะ', 'error'); 
+                // ❌ ข้างล่างนี้ไม่ต้องมี window.resetPOS(); แล้วค่ะ
             }
-            window.resetPOS(); 
         }
 
         // ==========================================
@@ -1646,12 +1650,18 @@ window.togglePosPassword = function() {
         // ==========================================
         // ระบบค่าใช้จ่าย และ ปันผล
         // ==========================================
-        window.addExpense = async function() {
+       // 🌟 เติมคำว่า event ลงในวงเล็บตรงนี้ค่ะ
+        window.addExpense = async function(event) {
             const date = document.getElementById('exp-date').value; const name = document.getElementById('exp-name').value.trim(); const amount = parseFloat(document.getElementById('exp-amount').value);
             if(!name || isNaN(amount)) return Swal.fire('ข้อมูลไม่ครบ', '', 'warning');
             
-            // ล็อกปุ่มกันกดเบิ้ล
-            const btn = event.target; btn.disabled = true; btn.innerText = "กำลังบันทึก...";
+            // ล็อกปุ่มกันกดเบิ้ล (ตอนนี้ระบบรู้จัก event แล้วค่ะ)
+            let btn = null;
+            if (event && event.target) {
+                btn = event.target; 
+                btn.disabled = true; 
+                btn.innerText = "กำลังบันทึก...";
+            }
             
             try {
                 await db.collection("expenses").add({ date: date, name: escapeForHtml(name), amount: amount, timestamp: firebase.firestore.FieldValue.serverTimestamp() });
@@ -1660,7 +1670,11 @@ window.togglePosPassword = function() {
                 document.getElementById('exp-name').value = ''; document.getElementById('exp-amount').value = '';
             } catch(e) { Swal.fire('Error', 'บันทึกไม่สำเร็จ', 'error'); }
             
-            btn.disabled = false; btn.innerText = "บันทึกรายจ่าย"; // ปลดล็อกปุ่ม
+            // ปลดล็อกปุ่ม
+            if (btn) {
+                btn.disabled = false; 
+                btn.innerText = "บันทึกรายจ่าย"; 
+            }
         }
 
         window.saveCurrentYear = async function() {
@@ -1798,10 +1812,14 @@ window.togglePosPassword = function() {
                     </thead><tbody>`;
             
             window.currentDividendResults.forEach((m, idx) => {
+                // 🌟 เพิ่มบรรทัดนี้: กรองชื่อก่อนพิมพ์ ป้องกันอักขระพิเศษทำให้ตารางพัง
+                let safeName = escapeForHtml(m.name || '');
+
                 contentHtml += `<tr>
                         <td style="border: 1px solid #CBD5E0; padding: 8px; text-align: center;">${idx + 1}</td>
                         <td style="border: 1px solid #CBD5E0; padding: 8px; text-align: center;">${m.id}</td>
-                        <td style="border: 1px solid #CBD5E0; padding: 8px;">${m.name}</td>
+                        <!-- 🌟 เปลี่ยนจาก ${m.name} เป็น ${safeName} -->
+                        <td style="border: 1px solid #CBD5E0; padding: 8px;">${safeName}</td>
                         <td style="border: 1px solid #CBD5E0; padding: 8px; text-align: center;">${m.class}</td>
                         <td style="border: 1px solid #CBD5E0; padding: 8px; text-align: right;">${m.shareDiv.toFixed(2)}</td>
                         <td style="border: 1px solid #CBD5E0; padding: 8px; text-align: right;">${m.buyDiv.toFixed(2)}</td>

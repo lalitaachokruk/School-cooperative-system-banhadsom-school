@@ -904,15 +904,25 @@
         }
 
         async function sendToGoogleSheets(sheetName, rowDataArray) {
-            // [Security]: เพิ่ม Token ลับ ยืนยันตัวตนฝั่ง Apps Script
-            const SECRET_TOKEN = "BHSP_SECURE_TOKEN_2026"; 
             try { 
+                // 🔒 [Security]: ดึงกุญแจลับจาก "ตู้เซฟ" Firestore แทนการฝังในโค้ดหน้าเว็บ
+                const secretDoc = await db.collection("settings").doc("secrets").get();
+                
+                if (!secretDoc.exists) {
+                    console.error("ระบบขัดข้อง: ไม่พบกุญแจลับสำหรับส่งข้อมูล (Secret Token Missing)");
+                    return;
+                }
+                
+                const SECRET_TOKEN = secretDoc.data().sheet_token;
+                
                 await fetch(SHEET_API_URL, { 
                     method: "POST", 
                     headers: { "Content-Type": "text/plain;charset=utf-8" }, 
                     body: JSON.stringify({ token: SECRET_TOKEN, sheetName: sheetName, rowData: rowDataArray }) 
                 }); 
-            } catch (error) { console.error(error); }
+            } catch (error) { 
+                console.error("Sheet Sync Error:", error); 
+            }
         }
 
         // ==========================================

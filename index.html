@@ -1015,12 +1015,12 @@
                     let p = parseFloat(val);
 
                     // 🌟 ดักจับบาร์โค้ดคำสั่ง (ใช้ String เพียวๆ)
-                    if (val === 'PAY') { 
+                    if (val === 'PAY' || val === '9999') { 
                         inAmt.value = ''; 
                         if (cartItems.length > 0 || (mode === 'total' && totalAmount > 0)) checkout(false); 
                         return; 
                     }
-                    if (val === 'CREDIT') { 
+                    if (val === 'CREDIT' || val === '8888') { 
                         inAmt.value = ''; 
                         if (cartItems.length > 0 || (mode === 'total' && totalAmount > 0)) checkout(true);  
                         return; 

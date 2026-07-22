@@ -864,16 +864,28 @@
             const pwd = pwdInput.value.trim();
             if(!pwd) return;
             try {
-                // [Security]: ดึงรหัสผ่านจาก Firestore แทนการฝังหน้าเว็บ
+                // [Security]: ดึงรหัสผ่านจาก Firestore
                 const doc = await db.collection("settings").doc("admin_auth").get();
-                const realPwd = doc.exists ? doc.data().password : "Bhsp2026"; 
+                
+                // 🔒 ปิดช่องโหว่: ถ้าไม่มีไฟล์รหัสผ่านในระบบ ให้บล็อกการเข้าใช้งานทันที
+                if (!doc.exists) {
+                    Swal.fire('ระบบขัดข้อง', 'ไม่พบข้อมูลรหัสผ่านในระบบ ฐานข้อมูลอาจมีปัญหา', 'error');
+                    return;
+                }
+                
+                // ดึงรหัสจากฐานข้อมูลล้วนๆ (ไม่มี Fallback Password ฝังในโค้ดอีกต่อไป)
+                const realPwd = doc.data().password; 
                 
                 if (pwd === realPwd) {
                     loginModal.style.display = 'none'; posSection.style.display = 'none'; adminSection.style.display = 'flex';
                     if(!adminInitialized) { initRealtimeListeners(); adminInitialized = true; }
                     Swal.fire({ title: 'เข้าสู่ระบบสำเร็จ', icon: 'success', timer: 1000, showConfirmButton: false });
-                } else { document.getElementById('pwd-error').style.display = 'block'; pwdInput.value = ''; pwdInput.focus(); }
-            } catch(e) { Swal.fire('Error', 'ตรวจสอบสิทธิ์ไม่สำเร็จ', 'error'); }
+                } else { 
+                    document.getElementById('pwd-error').style.display = 'block'; pwdInput.value = ''; pwdInput.focus(); 
+                }
+            } catch(e) { 
+                Swal.fire('Error', 'ตรวจสอบสิทธิ์ไม่สำเร็จ', 'error'); 
+            }
         }
         
         window.exitAdmin = function() { adminSection.style.display = 'none'; posSection.style.display = 'flex'; resetPOS(); }
@@ -964,39 +976,36 @@
             });
         }
 
-        // ดักจับการกด Enter (หรือเครื่องสแกนยิงเสร็จแล้วมันจะ Enter อัตโนมัติ)
+        // ดักจับการกด Enter
             inAmt.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') {
-                    let val = toArabic(inAmt.value.trim());
+                    // แปลงตัวอักษรเป็นพิมพ์ใหญ่ทั้งหมด เพื่อรองรับการสแกนบาร์โค้ดที่เป็นตัวหนังสือ
+                    let val = toArabic(inAmt.value.trim()).toUpperCase(); 
                     let mode = document.getElementById('pos-mode').value;
-                    let p = parseFloat(val); // แปลงค่าที่สแกนให้เป็นตัวเลขก่อน
+                    let p = parseFloat(val);
 
-                    // 🌟 1. ดักจับ "บาร์โค้ดคำสั่ง" 🌟 (ต้องเอาไว้เช็คเป็นด่านแรกสุด)
-                    if (val === '9999') { // สั่ง "ชำระเงิน"
+                    // 🌟 1. ดักจับ "บาร์โค้ดคำสั่ง" (ใช้ PAY / CREDIT แทนตัวเลขเพื่อไม่ให้ชนกับราคา)
+                    if (val === 'PAY' || val === '9999') { 
                         inAmt.value = ''; 
-                        if (cartItems.length > 0 || (mode === 'total' && totalAmount > 0)) {
-                            checkout(false); 
-                        }
+                        if (cartItems.length > 0 || (mode === 'total' && totalAmount > 0)) checkout(false); 
                         return; 
                     }
-                    if (val === '8888') { // สั่ง "ค้างไว้ก่อน"
+                    if (val === 'CREDIT' || val === '8888') { 
                         inAmt.value = ''; 
-                        if (cartItems.length > 0 || (mode === 'total' && totalAmount > 0)) {
-                            checkout(true);  
-                        }
+                        if (cartItems.length > 0 || (mode === 'total' && totalAmount > 0)) checkout(true);  
                         return; 
                     }
 
-                    // 🛡️ 2. ระบบป้องกันการสแกนผิดพลาด (Safety Lock ตามลอจิกจำกัดเพดานราคา)
+                    // 🛡️ 2. ป้องกันเผลอยิงรหัสนักเรียนซ้ำ
                     if (val === currentDocId) {
-                        Swal.fire('⚠️ สแกนผิดพลาด!', 'เผลอยิง "บาร์โค้ดรหัสนักเรียน" ซ้ำลงในช่องราคาค่ะ กรุณายิงป้ายราคาใหม่นะคะ', 'warning');
+                        Swal.fire('⚠️ สแกนผิดพลาด!', 'เผลอยิง "บาร์โค้ดรหัสนักเรียน" ซ้ำลงในช่องราคาค่ะ', 'warning');
                         inAmt.value = '';
                         return;
                     }
                     
-                    // 🛑 ล็อกเพดานราคา: ถ้ายอดเกิน 999 บาท ให้บล็อกทันที!
-                    if (!isNaN(p) && p > 999) {
-                        Swal.fire('⚠️ ยอดเงินสูงเกินจริง!', 'เป็นไปไม่ได้ที่นักเรียนจะซื้อของเกิน 1,000 บาท! (อาจเผลอยิงโดนบาร์โค้ดซองขนม) กรุณาตรวจสอบอีกครั้งค่ะ', 'error');
+                    // 🛑 3. ล็อกเพดานราคา 999 บาท: **ทำงานเฉพาะโหมด Cart (สแกนทีละชิ้น) เท่านั้น!**
+                    if (mode === 'cart' && !isNaN(p) && p > 999) {
+                        Swal.fire('⚠️ ยอดเงินสูงเกินจริง!', 'ราคาสินค้าต่อชิ้นไม่ควรเกิน 1,000 บาท', 'error');
                         inAmt.value = '';
                         return;
                     }
@@ -1268,6 +1277,11 @@ window.togglePosPassword = function() {
                 Swal.fire({ title: 'กำลังซิงค์ข้อมูล...', text: 'ระบบกำลังดึงข้อมูลใหม่จาก Sheets กรุณารอสักครู่ค่ะ', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
                 try {
                     const res = await fetch(SHEET_API_URL); const members = await res.json(); 
+
+                    // 🛡️ ป้องกันการล้างข้อมูลฟรี: ตรวจสอบว่าดึงข้อมูลมาจาก Sheets ได้จริงและไม่ว่างเปล่า
+                    if (!members || members.length === 0) {
+                        return Swal.fire('แจ้งเตือนความปลอดภัย', 'ตรวจพบว่า Google Sheets ปลายทางว่างเปล่า หรือเกิดข้อผิดพลาดในการเชื่อมต่อ ระบบได้ยกเลิกการล้างข้อมูลสมาชิก เพื่อป้องกันข้อมูลสูญหายค่ะ', 'error');
+                    }
                     
                     // ล้างข้อมูลสมาชิกเก่าทิ้งทั้งหมด เพื่อให้ตรงกับ Sheets ปัจจุบัน 100%
                     const snapshot = await db.collection("members").get();
@@ -1886,9 +1900,10 @@ window.togglePosPassword = function() {
                         let safeName = escapeForHtml(d.name);
                         let safeClass = escapeForHtml(d.class);
                         
-                        html += `<tr><td>${d.id}</td><td style="min-width: 150px;">${safeName}</td><td>${safeClass}</td><td>${displayDate}</td><td style="color:#805AD5; font-weight:500; min-width: 100px;">${d.shares} <span style="font-size:0.8rem; color:#A0AEC0;">(฿${sVal.toFixed(2)})</span></td><td style="color:#38A169; min-width: 100px;">฿${d.total_buy_accumulated.toFixed(2)}</td>
-                                 <td style="min-width: 150px;"><button class="btn-blue" style="padding:6px 12px; font-size:0.85rem;" onclick="editMember('${d.id}', '${safeName}', '${safeClass}', ${d.shares}, '${d.register_date}')">✏️ แก้ไข</button> <button class="btn-red" onclick="confirmDelete('members', '${d.id}', 'สมาชิก ${safeName}')">🗑️</button></td></tr>`;
-                    });
+                        let safeDate = escapeForHtml(d.register_date || '');
+            html += `<tr><td>${d.id}</td><td style="min-width: 150px;">${safeName}</td><td>${safeClass}</td><td>${displayDate}</td><td style="color:#805AD5; font-weight:500; min-width: 100px;">${d.shares} <span style="font-size:0.8rem; color:#A0AEC0;">(฿${sVal.toFixed(2)})</span></td><td style="color:#38A169; min-width: 100px;">฿${d.total_buy_accumulated.toFixed(2)}</td>
+                                 <td style="min-width: 150px;"><button class="btn-blue" style="padding:6px 12px; font-size:0.85rem;" onclick="editMember('${d.id}', '${safeName}', '${safeClass}', ${d.shares}, '${safeDate}')">✏️ แก้ไข</button> <button class="btn-red" onclick="confirmDelete('members', '${d.id}', 'สมาชิก ${safeName}')">🗑️</button></td></tr>`;
+            });
                     if (tb) tb.innerHTML = c === 0 ? '<tr><td colspan="7" align="center">ไม่มีข้อมูล</td></tr>' : html;
                     let dashTotalEl = document.getElementById('dash-total-members'); if (dashTotalEl) dashTotalEl.innerText = c; 
                     let dashSharesEl = document.getElementById('dash-shares-value'); if (dashSharesEl) dashSharesEl.innerText = (tShares * price).toLocaleString(undefined, {minimumFractionDigits: 2});

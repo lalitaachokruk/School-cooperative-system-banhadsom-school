@@ -551,7 +551,7 @@
                             </select>
                             <input type="number" id="cash-amount" placeholder="จำนวนเงิน" style="width: 140px; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-family:'Kanit';">
                             <input type="text" id="cash-note" placeholder="รายการ / หมายเหตุ" style="flex: 1; min-width: 200px; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-family:'Kanit';">
-                            <button class="btn-blue" onclick="window.addCashbookRecord()">💾 บันทึก</button>
+                            <button class="btn-blue" onclick="window.addCashbookRecord(event)">💾 บันทึก</button>
                         </div>
 
                         <div class="admin-table-container" style="margin-top: 20px;">
@@ -683,7 +683,7 @@
                             <div style="background: #F7FAFC; padding: 20px; border-radius: 10px; border: 1px solid var(--border-color);">
                                 <div style="display: flex; justify-content: space-between; align-items: center;">
                                     <h4 style="color: var(--primary-blue); margin: 0;">📊 ข้อมูลสรุปสถานะระบบ</h4>
-                                    <button onclick="loadSystemStat(sevent)" style="font-size: 0.8rem; padding: 4px 8px; border-radius: 4px; cursor: pointer; border: 1px solid #CBD5E0; background: white; color: #4A5568;">🔄 โหลดข้อมูล</button>
+                                    <button onclick="loadSystemStats(event)" style="font-size: 0.8rem; padding: 4px 8px; border-radius: 4px; cursor: pointer; border: 1px solid #CBD5E0; background: white; color: #4A5568;">🔄 โหลดข้อมูล</button>
                                 </div>
                                 <div style="margin-top: 15px; font-size: 0.95rem; color: #4A5568;">
                                     <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed #CBD5E0; padding: 10px 0;">
@@ -1520,11 +1520,18 @@ window.togglePosPassword = function() {
             activePrintItems.forEach((item, index) => {
                 let div = document.createElement('div');
                 div.style.background = 'white'; div.style.border = '1px solid #CBD5E0'; div.style.borderRadius = '8px'; div.style.padding = '15px'; div.style.textAlign = 'center'; div.style.position = 'relative'; div.style.minWidth = '210px';
+                
                 if (item.type === 'student') {
-                    div.innerHTML = `<div style="font-weight:600; color:var(--primary-blue); font-size:0.9rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${item.name}</div><div style="color:var(--text-muted); font-size:0.8rem; margin-bottom:5px;">ชั้น: ${item.class}</div><svg id="pre-bc-${index}"></svg><br><button onclick="removePrintItem(${index})" class="btn-red" style="padding:2px 8px; font-size:0.75rem; margin-top:5px;">ลบออก</button>`;
+                    // 🌟 1. เพิ่ม 2 บรรทัดนี้เพื่อกรองชื่อและชั้น ป้องกันหน้าเว็บพัง
+                    let safeName = escapeForHtml(item.name || '');
+                    let safeClass = escapeForHtml(item.class || '');
+
+                    // 🌟 2. เปลี่ยนมาใช้ safeName และ safeClass แทน
+                    div.innerHTML = `<div style="font-weight:600; color:var(--primary-blue); font-size:0.9rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${safeName}</div><div style="color:var(--text-muted); font-size:0.8rem; margin-bottom:5px;">ชั้น: ${safeClass}</div><svg id="pre-bc-${index}"></svg><br><button onclick="removePrintItem(${index})" class="btn-red" style="padding:2px 8px; font-size:0.75rem; margin-top:5px;">ลบออก</button>`;
                 } else {
                     div.innerHTML = `<div style="font-weight:600; color:#DD6B20; font-size:0.9rem;">ป้ายราคาบาร์โค้ดสินค้า</div><div style="color:var(--text-muted); font-size:0.8rem; margin-bottom:5px;">มูลค่า: ฿${item.value}</div><svg id="pre-bc-${index}"></svg><br><button onclick="removePrintItem(${index})" class="btn-red" style="padding:2px 8px; font-size:0.75rem; margin-top:5px;">ลบออก</button>`;
                 }
+                
                 container.appendChild(div);
                 JsBarcode("#pre-bc-" + index, item.value, { format: "CODE128", displayValue: true, text: item.type === 'student' ? "ID: " + item.value : "฿ " + item.value, fontSize: 13, height: 38, width: 1.4 });
             });

@@ -1869,11 +1869,12 @@ contentHtml += `<div class="student-badge"><div class="badge-title">บัตร
                         return a.class.localeCompare(b.class);
                     });
 
-                    // ใส่ปุ่มกดพิมพ์ 2 ระบบ
+                    // 🌟 ปรับปรุงส่วนนี้: ใส่ปุ่มกด 3 ระบบ (พิมพ์ 2 + บันทึกออนไลน์ 1)
                     resultHtml += `
                         <div style="margin-top: 15px; display: flex; flex-direction: column; gap: 10px;">
-                            <button class="btn-blue" style="background:#2B6CB0; padding: 10px; font-size:1rem;" onclick="printDividendSummary()">🖨️ 1. พิมพ์ตารางรายชื่อรวม (ใบเซ็นรับเงิน)</button>
-                            <button class="btn-blue" style="background:#DD6B20; padding: 10px; font-size:1rem;" onclick="printDividendSlips()">🖨️ 2. พิมพ์สลิปตัดฉีกแจกรายคน</button>
+                            <button class="btn-blue" style="background:#2B6CB0; color:white; border:none; border-radius:6px; cursor:pointer; padding: 10px; font-size:1rem;" onclick="printDividendSummary()">🖨️ 1. พิมพ์ตารางรายชื่อรวม (ใบเซ็นรับ)</button>
+                            <button class="btn-blue" style="background:#DD6B20; color:white; border:none; border-radius:6px; cursor:pointer; padding: 10px; font-size:1rem;" onclick="printDividendSlips()">🖨️ 2. พิมพ์สลิปตัดฉีกแจกรายคน</button>
+                            <button class="btn-blue" style="background:#38A169; color:white; border:none; border-radius:6px; cursor:pointer; padding: 10px; font-size:1rem;" onclick="saveDividendToFirebase()">💾 3. บันทึกยอดลงระบบออนไลน์ (E-Service)</button>
                         </div>
                     `;
 
@@ -1905,13 +1906,10 @@ contentHtml += `<div class="student-badge"><div class="badge-title">บัตร
                     </thead><tbody>`;
             
             window.currentDividendResults.forEach((m, idx) => {
-                // 🌟 เพิ่มบรรทัดนี้: กรองชื่อก่อนพิมพ์ ป้องกันอักขระพิเศษทำให้ตารางพัง
                 let safeName = escapeForHtml(m.name || '');
-
                 contentHtml += `<tr>
                         <td style="border: 1px solid #CBD5E0; padding: 8px; text-align: center;">${idx + 1}</td>
                         <td style="border: 1px solid #CBD5E0; padding: 8px; text-align: center;">${m.id}</td>
-                        <!-- 🌟 เปลี่ยนจาก ${m.name} เป็น ${safeName} -->
                         <td style="border: 1px solid #CBD5E0; padding: 8px;">${safeName}</td>
                         <td style="border: 1px solid #CBD5E0; padding: 8px; text-align: center;">${m.class}</td>
                         <td style="border: 1px solid #CBD5E0; padding: 8px; text-align: right;">${m.shareDiv.toFixed(2)}</td>
@@ -1933,8 +1931,6 @@ contentHtml += `<div class="student-badge"><div class="badge-title">บัตร
             let contentHtml = '<div class="slip-container">';
             
             window.currentDividendResults.forEach((m) => {
-
-                // 🌟 เพิ่ม 2 บรรทัดนี้เพื่อกรองอักขระพิเศษ
                 let safeName = escapeForHtml(m.name || '');
                 let safeClass = escapeForHtml(m.class || '');
                 
@@ -1981,6 +1977,49 @@ contentHtml += `<div class="student-badge"><div class="badge-title">บัตร
                 }
             </style></head><body>${contentHtml}<script>window.onload = function() { setTimeout(() => { window.print(); window.close(); }, 500); }${scriptTagClose}</body></html>`;
             win.document.write(htmlDoc); win.document.close();
+        }
+
+        // 🌟 ส่วนที่ 3 (เพิ่มใหม่): ระบบบันทึกปันผลลงฐานข้อมูล (ให้ E-Service ดึงไปโชว์)
+        window.saveDividendToFirebase = async function() {
+            if (!window.currentDividendResults || window.currentDividendResults.length === 0) {
+                return Swal.fire('แจ้งเตือน', 'ไม่มีข้อมูลปันผลให้บันทึกค่ะ', 'warning');
+            }
+
+            // แจ้งเตือนยืนยันก่อนบันทึก
+            const confirm = await Swal.fire({
+                title: 'ยืนยันการบันทึกข้อมูล?',
+                html: "ระบบจะอัปเดตยอดปันผลทั้งหมดเข้าสู่ฐานข้อมูลกลาง<br><b>นักเรียนจะสามารถเห็นยอดเงินนี้ได้ทันทีผ่านเว็บ E-Service</b>",
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#38A169',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'ใช่, บันทึกเลย!',
+                cancelButtonText: 'ยกเลิก'
+            });
+
+            if (confirm.isConfirmed) {
+                try {
+                    Swal.fire({ title: 'กำลังบันทึกข้อมูล...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+                    
+                    let batch = db.batch(); // สร้างตะกร้าเตรียมอัปเดตพร้อมกัน
+                    
+                    window.currentDividendResults.forEach(student => {
+                        let memberRef = db.collection("members").doc(student.id.toString());
+                        
+                        // สั่งอัปเดตเฉพาะช่อง dividend_amount (ยอดเงินปันผล)
+                        batch.update(memberRef, {
+                            dividend_amount: student.totalDiv
+                        });
+                    });
+                    
+                    await batch.commit(); // สั่งส่งขึ้น Cloud รวดเดียวจบ
+                    
+                    Swal.fire('สำเร็จ!', 'บันทึกยอดปันผลเข้าระบบออนไลน์เรียบร้อยแล้ว! 🎉', 'success');
+                } catch (error) {
+                    console.error("Error saving dividend:", error);
+                    Swal.fire('ข้อผิดพลาด', 'ไม่สามารถบันทึกข้อมูลได้ กรุณาลองใหม่อีกครั้ง', 'error');
+                }
+            }
         }
 
         // ==========================================

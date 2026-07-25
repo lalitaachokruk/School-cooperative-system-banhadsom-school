@@ -982,6 +982,25 @@
                     let val = toArabic(inId.value.trim()); 
                     lbId.innerText = "กำลังค้นหา...";
                     
+                    // 🌟 ส่วนที่เพิ่มใหม่: ดักจับรหัสผ่านพิเศษ (0000) สำหรับลูกค้าขาจร
+                    if (val === '0000') {
+                        currentDocId = '0000';
+                        currentMemberId = '0000';
+                        currentMemberName = 'ลูกค้าบุคคลภายนอก';
+                        window.currentMemberClass = 'บุคคลภายนอก';
+                        
+                        mText.innerText = `รหัส 0000: ลูกค้าบุคคลภายนอก (ขาจร)`; 
+                        mDisp.style.display = "flex";
+                        inId.disabled = true; 
+                        lbId.innerText = "1. รหัสสมาชิก (รับข้อมูลสำเร็จ)";
+                        inAmt.disabled = false; 
+                        lbAmt.innerText = "2. สแกนบาร์โค้ดสินค้า หรือ พิมพ์ราคา"; 
+                        lbAmt.style.color = "var(--accent-red)"; 
+                        inAmt.focus();
+                        return; // สั่งจบการทำงานตรงนี้ ไม่ต้องให้มันวิ่งไปหาในฐานข้อมูล Firebase 
+                    }
+                    // 🌟 จบส่วนที่เพิ่มใหม่
+
                     try {
                         // 1. ค้นหาแบบตรงๆ ก่อน (เช่น สแกนมา 0004 ก็หา 0004)
                         let doc = await db.collection("members").doc(val).get(); 

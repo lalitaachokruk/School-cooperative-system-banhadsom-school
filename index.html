@@ -713,7 +713,6 @@
                                     </div>
                                 </div>
                             </div>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -913,16 +912,15 @@
         
         window.exitAdmin = async function() { 
     try {
-        // สั่งให้ Firebase เตะ Session นี้ออก
-        await firebase.auth().signOut();
-
+        // ✅ ไม่ต้อง signOut Firebase แล้ว แค่ปิด/ซ่อน UI ฝั่งแอดมินเท่านั้น
+        // เพื่อไม่ให้ Session ของหน้า POS หลุดหรือพังชั่วคราว
         adminSection.style.display = 'none'; 
         posSection.style.display = 'flex'; 
         resetPOS(); 
 
         Swal.fire({ title: 'ออกจากระบบเรียบร้อย', icon: 'success', timer: 1000, showConfirmButton: false });
     } catch (error) {
-        console.error("Sign Out Error:", error);
+        console.error("Exit Admin Error:", error);
     }
 }
 
@@ -1050,12 +1048,15 @@
                     let p = parseFloat(val);
 
                     // 🌟 ดักจับบาร์โค้ดคำสั่ง (ใช้ String เพียวๆ)
-                    if (val === 'PAY' || val === '9999') { 
+                    // ✅ รหัสตัวเลข 8888/9999 จะทำงานเป็นคำสั่งลัดก็ต่อเมื่อสแกนเข้ามาตอนอยู่ในโหมด "cart" 
+                    // (โหมดสแกนบาร์โค้ดสินค้าทีละชิ้น) เท่านั้น เพื่อไม่ให้ชนกับการพิมพ์ยอดเงินในโหมด "total"
+                    // (เช่น ยอดบิลรวมพอดี 8888 หรือ 9999 บาท) ส่วนคำสั่ง 'PAY'/'CREDIT' แบบข้อความยังใช้ได้ทุกโหมดเหมือนเดิม
+                    if (val === 'PAY' || (val === '9999' && mode === 'cart')) { 
                         inAmt.value = ''; 
                         if (cartItems.length > 0 || (mode === 'total' && totalAmount > 0)) checkout(false); 
                         return; 
                     }
-                    if (val === 'CREDIT' || val === '8888') { 
+                    if (val === 'CREDIT' || (val === '8888' && mode === 'cart')) { 
                         inAmt.value = ''; 
                         if (cartItems.length > 0 || (mode === 'total' && totalAmount > 0)) checkout(true);  
                         return; 
@@ -1208,13 +1209,15 @@
                 const timeNow = new Date().toLocaleTimeString('th-TH');
                 const billStatus = isCredit ? "unpaid" : "paid";
                 
-                // 🌟 สร้างกล่องพัสดุ (Batch)
+                                // 🌟 สร้างกล่องพัสดุ (Batch)
                 const batch = db.batch();
                 
-                if (!isCredit) {
+                if (!isCredit && currentDocId !== '0000') {
                     const memberRef = db.collection("members").doc(currentDocId);
                     batch.set(memberRef, { total_buy_accumulated: firebase.firestore.FieldValue.increment(totalAmount) }, { merge: true });
                 }
+                // ✅ ถ้าเป็นรหัส 0000 (ลูกค้าขาจร) จะข้ามการอัปเดต/สร้างเอกสารใน collection "members" ไปเลย
+                // แต่ยังคง batch.set(txRef, ...) ด้านล่างเหมือนเดิม เพื่อบันทึกประวัติการขายไว้ปกติ
                 
                 const txRef = db.collection("transactions").doc();
                 batch.set(txRef, { 
@@ -1356,15 +1359,44 @@ window.togglePosPassword = function() {
                     snapshot.docs.forEach(doc => { batch.delete(doc.ref); });
                     await batch.commit();
 
+                    // ✅ [ปรับปรุงใหม่] เปลี่ยนจาก await .set() ทีละคน มาเป็นระบบ Batch ของ Firestore
+                    // หมายเหตุ: Firestore จำกัดสูงสุด 500 รายการต่อ 1 Batch จึงแบ่งส่งเป็นชุดละ 450 รายการเพื่อความปลอดภัย
                     let count = 0;
-                    for (const m of members) {
-                        if (m.member_id) {
-                            await db.collection("members").doc(m.member_id.toString()).set({ name: m.name||'', class: m.class||'', shares: parseInt(m.shares)||0, register_date: m.register_date||'', total_buy_accumulated: 0 }); 
+                    const validMembers = members.filter(m => m.member_id);
+                    const CHUNK_SIZE = 450;
+                    for (let i = 0; i < validMembers.length; i += CHUNK_SIZE) {
+                        const chunk = validMembers.slice(i, i + CHUNK_SIZE);
+                        const importBatch = db.batch();
+                        chunk.forEach(m => {
+                            const memberRef = db.collection("members").doc(m.member_id.toString());
+                            importBatch.set(memberRef, { name: m.name||'', class: m.class||'', shares: parseInt(m.shares)||0, register_date: m.register_date||'', total_buy_accumulated: 0 });
                             count++;
-                        }
+                        });
+                        await importBatch.commit();
                     }
+                    
                     Swal.fire('ซิงค์ข้อมูลสำเร็จ!', `อัปเดตฐานข้อมูลใหม่ทั้งหมด ${count} คน เรียบร้อยแล้ว`, 'success');
                 } catch (err) { Swal.fire('Error', 'ดึงข้อมูลไม่สำเร็จ', 'error'); }
+            }
+        }
+
+                // ✅ [เพิ่มใหม่] ฟังก์ชันส่งข้อมูลไป Google Sheets แบบ Batch (รวมหลายแถวส่งในคำขอเดียว)
+        async function sendBatchToGoogleSheets(sheetName, rowsArray) {
+            try {
+                const secretDoc = await db.collection("settings").doc("secrets").get();
+                if (!secretDoc.exists) {
+                    console.error("ระบบขัดข้อง: ไม่พบกุญแจลับสำหรับส่งข้อมูล (Secret Token Missing)");
+                    return;
+                }
+                const SECRET_TOKEN = secretDoc.data().sheet_token;
+
+                await fetch(SHEET_API_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "text/plain;charset=utf-8" },
+                    body: JSON.stringify({ token: SECRET_TOKEN, sheetName: sheetName, rowDataBatch: rowsArray })
+                });
+            } catch (error) {
+                console.error("Sheet Batch Sync Error:", error);
             }
         }
 
@@ -1372,14 +1404,17 @@ window.togglePosPassword = function() {
             Swal.fire({ title: 'กำลังส่งออกข้อมูลสำรอง...', didOpen: () => Swal.showLoading() });
             try {
                 const snapshot = await db.collection("members").get();
-                for (const doc of snapshot.docs) {
+
+                // ✅ รวบรวมข้อมูลทุกแถวไว้ใน Array ก้อนเดียวก่อน แทนที่จะยิง Request ทีละคน
+                const rows = snapshot.docs.map(doc => {
                     const d = doc.data();
-                    
-                    // เรียกใช้ตัวแปลงวันที่ ให้กลายเป็น 5 มิ.ย. 2567 ก่อนส่งลง Sheets
-                    let niceDate = formatDisplayDate(d.register_date); 
-                    
-                    await sendToGoogleSheets("Member_Backup", [doc.id, d.name, d.class || '', niceDate, d.shares || 0, d.total_buy_accumulated || 0]);
-                }
+                    let niceDate = formatDisplayDate(d.register_date);
+                    return [doc.id, d.name, d.class || '', niceDate, d.shares || 0, d.total_buy_accumulated || 0];
+                });
+
+                // ✅ ยิง Request ออกไปเพียงครั้งเดียว ส่งข้อมูลทั้งหมดพร้อมกัน
+                await sendBatchToGoogleSheets("Member_Backup", rows);
+
                 Swal.fire('สำรองข้อมูลสำเร็จ!', 'ส่งรายชื่อและยอดหุ้นไปยังแท็บ Member_Backup แล้ว', 'success');
             } catch (error) { Swal.fire('Error', 'ส่งข้อมูลไม่สำเร็จ', 'error'); }
         }
@@ -2046,9 +2081,11 @@ contentHtml += `<div class="student-badge"><div class="badge-title">บัตร
         // ==========================================
         let salesChartInstance = null; let weeklyChartInstance = null; let gSales = 0; let gExp = 0;
 
-        function initRealtimeListeners() {
+                function initRealtimeListeners() {
             try {
-                db.collection("settings").doc("system").onSnapshot((doc) => {
+                // ✅ เปลี่ยนจาก onSnapshot (เรียลไทม์) เป็น .get() (ดึงข้อมูลครั้งเดียวตอนโหลดหน้า)
+                // เพื่อป้องกันไม่ให้ค่าที่แอดมินกำลังพิมพ์อยู่ในช่องตั้งค่าโดนข้อมูลจาก Server เด้งทับ
+                db.collection("settings").doc("system").get().then((doc) => {
                     if(doc.exists) {
                         let d = doc.data(); 
                         
@@ -2062,7 +2099,7 @@ contentHtml += `<div class="student-badge"><div class="badge-title">บัตร
                         let priceInput = document.getElementById('setting-share-price');
                         if (priceInput) priceInput.value = window.currentSharePrice;
                     }
-                });
+                }).catch((e) => console.error("Setting load error:", e));
                 
             } catch(e) { console.error("Setting listener error:", e); }
 

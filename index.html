@@ -1005,7 +1005,7 @@
                     }
                     // 🌟 จบส่วนที่เพิ่มใหม่
 
-                    try {
+                                        try {
                         // 1. ค้นหาแบบตรงๆ ก่อน (เช่น สแกนมา 0004 ก็หา 0004)
                         let doc = await db.collection("members").doc(val).get(); 
                         
@@ -1024,10 +1024,14 @@
                             if(thaiDoc.exists) { doc = thaiDoc; val = thaiVal; } 
                         }
 
-                        currentDocId = val;
+                        // ✅ [แก้ไข] ย้าย currentDocId = val; ออกจากตรงนี้ ไปตั้งค่าเฉพาะตอน "หาเจอ" เท่านั้น (ในบล็อก if ด้านล่าง)
+                        // เดิมตั้งค่าไว้ตรงนี้แบบไม่มีเงื่อนไข ทำให้ถ้ามีการค้นหาซ้อนกันด้วยรหัสเพี้ยน (เช่น ตัวเลขราคาไปต่อท้ายรหัสช่วงจังหวะรีบๆ)
+                        // แล้วหาไม่เจอ ระบบก็ยังจำรหัสเพี้ยนนั้นไว้เป็น currentDocId อยู่ดี พอกดคิดเงินเลยไปสร้างสมาชิกปลอมด้วยรหัสเพี้ยนนั้น
 
                         if (doc.exists) {
-                            const d = doc.data(); currentMemberId = val; currentMemberName = d.name;
+                            const d = doc.data(); 
+                            currentDocId = val; // ✅ [แก้ไข] ตั้งค่าตรงนี้แทน เฉพาะตอนหาเจอสมาชิกจริงเท่านั้น
+                            currentMemberId = val; currentMemberName = d.name;
                             window.currentMemberClass = window.isTeacherInfo(val, d.class) ? "ครู" : (d.class || '-'); 
                             let status = window.currentMemberClass === "ครู" ? "ครู" : `ชั้น ${window.currentMemberClass}`;
                             
@@ -1038,13 +1042,11 @@
                         } else {
                             Swal.fire({ icon: 'warning', title: 'ไม่พบข้อมูล', text: 'กรุณาตรวจสอบรหัสสมาชิกอีกครั้ง' });
                             lbId.innerText = "1. พิมพ์ / สแกน รหัสนักเรียน (4 หลัก)";
-                            // ✅ [เพิ่มใหม่] ไม่พบข้อมูล ต้องปลดล็อกช่องกลับมาให้สแกน/พิมพ์ใหม่ได้
                             inId.disabled = false;
                             inId.focus();
                         }
                     } catch (err) { 
                         Swal.fire('Error', 'เชื่อมต่อไม่ได้', 'error'); 
-                        // ✅ [เพิ่มใหม่] เชื่อมต่อไม่ได้ ต้องปลดล็อกช่องกลับมาเช่นกัน ไม่งั้นช่องจะค้างล็อกถาวร
                         inId.disabled = false;
                         lbId.innerText = "1. พิมพ์ / สแกน รหัสนักเรียน (4 หลัก)";
                         inId.focus();

@@ -1201,6 +1201,12 @@
         }
 
         // --- ฟังก์ชัน Checkout (อัปเกรดแยกบิลเงินสด กับ บิลค้างชำระ รองรับโหมดพิมพ์ด่วน) ---
+        function resetCheckoutButtons() {
+        if (btnCheckout) { btnCheckout.disabled = false; btnCheckout.style.opacity = '1'; }
+        if (btnCredit)   { btnCredit.disabled = false;   btnCredit.style.opacity = '1'; }
+        if (inAmt)        inAmt.disabled = false;
+        }
+        
         async function checkout(isCredit = false) {
             // ป้องกันการกดปุ่มรัว (Double-submit)
             if (btnCheckout) { btnCheckout.disabled = true; btnCheckout.style.opacity = '0.5'; }
@@ -1212,10 +1218,10 @@
             if (mode === 'total') {
                 let val = toArabic(inAmt.value.trim());
                 let p = parseFloat(val);
-                if (isNaN(p) || p <= 0) return Swal.fire('แจ้งเตือน', 'กรุณาใส่ยอดเงินที่ถูกต้อง', 'warning').then(()=>inAmt.focus());
+                if (isNaN(p) || p <= 0) { resetCheckoutButtons(); return Swal.fire('แจ้งเตือน', 'กรุณาใส่ยอดเงินที่ถูกต้อง', 'warning').then(()=>inAmt.focus()); }
                 totalAmount = p;
             } else {
-                if (cartItems.length === 0) return;
+                if (cartItems.length === 0) { resetCheckoutButtons(); return; }
             }
             
             inAmt.disabled = true; 
@@ -1255,10 +1261,11 @@
 
                 Swal.fire({ title: 'บันทึกสำเร็จ!', html: msg, icon: 'success', timer: 1800, showConfirmButton: false });
                 window.resetPOS(); 
-            } catch (err) { 
+                } catch (err) { 
+                resetCheckoutButtons();
                 Swal.fire('Error', 'บันทึกไม่สำเร็จ ข้อมูลในตะกร้ายังอยู่นะคะ', 'error'); 
-            }
-        } // <--- มีปีกกาปิดครบถ้วนแล้ว
+                }
+                } // <--- มีปีกกาปิดครบถ้วนแล้ว
 
         // ==========================================
         // ระบบรักษาความปลอดภัยหน้า POS (Login)
@@ -1378,18 +1385,23 @@ window.togglePosPassword = function() {
                     // ✅ [ปรับปรุงใหม่] เปลี่ยนจาก await .set() ทีละคน มาเป็นระบบ Batch ของ Firestore
                     // หมายเหตุ: Firestore จำกัดสูงสุด 500 รายการต่อ 1 Batch จึงแบ่งส่งเป็นชุดละ 450 รายการเพื่อความปลอดภัย
                     let count = 0;
-                    const validMembers = members.filter(m => m.member_id);
-                    const CHUNK_SIZE = 450;
-                    for (let i = 0; i < validMembers.length; i += CHUNK_SIZE) {
-                        const chunk = validMembers.slice(i, i + CHUNK_SIZE);
-                        const importBatch = db.batch();
-                        chunk.forEach(m => {
-                            const memberRef = db.collection("members").doc(m.member_id.toString());
-                            importBatch.set(memberRef, { name: m.name||'', class: m.class||'', shares: parseInt(m.shares)||0, register_date: m.register_date||'', total_buy_accumulated: 0 });
-                            count++;
-                        });
-                        await importBatch.commit();
-                    }
+const validMembers = members.filter(m => {
+    if (!m.member_id) return false;
+    const paddedId = m.member_id.toString().padStart(4, '0');
+    return paddedId !== '0000';   // 🌟 กันรหัส 0000 ไม่ให้ถูกนำเข้าฐานข้อมูลเด็ดขาด
+});
+const CHUNK_SIZE = 450;
+for (let i = 0; i < validMembers.length; i += CHUNK_SIZE) {
+    const chunk = validMembers.slice(i, i + CHUNK_SIZE);
+    const importBatch = db.batch();
+    chunk.forEach(m => {
+        const paddedId = m.member_id.toString().padStart(4, '0');   // 🌟 pad ให้ตรงฟอร์แมตเดียวกับ addNewMember
+        const memberRef = db.collection("members").doc(paddedId);
+        importBatch.set(memberRef, { name: m.name||'', class: m.class||'', shares: parseInt(m.shares)||0, register_date: m.register_date||'', total_buy_accumulated: 0 });
+        count++;
+    });
+    await importBatch.commit();
+}
                     
                     Swal.fire('ซิงค์ข้อมูลสำเร็จ!', `อัปเดตฐานข้อมูลใหม่ทั้งหมด ${count} คน เรียบร้อยแล้ว`, 'success');
                 } catch (err) { Swal.fire('Error', 'ดึงข้อมูลไม่สำเร็จ', 'error'); }
@@ -1480,12 +1492,19 @@ window.togglePosPassword = function() {
             });
 
             if (v && v.id && v.name) {
-                // 🌟 บังคับ Pad 0 ให้ครบ 4 หลักเสมอ
-                const newId = v.id.padStart(4, '0');
-                
-                try {
-                    // 🌟 เช็คก่อนว่ารหัสนี้มีคนใช้ไปหรือยัง (ป้องกันทับข้อมูลเดิม)
-                    const checkDoc = await db.collection("members").doc(newId).get();
+    // 🌟 บังคับ Pad 0 ให้ครบ 4 หลักเสมอ
+    const newId = v.id.padStart(4, '0');
+
+    // 🌟 [เพิ่มใหม่] กันชนกับรหัสลับ 0000 (ลูกค้าขาจร) ในหน้า POS
+        if (newId === '0000') {
+        Swal.fire('รหัสไม่ถูกต้อง', 'ไม่สามารถใช้รหัส 0000 ได้ เนื่องจากระบบสงวนไว้เป็นรหัสลูกค้าภายนอก (ขาจร)', 'error');
+        if (btn) { btn.disabled = false; btn.innerHTML = oldText; }
+        return;
+    }
+    
+    try {
+        // 🌟 เช็คก่อนว่ารหัสนี้มีคนใช้ไปหรือยัง (ป้องกันทับข้อมูลเดิม)
+        const checkDoc = await db.collection("members").doc(newId).get();
                     if (checkDoc.exists) {
                         Swal.fire('ข้อผิดพลาด', `รหัส ${newId} มีอยู่ในระบบแล้ว!`, 'error');
                     } else {
@@ -1498,23 +1517,26 @@ window.togglePosPassword = function() {
         };
 
         window.editMember = async function(docId, name, cls, shares, rawDate) {
-            let cleanDate = formatDisplayDate(rawDate);
-            
-            const { value: v } = await Swal.fire({
-                title: '✏️ แก้ไขและจัดการหุ้น',
-                html: `
-                <div style="text-align: left; margin-bottom: 15px;">
-                    <label style="display: block; font-size: 0.95rem; color: #1A365D; margin-bottom: 5px; font-weight: 500;">ชื่อ-นามสกุล:</label>
-                    <input id="s-name" type="text" value="${name}" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-family: 'Kanit'; outline: none; box-sizing: border-box;">
-                </div>
-                <div style="text-align: left; margin-bottom: 15px;">
-                    <label style="display: block; font-size: 0.95rem; color: #1A365D; margin-bottom: 5px; font-weight: 500;">ชั้นเรียน:</label>
-                    <input id="s-class" type="text" value="${cls}" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-family: 'Kanit'; outline: none; box-sizing: border-box;">
-                </div>
-                <div style="text-align: left; margin-bottom: 15px;">
-                    <label style="display: block; font-size: 0.95rem; color: #1A365D; margin-bottom: 5px; font-weight: 500;">วันที่สมัคร:</label>
-                    <input id="s-date" type="text" value="${cleanDate}" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-family: 'Kanit'; outline: none; box-sizing: border-box;">
-                </div>
+    let cleanDate = formatDisplayDate(rawDate);
+    let safeName = escapeForHtml(name);      // 🌟 เพิ่มใหม่
+    let safeClass = escapeForHtml(cls);      // 🌟 เพิ่มใหม่
+    let safeDate = escapeForHtml(cleanDate); // 🌟 เพิ่มใหม่
+    
+    const { value: v } = await Swal.fire({
+        title: '✏️ แก้ไขและจัดการหุ้น',
+        html: `
+        <div style="text-align: left; margin-bottom: 15px;">
+            <label style="display: block; font-size: 0.95rem; color: #1A365D; margin-bottom: 5px; font-weight: 500;">ชื่อ-นามสกุล:</label>
+            <input id="s-name" type="text" value="${safeName}" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-family: 'Kanit'; outline: none; box-sizing: border-box;">
+        </div>
+        <div style="text-align: left; margin-bottom: 15px;">
+            <label style="display: block; font-size: 0.95rem; color: #1A365D; margin-bottom: 5px; font-weight: 500;">ชั้นเรียน:</label>
+            <input id="s-class" type="text" value="${safeClass}" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-family: 'Kanit'; outline: none; box-sizing: border-box;">
+        </div>
+        <div style="text-align: left; margin-bottom: 15px;">
+            <label style="display: block; font-size: 0.95rem; color: #1A365D; margin-bottom: 5px; font-weight: 500;">วันที่สมัคร:</label>
+            <input id="s-date" type="text" value="${safeDate}" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-family: 'Kanit'; outline: none; box-sizing: border-box;">
+        </div>
                 <div style="text-align: left; margin-bottom: 15px;">
                     <label style="display: block; font-size: 0.95rem; color: #1A365D; margin-bottom: 5px; font-weight: 500;">จำนวนหุ้น (แก้เพื่อเพิ่ม/ถอน):</label>
                     <input id="s-shares" type="number" value="${shares}" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-family: 'Kanit'; outline: none; box-sizing: border-box;">
@@ -2443,7 +2465,7 @@ if(filterSelect) filterSelect.innerHTML = '<option value="all">-- ดึงน�
                     }
 
                     // 🌟 เติมปีกกาเปิด { ให้เรียบร้อย
-                    if (match && !activePrintItems.find(item => item.value === doc.id.toString().padStart(4, '0'))) {
+                    if (match && !activePrintItems.find(item => item.type === 'student' && item.value === doc.id.toString().padStart(4, '0'))) {
                         let paddedId = doc.id.toString().padStart(4, '0');
                         activePrintItems.push({
                             type: 'student',

@@ -973,12 +973,18 @@
         if(expDate && dateIn) { expDate.value = dateIn.value; }
         if(document.getElementById('cash-date')) { document.getElementById('cash-date').value = dateIn.value; }
 
-        if(inId) {
+                if(inId) {
             inId.addEventListener('keypress', async (e) => {
                 if (e.key === 'Enter' && inId.value.trim() !== "") {
                     if(!dateIn.value) return Swal.fire('Error', 'กรุณาระบุวันที่ทำรายการ', 'warning');
                     
                     let val = toArabic(inId.value.trim()); 
+
+                    // ✅ [เพิ่มใหม่] เคลียร์และล็อกช่องรหัสทันที ก่อนเริ่มค้นหาข้อมูล (ก่อน await)
+                    // ป้องกันสแกนเร็วเกินไปจนตัวอักษร "ราคาสินค้า" ไปต่อท้าย "รหัสนักเรียน" เดิม
+                    // ระหว่างที่ระบบกำลังรอเชื่อมต่อฐานข้อมูลอยู่
+                    inId.value = '';
+                    inId.disabled = true;
                     lbId.innerText = "กำลังค้นหา...";
                     
                     // 🌟 ส่วนที่เพิ่มใหม่: ดักจับรหัสผ่านพิเศษ (0000) สำหรับลูกค้าขาจร
@@ -990,13 +996,12 @@
                         
                         mText.innerText = `รหัส 0000: ลูกค้าบุคคลภายนอก (ขาจร)`; 
                         mDisp.style.display = "flex";
-                        inId.disabled = true; 
                         lbId.innerText = "1. รหัสสมาชิก (รับข้อมูลสำเร็จ)";
                         inAmt.disabled = false; 
                         lbAmt.innerText = "2. สแกนบาร์โค้ดสินค้า หรือ พิมพ์ราคา"; 
                         lbAmt.style.color = "var(--accent-red)"; 
                         inAmt.focus();
-                        return; // สั่งจบการทำงานตรงนี้ ไม่ต้องให้มันวิ่งไปหาในฐานข้อมูล Firebase 
+                        return; 
                     }
                     // 🌟 จบส่วนที่เพิ่มใหม่
 
@@ -1027,15 +1032,23 @@
                             let status = window.currentMemberClass === "ครู" ? "ครู" : `ชั้น ${window.currentMemberClass}`;
                             
                             mText.innerText = `รหัส ${val}: ${d.name} (${status})`; mDisp.style.display = "flex";
-                            inId.disabled = true; lbId.innerText = "1. รหัสสมาชิก (รับข้อมูลสำเร็จ)";
+                            lbId.innerText = "1. รหัสสมาชิก (รับข้อมูลสำเร็จ)";
                             inAmt.disabled = false; lbAmt.innerText = "2. สแกนบาร์โค้ดสินค้า หรือ พิมพ์ราคา"; lbAmt.style.color = "var(--accent-red)"; 
                             inAmt.focus();
                         } else {
                             Swal.fire({ icon: 'warning', title: 'ไม่พบข้อมูล', text: 'กรุณาตรวจสอบรหัสสมาชิกอีกครั้ง' });
                             lbId.innerText = "1. พิมพ์ / สแกน รหัสนักเรียน (4 หลัก)";
-                            inId.value = ''; 
+                            // ✅ [เพิ่มใหม่] ไม่พบข้อมูล ต้องปลดล็อกช่องกลับมาให้สแกน/พิมพ์ใหม่ได้
+                            inId.disabled = false;
+                            inId.focus();
                         }
-                    } catch (err) { Swal.fire('Error', 'เชื่อมต่อไม่ได้', 'error'); }
+                    } catch (err) { 
+                        Swal.fire('Error', 'เชื่อมต่อไม่ได้', 'error'); 
+                        // ✅ [เพิ่มใหม่] เชื่อมต่อไม่ได้ ต้องปลดล็อกช่องกลับมาเช่นกัน ไม่งั้นช่องจะค้างล็อกถาวร
+                        inId.disabled = false;
+                        lbId.innerText = "1. พิมพ์ / สแกน รหัสนักเรียน (4 หลัก)";
+                        inId.focus();
+                    }
                 }
             });
         }

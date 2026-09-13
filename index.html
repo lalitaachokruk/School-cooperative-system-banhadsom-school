@@ -1938,42 +1938,61 @@ contentHtml += `<div class="student-badge"><div class="badge-title">บัตร
             }
         }
 
-        // --- ระบบพิมพ์ใบที่ 1: ตารางรวม ---
+        // --- ระบบพิมพ์ใบที่ 1: ตารางรวม (แยกแผ่นต่อชั้นเรียน) ---
         window.printDividendSummary = function() {
             if (!window.currentDividendResults || window.currentDividendResults.length === 0) return Swal.fire('แจ้งเตือน', 'ไม่มีข้อมูลปันผลให้พิมพ์', 'warning');
             let win = window.open('', '', 'width=950,height=800');
-            let contentHtml = `
-                <div style="text-align: center; margin-bottom: 20px;">
-                    <h2 style="margin: 0; color: #1A365D;">ตารางจ่ายเงินปันผล สหกรณ์โรงเรียนบ้านหาดส้มแป้น</h2>
-                </div>
-                <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
-                    <thead>
-                        <tr style="background:#F7FAFC;">
-                            <th style="border: 1px solid #CBD5E0; padding: 8px;">ลำดับ</th>
-                            <th style="border: 1px solid #CBD5E0; padding: 8px;">รหัส</th>
-                            <th style="border: 1px solid #CBD5E0; padding: 8px;">ชื่อ-นามสกุล</th>
-                            <th style="border: 1px solid #CBD5E0; padding: 8px;">ชั้น</th>
-                            <th style="border: 1px solid #CBD5E0; padding: 8px; text-align: right;">ปันผลหุ้น</th>
-                            <th style="border: 1px solid #CBD5E0; padding: 8px; text-align: right;">ปันผลซื้อ</th>
-                            <th style="border: 1px solid #CBD5E0; padding: 8px; text-align: right;">รับสุทธิ</th>
-                            <th style="border: 1px solid #CBD5E0; padding: 8px; width: 150px;">ลายมือชื่อผู้รับเงิน</th>
-                        </tr>
-                    </thead><tbody>`;
-            
-            window.currentDividendResults.forEach((m, idx) => {
-                let safeName = escapeForHtml(m.name || '');
-                contentHtml += `<tr>
-                        <td style="border: 1px solid #CBD5E0; padding: 8px; text-align: center;">${idx + 1}</td>
-                        <td style="border: 1px solid #CBD5E0; padding: 8px; text-align: center;">${m.id}</td>
-                        <td style="border: 1px solid #CBD5E0; padding: 8px;">${safeName}</td>
-                        <td style="border: 1px solid #CBD5E0; padding: 8px; text-align: center;">${m.class}</td>
-                        <td style="border: 1px solid #CBD5E0; padding: 8px; text-align: right;">${m.shareDiv.toFixed(2)}</td>
-                        <td style="border: 1px solid #CBD5E0; padding: 8px; text-align: right;">${m.buyDiv.toFixed(2)}</td>
-                        <td style="border: 1px solid #CBD5E0; padding: 8px; text-align: right; font-weight: bold;">${m.totalDiv.toFixed(2)}</td>
-                        <td style="border: 1px solid #CBD5E0; padding: 8px;"></td>
-                    </tr>`;
+
+            // ✅ [เพิ่มใหม่] จัดกลุ่มรายชื่อตามชั้นเรียนก่อน (ข้อมูลเรียงตามชั้นอยู่แล้ว จึงแค่ไล่แบ่งกลุ่มตามลำดับ)
+            let groups = [];
+            window.currentDividendResults.forEach(m => {
+                let lastGroup = groups[groups.length - 1];
+                if (!lastGroup || lastGroup.class !== m.class) {
+                    groups.push({ class: m.class, members: [m] });
+                } else {
+                    lastGroup.members.push(m);
+                }
             });
-            contentHtml += `</tbody></table>`;
+
+            let contentHtml = '';
+            groups.forEach((group, gIdx) => {
+                // ✅ [เพิ่มใหม่] ทุกกลุ่ม (ยกเว้นกลุ่มแรก) จะขึ้นหน้าใหม่เสมอ ด้วย page-break-before
+                let pageBreakStyle = gIdx > 0 ? 'page-break-before: always;' : '';
+                
+                contentHtml += `<div style="${pageBreakStyle}">
+                    <div style="text-align: center; margin-bottom: 15px;">
+                        <h2 style="margin: 0; color: #1A365D;">ตารางจ่ายเงินปันผล สหกรณ์โรงเรียนบ้านหาดส้มแป้น</h2>
+                        <h3 style="margin: 5px 0 0; color: #4A5568; font-weight: 500;">ชั้น: ${escapeForHtml(group.class)}</h3>
+                    </div>
+                    <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                        <thead>
+                            <tr style="background:#F7FAFC;">
+                                <th style="border: 1px solid #CBD5E0; padding: 8px;">ลำดับ</th>
+                                <th style="border: 1px solid #CBD5E0; padding: 8px;">รหัส</th>
+                                <th style="border: 1px solid #CBD5E0; padding: 8px;">ชื่อ-นามสกุล</th>
+                                <th style="border: 1px solid #CBD5E0; padding: 8px; text-align: right;">ปันผลหุ้น</th>
+                                <th style="border: 1px solid #CBD5E0; padding: 8px; text-align: right;">ปันผลซื้อ</th>
+                                <th style="border: 1px solid #CBD5E0; padding: 8px; text-align: right;">รับสุทธิ</th>
+                                <th style="border: 1px solid #CBD5E0; padding: 8px; width: 150px;">ลายมือชื่อผู้รับเงิน</th>
+                            </tr>
+                        </thead><tbody>`;
+
+                group.members.forEach((m, idx) => {
+                    let safeName = escapeForHtml(m.name || '');
+                    contentHtml += `<tr>
+                            <td style="border: 1px solid #CBD5E0; padding: 8px; text-align: center;">${idx + 1}</td>
+                            <td style="border: 1px solid #CBD5E0; padding: 8px; text-align: center;">${m.id}</td>
+                            <td style="border: 1px solid #CBD5E0; padding: 8px;">${safeName}</td>
+                            <td style="border: 1px solid #CBD5E0; padding: 8px; text-align: right;">${m.shareDiv.toFixed(2)}</td>
+                            <td style="border: 1px solid #CBD5E0; padding: 8px; text-align: right;">${m.buyDiv.toFixed(2)}</td>
+                            <td style="border: 1px solid #CBD5E0; padding: 8px; text-align: right; font-weight: bold;">${m.totalDiv.toFixed(2)}</td>
+                            <td style="border: 1px solid #CBD5E0; padding: 8px;"></td>
+                        </tr>`;
+                });
+
+                contentHtml += `</tbody></table></div>`;
+            });
+
             let scriptTagClose = '</' + 'script>';
             let htmlDoc = `<html><head><title>พิมพ์ตารางรายชื่อรวม</title><link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;500;600&display=swap" rel="stylesheet"><style> body { font-family: 'Kanit', sans-serif; background: #fff; color: #000; } @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } } </style></head><body>${contentHtml}<script>window.onload = function() { setTimeout(() => { window.print(); window.close(); }, 500); }${scriptTagClose}</body></html>`;
             win.document.write(htmlDoc); win.document.close();

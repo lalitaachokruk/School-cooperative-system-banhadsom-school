@@ -2355,7 +2355,10 @@ let safeJsNote = escapeForJs(d.note);   // 🌟 เพิ่มใหม่ ส�
 
 let rowHtml = `<tr>
     <td>${d.date}</td>
-    ...
+    <td style="color:#4A5568; text-align: right;">${prevBalText}</td>
+    <td style="text-align: right;">${incHtml}</td>
+    <td style="text-align: right;">${expHtml}</td>
+    <td style="font-weight:bold; color:#3182CE; text-align: right;">${currentBalance.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
     <td style="padding-left: 20px;">${safeNote}</td>
     <td style="text-align:center;"><button class="btn-red" style="padding:4px 10px; font-size:0.8rem;" onclick="confirmDelete('cashbook', '${d.id}', 'รายการ: ${safeJsNote}')">ลบ</button></td>
 </tr>`;
@@ -2380,7 +2383,7 @@ let rowHtml = `<tr>
                     if (expEl) expEl.innerText = totalExpense.toLocaleString(undefined, {minimumFractionDigits: 2});
                     if (balEl) {
                         balEl.innerText = currentBalance.toLocaleString(undefined, {minimumFractionDigits: 2});
-                        balEl.style.color = currentBalance >= 0 ? '#3182CE' : '#E53E3E';
+                        balEl.style.color = currentBalance >= 0 ? '#3182CE' : '#E53E3E'; 
                     }
                 });
             } catch(e) { console.error("Cashbook listener error:", e); }
